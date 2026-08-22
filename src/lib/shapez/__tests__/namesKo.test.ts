@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
 import { OPERATIONS, OPERATION_IDS } from '../operations'
-import { PART_NAMES_KO, buildingNameKo, colorNameKo, islandNameKo } from '../namesKo'
-import { OPERATION_BUILDINGS } from '../progression'
+import {
+  PART_NAMES_KO,
+  SCENARIO_NAMES_KO,
+  buildingNameKo,
+  colorNameKo,
+  islandNameKo,
+  milestoneNameKo,
+} from '../namesKo'
+import { OPERATION_BUILDINGS, PROGRESSION } from '../progression'
 import { OPERATION_SPECS, STACKER_SPECS } from '../throughput'
 import { COLORS } from '../types'
 
@@ -80,5 +87,34 @@ describe('Korean names come from the game', () => {
     expect(PART_NAMES_KO.C).toBe('원')
     expect(PART_NAMES_KO.S).toBe('별')
     expect(PART_NAMES_KO.R).toBe('정사각형')
+  })
+})
+
+describe('scenario naming', () => {
+  it('names scenarios the way the game does', () => {
+    expect(SCENARIO_NAMES_KO.default).toBe('클래식 · 일반')
+    expect(SCENARIO_NAMES_KO.hard).toBe('클래식 · 어려움')
+    expect(SCENARIO_NAMES_KO.hexagonal).toBe('클래식 · 육각')
+    // the game calls this 광기, not "Insane"
+    expect(SCENARIO_NAMES_KO.insane).toBe('클래식 · 광기')
+    expect(SCENARIO_NAMES_KO.converter).toBe('제조')
+  })
+
+  it('has a Korean name for every scenario we ship data for', () => {
+    for (const key of Object.keys(PROGRESSION)) {
+      expect(SCENARIO_NAMES_KO[key], key).toBeTruthy()
+    }
+  })
+
+  it('translates the milestones it can and leaves the rest alone', () => {
+    expect(milestoneNameKo('RNInitial', 'Rotate & Cut')).toBe('회전 및 절단')
+    expect(milestoneNameKo('RNFluids', 'Fluids & Painting')).toBe('유체 및 색칠')
+    // no counterpart in the current game, so it stays as it was
+    expect(milestoneNameKo('RNEndOfGame', 'Final Qualification')).toBe('Final Qualification')
+  })
+
+  it('does not claim to cover the 제조 scenario', () => {
+    // our progression data predates that mode; offering it would be a lie
+    expect(PROGRESSION.converter).toBeUndefined()
   })
 })

@@ -8,7 +8,8 @@ import {
   subscribeToBrowserState,
 } from '@/lib/external-store'
 import type { SpeedTier, StackerVariant } from '@/lib/shapez/throughput'
-import type { ColorSkinId, ScenarioId } from '@/lib/shapez/types'
+import type { ScenarioKey } from '@/lib/shapez/progression'
+import type { ColorSkinId } from '@/lib/shapez/types'
 
 /**
  * Everything worth keeping in the URL, so a setup can be bookmarked, shared or
@@ -16,7 +17,7 @@ import type { ColorSkinId, ScenarioId } from '@/lib/shapez/types'
  */
 export interface SessionState {
   code: string
-  scenario: ScenarioId
+  scenario: ScenarioKey
   skin: ColorSkinId
   target: number
   tier: SpeedTier
@@ -28,7 +29,7 @@ export interface SessionState {
 
 export const DEFAULT_STATE: SessionState = {
   code: 'RbRbRbRb:CrCrCrCr',
-  scenario: 'normal',
+  scenario: 'default',
   skin: 'RGB',
   target: 60,
   tier: 100,
@@ -58,7 +59,7 @@ function readParams(search: string): SessionState {
 
   return {
     code: params.get(KEYS.code) ?? DEFAULT_STATE.code,
-    scenario: (params.get(KEYS.scenario) as ScenarioId) ?? DEFAULT_STATE.scenario,
+    scenario: (params.get(KEYS.scenario) as ScenarioKey) ?? DEFAULT_STATE.scenario,
     skin: (params.get(KEYS.skin) as ColorSkinId) ?? DEFAULT_STATE.skin,
     target: Math.max(1, number(KEYS.target, DEFAULT_STATE.target)),
     tier: number(KEYS.tier, DEFAULT_STATE.tier) as SpeedTier,

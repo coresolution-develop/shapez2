@@ -56,6 +56,44 @@ export const PART_NAMES_KO: Record<string, string> = {
   c: '결정체',
 }
 
+/**
+ * The game's own scenario names, keyed by the ids our progression data uses.
+ * `converter` (제조) is listed so the UI can say it isn't supported rather than
+ * quietly leaving it out — our scenario data predates that mode.
+ */
+export const SCENARIO_NAMES_KO: Record<string, string> = {
+  default: '클래식 · 일반',
+  hard: '클래식 · 어려움',
+  hexagonal: '클래식 · 육각',
+  insane: '클래식 · 광기',
+  converter: '제조',
+}
+
+/**
+ * Milestone names, matched to the game's by meaning.
+ *
+ * The ids changed between the game build our scenario data comes from (1058)
+ * and the current one, so these are paired on their titles — `Rotate & Cut`
+ * with 회전 및 절단, and so on. Two milestones have no clear counterpart and
+ * deliberately stay in English rather than being guessed at.
+ */
+const MILESTONE_NAMES_KO: Record<string, string> = {
+  RNInitial: '회전 및 절단',
+  RNStackerLayer2: '결합기',
+  RNBlueprints: '청사진',
+  RNIslandBuilding: '우주 플랫폼',
+  RNFluids: '유체 및 색칠',
+  RNTrains: '기차',
+  RNPinPusher: '핀 누름기',
+  RNColorMixing: '색상 혼합',
+  RNIslandLayer3: '3번째 우주 층',
+  RNCrystals: '결정체',
+}
+
+export function milestoneNameKo(id: string, fallback: string): string {
+  return MILESTONE_NAMES_KO[id] ?? fallback
+}
+
 /** Buildings each operation runs on, named the way the game names them. */
 export const OPERATION_VARIANTS = {
   cut: 'CutterDefaultVariant',

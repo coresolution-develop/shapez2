@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { milestoneNameKo } from '@/lib/shapez/namesKo'
 import presets from '@/lib/shapez/presets.json'
 import { PROGRESSION, unlocksFor } from '@/lib/shapez/progression'
 import type { ScenarioKey } from '@/lib/shapez/progression'
@@ -64,9 +65,12 @@ export function ProgressPanel({
               {(value: string) =>
                 Number(value) === 0
                   ? '제한 없음 (모든 건물 사용)'
-                  : `마일스톤 ${value} 완료 · ${
-                      scenario.milestones.find((m) => m.index === Number(value))?.title ?? ''
-                    }`
+                  : (() => {
+                      const entry = scenario.milestones.find((m) => m.index === Number(value))
+                      return `마일스톤 ${value} 완료 · ${
+                        entry ? milestoneNameKo(entry.id, entry.title) : ''
+                      }`
+                    })()
               }
             </SelectValue>
           </SelectTrigger>
@@ -74,13 +78,18 @@ export function ProgressPanel({
             <SelectItem value="0">제한 없음 (모든 건물 사용)</SelectItem>
             {scenario.milestones.map((entry) => (
               <SelectItem key={entry.index} value={String(entry.index)}>
-                마일스톤 {entry.index} 완료 · {entry.title}
+                마일스톤 {entry.index} 완료 · {milestoneNameKo(entry.id, entry.title)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
           설정하면 그 시점에 지을 수 있는 건물로만 가공 순서를 짭니다.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          해금 데이터는 게임 빌드 1058 기준이라 현재 버전과 다를 수 있고,{' '}
+          <strong className="font-medium text-foreground">제조 모드는 아직 지원하지 않습니다</strong>.
+          맞지 않으면 「제한 없음」으로 두세요.
         </p>
       </div>
 

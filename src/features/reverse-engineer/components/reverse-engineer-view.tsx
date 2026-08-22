@@ -24,26 +24,29 @@ import { ProgressPanel } from '@/features/reverse-engineer/components/progress-p
 import { ThroughputPanel } from '@/features/reverse-engineer/components/throughput-panel'
 import { shareUrl, useSessionState } from '@/features/reverse-engineer/utils/session-state'
 import { useShapeHistory } from '@/features/reverse-engineer/utils/shape-history'
-import { allUnlocks, unlocksFor } from '@/lib/shapez/progression'
+import { SCENARIO_NAMES_KO } from '@/lib/shapez/namesKo'
+import { PROGRESSION, allUnlocks, unlocksFor } from '@/lib/shapez/progression'
 import type { ScenarioKey } from '@/lib/shapez/progression'
 import { parseShapeCode } from '@/lib/shapez/shapeCode'
 import { solveShape } from '@/lib/shapez/solver'
 import { computeThroughput } from '@/lib/shapez/throughput'
 import type { SpeedTier, StackerVariant } from '@/lib/shapez/throughput'
-import { COLOR_SKINS, MAX_LAYERS, operationConfig } from '@/lib/shapez/types'
-import type { ColorSkinId, ScenarioId } from '@/lib/shapez/types'
+import { COLOR_SKINS } from '@/lib/shapez/types'
+import type { ColorSkinId } from '@/lib/shapez/types'
 
-const SCENARIO_LABELS: Record<ScenarioId, string> = {
-  normal: `표준 / 하드 / 육각 (최대 ${MAX_LAYERS.normal}레이어)`,
-  insane: `Insane (최대 ${MAX_LAYERS.insane}레이어)`,
-}
+/** The classic mode's scenarios. 제조 has no data yet, so it isn't offered. */
+const SCENARIOS: ScenarioKey[] = ['default', 'hard', 'hexagonal', 'insane']
+
+const scenarioLabel = (key: ScenarioKey) =>
+  `${SCENARIO_NAMES_KO[key] ?? key} · 최대 ${PROGRESSION[key]?.maxShapeLayers ?? 4}레이어`
 
 export function ReverseEngineerView() {
   const { state, update, hydrated } = useSessionState()
   const { code, scenario, skin, target, tier, stackerVariant, milestone, sideUpgrades } = state
 
   const parsed = useMemo(() => parseShapeCode(code), [code])
-  const scenarioKey: ScenarioKey = scenario === 'insane' ? 'insane' : 'default'
+  const scenarioKey = scenario
+  const maxShapeLayers = PROGRESSION[scenarioKey]?.maxShapeLayers ?? 4
 
   const unlocks = useMemo(
     () =>
@@ -53,11 +56,12 @@ export function ReverseEngineerView() {
 
   const solution = useMemo(() => {
     if (!parsed.ok) return null
-    return solveShape(parsed.shape, operationConfig(parsed.config, scenario), {
-      unlocks,
-      scenario: scenarioKey,
-    })
-  }, [parsed, scenario, unlocks, scenarioKey])
+    return solveShape(
+      parsed.shape,
+      { maxShapeLayers, shapesConfig: parsed.config },
+      { unlocks, scenario: scenarioKey },
+    )
+  }, [parsed, maxShapeLayers, unlocks, scenarioKey])
 
   const throughput = useMemo(() => {
     if (!solution?.ok) return null
@@ -146,15 +150,15 @@ export function ReverseEngineerView() {
                 <Label htmlFor="scenario">시나리오</Label>
                 <Select
                   value={scenario}
-                  onValueChange={(value) => update('scenario', (value ?? 'normal') as ScenarioId)}
+                  onValueChange={(value) => update('scenario', (value ?? 'default') as ScenarioKey)}
                 >
                   <SelectTrigger id="scenario" className="w-full">
-                    <SelectValue>{(value: ScenarioId) => SCENARIO_LABELS[value]}</SelectValue>
+                    <SelectValue>{(value: ScenarioKey) => scenarioLabel(value)}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(SCENARIO_LABELS).map(([value, label]) => (
+                    {SCENARIOS.map((value) => (
                       <SelectItem key={value} value={value}>
-                        {label}
+                        {scenarioLabel(value)}
                       </SelectItem>
                     ))}
                   </SelectContent>

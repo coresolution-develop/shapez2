@@ -5,7 +5,7 @@
  * path, and side upgrades are bought separately with research points. A plan is
  * only useful if it sticks to what you already have.
  */
-import { buildingNameKo } from './namesKo'
+import { buildingNameKo, milestoneNameKo } from './namesKo'
 import type { OperationId } from './operations'
 import progressionData from './progression.json'
 import type { ColorCode } from './types'
@@ -139,7 +139,9 @@ export function sideUpgradeForVariant(scenario: ScenarioKey, variant: string): S
 /** Human-readable "you still need X" for a building the player lacks. */
 export function unlockHint(scenario: ScenarioKey, variant: string, nameKo: string): string {
   const milestone = milestoneForVariant(scenario, variant)
-  if (milestone) return `${nameKo} (마일스톤 ${milestone.index} · ${milestone.title})`
+  if (milestone) {
+    return `${nameKo} (마일스톤 ${milestone.index} · ${milestoneNameKo(milestone.id, milestone.title)})`
+  }
   const upgrade = sideUpgradeForVariant(scenario, variant)
   if (upgrade) {
     const cost = upgrade.cost === null ? '' : ` · 연구포인트 ${upgrade.cost}`
