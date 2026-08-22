@@ -25,8 +25,8 @@ const TRANSLITERATIONS = [
   '믹서',
   '핀 푸셔',
   '크리스탈',
-  '벨트 포트',
-  '리프트',
+  '벨트 포트', // the game says 벨트 발사기 / 벨트 포획기
+  '리프트', // the game says 벨트 승강기
 ]
 
 function assertNoTransliteration(label: string, where: string) {
