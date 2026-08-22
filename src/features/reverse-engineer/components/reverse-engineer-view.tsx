@@ -276,7 +276,7 @@ export function ReverseEngineerView() {
                   }
                 />
               ) : null}
-              <BlueprintExport root={solution.root} shapeCode={code} />
+              <BlueprintExport root={solution.root} shapeCode={code} skin={skin} />
               <PlanSteps root={solution.root} skin={skin} loads={throughput?.loads} />
             </div>
           ) : (

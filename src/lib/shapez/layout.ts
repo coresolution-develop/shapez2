@@ -93,7 +93,6 @@ export function asLinearChain(root: BuildNode): BuildNode[] | null {
  * wires itself up.
  */
 export function generateLineLayout(root: BuildNode, options: LayoutOptions = {}): LayoutResult {
-  const { includeExtractor = false, leadIn = 1, leadOut = 1 } = options
   const chain = asLinearChain(root)
   if (!chain) {
     return {
@@ -101,6 +100,17 @@ export function generateLineLayout(root: BuildNode, options: LayoutOptions = {})
       reason: '두 도형을 합치는 단계(적층·교환)가 있어서 직선 라인으로 배치할 수 없습니다',
     }
   }
+  return layoutChain(chain, options)
+}
+
+/**
+ * Lays out an already-linear run of nodes.
+ *
+ * Split out from `generateLineLayout` so a segment of a branching plan — a run
+ * between two merges — can be laid out on its own.
+ */
+export function layoutChain(chain: BuildNode[], options: LayoutOptions = {}): LayoutResult {
+  const { includeExtractor = false, leadIn = 1, leadOut = 1 } = options
 
   for (const node of chain) {
     if (node.op === null) continue
@@ -177,6 +187,135 @@ export function generateLineLayout(root: BuildNode, options: LayoutOptions = {})
     size: { width: x, height: 2 },
     notes,
   }
+}
+
+/** A machine that takes two shapes, so it sits between two lines. */
+export interface PlanJunction {
+  id: string
+  op: OperationId
+  /** Ids feeding it — each is either a segment or another junction. */
+  feeds: string[]
+  /** How many merges sit between this and the finished shape. */
+  depth: number
+}
+
+export interface PlanSegment {
+  id: string
+  /** In build order; the last node is what comes off the end of the line. */
+  chain: BuildNode[]
+  /** Where this line's shape starts: an extractor, or a junction's output. */
+  startsAt: { kind: 'extractor'; part: string } | { kind: 'junction'; id: string }
+  /** What consumes it: the finished shape, or a junction. */
+  endsAt: { kind: 'output' } | { kind: 'junction'; id: string; inputIndex: number }
+  /** How many merges sit between this line and the finished shape. */
+  depth: number
+  layout: LayoutResult
+}
+
+export interface PlanAssembly {
+  segments: PlanSegment[]
+  junctions: PlanJunction[]
+  /** True when the whole plan came out as one line and needs no assembly. */
+  singleLine: boolean
+}
+
+/**
+ * Cuts a plan into straight lines joined by two-input machines.
+ *
+ * Most real shapes need stacking, so the whole plan is rarely one line — but
+ * the runs *between* the merges are, and each of those is a blueprint we can
+ * emit today. The merges are reported as junctions for the player to place by
+ * hand, which is honest about the one thing still missing (see `portData.ts`:
+ * the stacker's second input has never been observed).
+ */
+export function planAssembly(root: BuildNode, options: LayoutOptions = {}): PlanAssembly {
+  const isMerge = (node: BuildNode) => node.op !== null && node.inputs.length > 1
+
+  const segments: PlanSegment[] = []
+  const junctions: PlanJunction[] = []
+  const visited = new Set<string>()
+
+  /** `depth` counts merges between here and the finished shape. */
+  const resolveJunction = (node: BuildNode, depth: number): void => {
+    if (junctions.some((entry) => entry.id === node.id)) return
+    junctions.push({
+      id: node.id,
+      op: node.op!,
+      feeds: node.inputs.map((input) => input.id),
+      depth,
+    })
+    node.inputs.forEach((input, inputIndex) => {
+      resolve(input, { kind: 'junction', id: node.id, inputIndex }, depth + 1)
+    })
+  }
+
+  /** Files whatever produces `endsAt`'s shape as a line, recursing upstream. */
+  const resolve = (node: BuildNode, endsAt: PlanSegment['endsAt'], depth: number): void => {
+    if (isMerge(node)) return resolveJunction(node, depth)
+    if (visited.has(node.id)) return
+    visited.add(node.id)
+
+    // walk back while each step still takes exactly one shape
+    const chain: BuildNode[] = []
+    let head: BuildNode = node
+    while (true) {
+      chain.unshift(head)
+      if (head.op === null) break
+      const [next] = head.inputs
+      if (!next || isMerge(next)) break
+      head = next
+    }
+
+    const upstream = head.op === null ? null : head.inputs[0]
+    const machines = chain.filter((entry) => entry.op !== null)
+
+    segments.push({
+      id: node.id,
+      chain,
+      startsAt:
+        upstream && isMerge(upstream)
+          ? { kind: 'junction', id: upstream.id }
+          : { kind: 'extractor', part: chain[0].sourcePart ?? '' },
+      endsAt,
+      depth,
+      layout:
+        machines.length === 0
+          ? { ok: false, reason: '이 갈래는 채굴한 도형을 그대로 씁니다 — 벨트만 연결하세요' }
+          : layoutChain(chain, options),
+    })
+
+    if (upstream && isMerge(upstream)) resolveJunction(upstream, depth)
+  }
+
+  resolve(root, { kind: 'output' }, 0)
+
+  // deepest first, so line 1 and junction 1 are what you build first
+  segments.sort((a, b) => b.depth - a.depth)
+  junctions.sort((a, b) => b.depth - a.depth)
+
+  return { segments, junctions, singleLine: junctions.length === 0 }
+}
+
+/** Splits the plan into lines and encodes a blueprint for each one it can. */
+export async function generateAssembly(
+  root: BuildNode,
+  icon?: string,
+  options: LayoutOptions = {},
+): Promise<PlanAssembly> {
+  const assembly = planAssembly(root, options)
+
+  const segments = await Promise.all(
+    assembly.segments.map(async (segment) => {
+      if (!segment.layout.ok) return segment
+      const code = await encodeBuildingBlueprint(
+        segment.layout.placements,
+        icon ? [`shape:${icon}`, null, null, null] : [null, null, null, null],
+      )
+      return { ...segment, layout: { ...segment.layout, code } }
+    }),
+  )
+
+  return { ...assembly, segments }
 }
 
 /** Lays the chain out and encodes it as a blueprint string. */

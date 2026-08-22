@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { decodeBlueprint } from '../blueprint'
 import type { BuildingEntry } from '../blueprint'
-import { asLinearChain, generateLineBlueprint, generateLineLayout } from '../layout'
+import { asLinearChain, generateLineBlueprint, generateLineLayout, planAssembly } from '../layout'
 import { portsFor } from '../portData'
 import { toWorld } from '../ports'
 import { parseShapeCode } from '../shapeCode'
@@ -149,5 +149,79 @@ describe('line layout', () => {
     const result = await generateLineBlueprint(plan('CrCrCrCr'))
     if (!result.ok) throw new Error(result.reason)
     expect(result.notes.some((note) => note.includes('파이프'))).toBe(true)
+  })
+})
+
+/**
+ * Most real shapes need stacking, so the plan is rarely one line. Splitting it
+ * at the merges turns "can't do it" into a blueprint per line plus a short list
+ * of machines to place by hand.
+ */
+describe('splitting a plan into lines', () => {
+  const assemble = (code: string) => {
+    const parsed = parseShapeCode(code, QUAD_CONFIG)
+    if (!parsed.ok) throw new Error(parsed.error)
+    const solved = solveShape(parsed.shape, operationConfig(QUAD_CONFIG))
+    if (!solved.ok) throw new Error(solved.error)
+    return planAssembly(solved.root)
+  }
+
+  it('keeps a straight plan as one line with nothing to assemble', () => {
+    const assembly = assemble('CrCrCrCr')
+    expect(assembly.singleLine).toBe(true)
+    expect(assembly.junctions).toHaveLength(0)
+    expect(assembly.segments).toHaveLength(1)
+    expect(assembly.segments[0].layout.ok).toBe(true)
+  })
+
+  it('splits a stacked shape into one line per half', () => {
+    const assembly = assemble('RbRbRbRb:CrCrCrCr')
+    expect(assembly.singleLine).toBe(false)
+    expect(assembly.junctions).toHaveLength(1)
+    expect(assembly.junctions[0].op).toBe('stack')
+    expect(assembly.segments).toHaveLength(2)
+
+    // both halves are ordinary lines, so both get a real blueprint
+    for (const segment of assembly.segments) {
+      expect(segment.layout.ok, segment.id).toBe(true)
+      expect(segment.endsAt.kind).toBe('junction')
+      expect(segment.startsAt.kind).toBe('extractor')
+    }
+  })
+
+  it('never puts a merge inside a line', () => {
+    for (const code of ['RbRbRbRb:CrCrCrCr', 'RgRgRgRg:CwCwCwCw:SbSbSbSb']) {
+      const assembly = assemble(code)
+      for (const segment of assembly.segments) {
+        for (const node of segment.chain) {
+          expect(node.inputs.length, `${code} ${node.op}`).toBeLessThan(2)
+        }
+      }
+    }
+  })
+
+  it('orders lines and junctions so the first one is built first', () => {
+    const assembly = assemble('RgRgRgRg:CwCwCwCw:SbSbSbSb')
+    expect(assembly.junctions).toHaveLength(2)
+
+    const depths = assembly.segments.map((segment) => segment.depth)
+    expect(depths).toEqual([...depths].sort((a, b) => b - a))
+
+    // the second junction consumes the first one's output, not a line
+    const [first, second] = assembly.junctions
+    expect(second.feeds).toContain(first.id)
+  })
+
+  it('covers every input of every junction', () => {
+    const assembly = assemble('RgRgRgRg:CwCwCwCw:SbSbSbSb')
+    const known = new Set([
+      ...assembly.segments.map((segment) => segment.id),
+      ...assembly.junctions.map((junction) => junction.id),
+    ])
+    for (const junction of assembly.junctions) {
+      for (const feed of junction.feeds) {
+        expect(known.has(feed), `${junction.op} feed ${feed}`).toBe(true)
+      }
+    }
   })
 })
