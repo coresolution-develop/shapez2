@@ -239,9 +239,12 @@ class Translator:
 
     def __call__(self, value: str, fallback: str = "") -> str:
         match = TRANSLATION_KEY.match(value or "")
-        if not match:
-            return value or fallback
-        return self.lookup(match.group(1), fallback)
+        if match:
+            return self.lookup(match.group(1), fallback)
+        # island layouts name their key without the leading @
+        if value in self.table:
+            return self.lookup(value, fallback)
+        return value or fallback
 
     def lookup(self, key: str, fallback: str, depth: int = 0) -> str:
         text = self.table.get(key)
@@ -293,6 +296,35 @@ def milestone_goals(milestone: dict) -> list[dict]:
         for entry in line.get("Shapes", []):
             goals.append({"shape": entry["Shape"], "amount": entry["Amount"]})
     return goals
+
+
+def trade_stations(scenario: dict, ko: Translator, en: Translator) -> list[dict]:
+    """The trade stations this scenario can build, and what each one swaps.
+
+    These are the 제조 mode's whole point — you can't build a gem shape, you
+    hand a station the shapes it wants and it hands one back. Classic scenarios
+    have a few of these too, after the vortex.
+    """
+    stations = []
+    for layout_id, layout in scenario["ConvertersConfig"]["Configs"].items():
+        recipe = layout.get("Recipe")
+        if not recipe:
+            continue
+        stations.append(
+            {
+                "id": layout_id,
+                "title": en(layout["Title"], layout_id),
+                "titleKo": ko(layout["Title"], ""),
+                "descriptionKo": ko(layout.get("Description", ""), ""),
+                "chunkCost": layout.get("ChunkCost"),
+                "inputs": [entry["Shape"] for entry in recipe.get("Inputs", [])],
+                "outputs": [entry["Shape"] for entry in recipe.get("Outputs", [])],
+                "conversionsPerRocket": recipe.get("ConversionsPerRocket"),
+                "convertersPerFullBelt": recipe.get("ConvertersPerFullBelt"),
+                "requiredUpgradeIds": recipe.get("RequiredUpgradeIds", []),
+            }
+        )
+    return stations
 
 
 def research_points_cost(bundle: dict) -> int | None:
@@ -358,6 +390,7 @@ def scenario_progression(game: GameData, path: str, ko: Translator, en: Translat
         "maxShapeLayers": scenario["ResearchConfig"]["MaxShapeLayers"],
         "milestones": milestones,
         "sideUpgrades": side_upgrades,
+        "tradeStations": trade_stations(scenario, ko, en),
     }
 
 

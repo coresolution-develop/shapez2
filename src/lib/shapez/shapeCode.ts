@@ -34,6 +34,17 @@ export type ParseResult = ParseSuccess | ParseFailure
 export const TRADE_PARTS = ['X', 'Y']
 
 /**
+ * Colours the simulator has no rules for.
+ *
+ * Black exists on ordinary parts — 제조 어려움 asks for `RkSuRkSu:SuRrSuRr` —
+ * so unlike the gems it is presumably something you make. But its map fluid is
+ * switched off in that scenario (`FluidsSpawnTertiaryColors: false`) and no
+ * mixing recipe for it has been confirmed, so guessing one would make the
+ * simulator lie. It says it doesn't know instead.
+ */
+export const UNSUPPORTED_COLORS = ['k']
+
+/**
  * Parses a shape code such as `CuRuCuRu:P-cg----`.
  * Layers are bottom-to-top, parts run clockwise from the top-right.
  */
@@ -113,6 +124,12 @@ function parseWithConfig(layerCodes: string[], config: ShapesConfig): ParseResul
 
       if (type.hasColor) {
         if (!isColorCode(colorChar)) {
+          if (UNSUPPORTED_COLORS.includes(colorChar)) {
+            return {
+              ok: false,
+              error: `검은색(${colorChar})은 아직 지원하지 않습니다 — 만드는 방법을 확인하지 못했습니다`,
+            }
+          }
           return { ok: false, error: `유효하지 않은 색상 문자: ${colorChar}` }
         }
         layer.push({ type, color: colorChar })

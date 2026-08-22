@@ -584,6 +584,160 @@
      "cost": 8,
      "requires": []
     }
+   ],
+   "tradeStations": [
+    {
+     "id": "Layout_Classic_Regular_Tier0_RedA",
+     "title": "Red Trade Station",
+     "titleKo": "빨간색 거래소",
+     "descriptionKo": "도형을 <b>빨간색</b> <gl>정제된 도형</gl>으로 교환합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "SrSrRrRr"
+     ],
+     "outputs": [
+      "XrXrXrXr"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier0_GreenA",
+     "title": "Green Trade Station",
+     "titleKo": "초록색 거래소",
+     "descriptionKo": "도형을 <b>초록색</b> <gl>정제된 도형</gl>으로 교환합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "SgSgRgRg"
+     ],
+     "outputs": [
+      "XgXgXgXg"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier0_BlueA",
+     "title": "Blue Trade Station",
+     "titleKo": "파란색 거래소",
+     "descriptionKo": "도형을 <b>파란색</b> <gl>정제된 도형</gl>으로 교환합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "SbSbRbRb"
+     ],
+     "outputs": [
+      "XbXbXbXb"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier1_CyanA",
+     "title": "Cyan Trade Station",
+     "titleKo": "시안 거래소",
+     "descriptionKo": "<b>파란색</b>과 <b>초록색</b> <gl>정제된 도형</gl>을 조합해 <b>시안</b>으로 만듭니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XbXb----",
+      "XgXg----"
+     ],
+     "outputs": [
+      "XcXcXcXc"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier1_MagentaA",
+     "title": "Magenta Trade Station",
+     "titleKo": "마젠타 거래소",
+     "descriptionKo": "<b>빨간색</b>과 <b>파란색</b> <gl>정제된 도형</gl>을 조합해 <b>마젠타</b>로 만듭니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XrXr----",
+      "XbXb----"
+     ],
+     "outputs": [
+      "XmXmXmXm"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier1_YellowA",
+     "title": "Yellow Trade Station",
+     "titleKo": "노란색 거래소",
+     "descriptionKo": "<b>빨간색</b>과 <b>초록색</b> <gl>정제된 도형</gl>을 조합해 <b>노란색</b>으로 만듭니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XrXr----",
+      "XgXg----"
+     ],
+     "outputs": [
+      "XyXyXyXy"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier2_WhiteA",
+     "title": "White Trade Station",
+     "titleKo": "흰색 거래소",
+     "descriptionKo": "<b>빨간색</b>, <b>파란색</b>, <b>초록색</b> <gl>정제된 도형</gl>을 조합해 <b>흰색</b>으로 만듭니다.",
+     "chunkCost": 12,
+     "inputs": [
+      "XrXr----",
+      "XbXb----",
+      "XgXg----"
+     ],
+     "outputs": [
+      "XwXwXwXw"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier2_BlackA",
+     "title": "Black Trade Station",
+     "titleKo": "검은색 거래소",
+     "descriptionKo": "<b>시안</b>, <b>마젠타</b>, <b>노란색</b>, <gl>정제된 도형</gl>을 조합해 <b>검은색</b>으로 만듭니다.",
+     "chunkCost": 18,
+     "inputs": [
+      "XcXc----",
+      "XmXm----",
+      "XyXy----"
+     ],
+     "outputs": [
+      "XkXkXkXk"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier3_Vortex",
+     "title": "Vortex Grand-Assembler",
+     "titleKo": "소용돌이 거대 조립기",
+     "descriptionKo": "<b>흰색</b>과 <b>검은색</b> <gl>정제된 도형</gl>을 조립해 <gl>소용돌이</gl> 플랫폼으로 만듭니다.",
+     "chunkCost": 142,
+     "inputs": [
+      "XwXw----",
+      "XkXk----"
+     ],
+     "outputs": [
+      "YkYkYwYw"
+     ],
+     "conversionsPerRocket": 1080,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    }
    ]
   },
   "hard": {
@@ -1169,6 +1323,160 @@
      "cost": 8,
      "requires": []
     }
+   ],
+   "tradeStations": [
+    {
+     "id": "Layout_Classic_Regular_Tier0_RedA",
+     "title": "Red Trade Station",
+     "titleKo": "빨간색 거래소",
+     "descriptionKo": "도형을 <b>빨간색</b> <gl>정제된 도형</gl>으로 교환합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "SrSrRrRr"
+     ],
+     "outputs": [
+      "XrXrXrXr"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier0_GreenA",
+     "title": "Green Trade Station",
+     "titleKo": "초록색 거래소",
+     "descriptionKo": "도형을 <b>초록색</b> <gl>정제된 도형</gl>으로 교환합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "SgSgRgRg"
+     ],
+     "outputs": [
+      "XgXgXgXg"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier0_BlueA",
+     "title": "Blue Trade Station",
+     "titleKo": "파란색 거래소",
+     "descriptionKo": "도형을 <b>파란색</b> <gl>정제된 도형</gl>으로 교환합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "SbSbRbRb"
+     ],
+     "outputs": [
+      "XbXbXbXb"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier1_CyanA",
+     "title": "Cyan Trade Station",
+     "titleKo": "시안 거래소",
+     "descriptionKo": "<b>파란색</b>과 <b>초록색</b> <gl>정제된 도형</gl>을 조합해 <b>시안</b>으로 만듭니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XbXb----",
+      "XgXg----"
+     ],
+     "outputs": [
+      "XcXcXcXc"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier1_MagentaA",
+     "title": "Magenta Trade Station",
+     "titleKo": "마젠타 거래소",
+     "descriptionKo": "<b>빨간색</b>과 <b>파란색</b> <gl>정제된 도형</gl>을 조합해 <b>마젠타</b>로 만듭니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XrXr----",
+      "XbXb----"
+     ],
+     "outputs": [
+      "XmXmXmXm"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier1_YellowA",
+     "title": "Yellow Trade Station",
+     "titleKo": "노란색 거래소",
+     "descriptionKo": "<b>빨간색</b>과 <b>초록색</b> <gl>정제된 도형</gl>을 조합해 <b>노란색</b>으로 만듭니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XrXr----",
+      "XgXg----"
+     ],
+     "outputs": [
+      "XyXyXyXy"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier2_WhiteA",
+     "title": "White Trade Station",
+     "titleKo": "흰색 거래소",
+     "descriptionKo": "<b>빨간색</b>, <b>파란색</b>, <b>초록색</b> <gl>정제된 도형</gl>을 조합해 <b>흰색</b>으로 만듭니다.",
+     "chunkCost": 12,
+     "inputs": [
+      "XrXr----",
+      "XbXb----",
+      "XgXg----"
+     ],
+     "outputs": [
+      "XwXwXwXw"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier2_BlackA",
+     "title": "Black Trade Station",
+     "titleKo": "검은색 거래소",
+     "descriptionKo": "<b>시안</b>, <b>마젠타</b>, <b>노란색</b>, <gl>정제된 도형</gl>을 조합해 <b>검은색</b>으로 만듭니다.",
+     "chunkCost": 18,
+     "inputs": [
+      "XcXc----",
+      "XmXm----",
+      "XyXy----"
+     ],
+     "outputs": [
+      "XkXkXkXk"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier3_Vortex",
+     "title": "Vortex Grand-Assembler",
+     "titleKo": "소용돌이 거대 조립기",
+     "descriptionKo": "<b>흰색</b>과 <b>검은색</b> <gl>정제된 도형</gl>을 조립해 <gl>소용돌이</gl> 플랫폼으로 만듭니다.",
+     "chunkCost": 142,
+     "inputs": [
+      "XwXw----",
+      "XkXk----"
+     ],
+     "outputs": [
+      "YkYkYwYw"
+     ],
+     "conversionsPerRocket": 1080,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    }
    ]
   },
   "hexagonal": {
@@ -1638,7 +1946,8 @@
      "cost": 8,
      "requires": []
     }
-   ]
+   ],
+   "tradeStations": []
   },
   "insane": {
    "id": "insane-scenario",
@@ -2235,6 +2544,160 @@
      "cost": 8,
      "requires": []
     }
+   ],
+   "tradeStations": [
+    {
+     "id": "Layout_Classic_Regular_Tier0_RedA",
+     "title": "Red Trade Station",
+     "titleKo": "빨간색 거래소",
+     "descriptionKo": "도형을 <b>빨간색</b> <gl>정제된 도형</gl>으로 교환합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "SrSrRrRr"
+     ],
+     "outputs": [
+      "XrXrXrXr"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier0_GreenA",
+     "title": "Green Trade Station",
+     "titleKo": "초록색 거래소",
+     "descriptionKo": "도형을 <b>초록색</b> <gl>정제된 도형</gl>으로 교환합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "SgSgRgRg"
+     ],
+     "outputs": [
+      "XgXgXgXg"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier0_BlueA",
+     "title": "Blue Trade Station",
+     "titleKo": "파란색 거래소",
+     "descriptionKo": "도형을 <b>파란색</b> <gl>정제된 도형</gl>으로 교환합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "SbSbRbRb"
+     ],
+     "outputs": [
+      "XbXbXbXb"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier1_CyanA",
+     "title": "Cyan Trade Station",
+     "titleKo": "시안 거래소",
+     "descriptionKo": "<b>파란색</b>과 <b>초록색</b> <gl>정제된 도형</gl>을 조합해 <b>시안</b>으로 만듭니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XbXb----",
+      "XgXg----"
+     ],
+     "outputs": [
+      "XcXcXcXc"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier1_MagentaA",
+     "title": "Magenta Trade Station",
+     "titleKo": "마젠타 거래소",
+     "descriptionKo": "<b>빨간색</b>과 <b>파란색</b> <gl>정제된 도형</gl>을 조합해 <b>마젠타</b>로 만듭니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XrXr----",
+      "XbXb----"
+     ],
+     "outputs": [
+      "XmXmXmXm"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier1_YellowA",
+     "title": "Yellow Trade Station",
+     "titleKo": "노란색 거래소",
+     "descriptionKo": "<b>빨간색</b>과 <b>초록색</b> <gl>정제된 도형</gl>을 조합해 <b>노란색</b>으로 만듭니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XrXr----",
+      "XgXg----"
+     ],
+     "outputs": [
+      "XyXyXyXy"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier2_WhiteA",
+     "title": "White Trade Station",
+     "titleKo": "흰색 거래소",
+     "descriptionKo": "<b>빨간색</b>, <b>파란색</b>, <b>초록색</b> <gl>정제된 도형</gl>을 조합해 <b>흰색</b>으로 만듭니다.",
+     "chunkCost": 12,
+     "inputs": [
+      "XrXr----",
+      "XbXb----",
+      "XgXg----"
+     ],
+     "outputs": [
+      "XwXwXwXw"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier2_BlackA",
+     "title": "Black Trade Station",
+     "titleKo": "검은색 거래소",
+     "descriptionKo": "<b>시안</b>, <b>마젠타</b>, <b>노란색</b>, <gl>정제된 도형</gl>을 조합해 <b>검은색</b>으로 만듭니다.",
+     "chunkCost": 18,
+     "inputs": [
+      "XcXc----",
+      "XmXm----",
+      "XyXy----"
+     ],
+     "outputs": [
+      "XkXkXkXk"
+     ],
+     "conversionsPerRocket": 540,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Classic_Regular_Tier3_Vortex",
+     "title": "Vortex Grand-Assembler",
+     "titleKo": "소용돌이 거대 조립기",
+     "descriptionKo": "<b>흰색</b>과 <b>검은색</b> <gl>정제된 도형</gl>을 조립해 <gl>소용돌이</gl> 플랫폼으로 만듭니다.",
+     "chunkCost": 142,
+     "inputs": [
+      "XwXw----",
+      "XkXk----"
+     ],
+     "outputs": [
+      "YkYkYwYw"
+     ],
+     "conversionsPerRocket": 1080,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    }
    ]
   },
   "converter": {
@@ -2686,6 +3149,340 @@
      "cost": 8,
      "requires": []
     }
+   ],
+   "tradeStations": [
+    {
+     "id": "Layout_Converter_Regular_Tier0_A",
+     "title": "Polishing Station",
+     "titleKo": "연마소",
+     "descriptionKo": "<gl>폐기물</gl>을 <gl>연마된 폐기물</gl>로 변환합니다.",
+     "chunkCost": 4,
+     "inputs": [
+      "XkXk----"
+     ],
+     "outputs": [
+      "XuXu----"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier1"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier0_B",
+     "title": "Polishing Station B",
+     "titleKo": "연마소 B",
+     "descriptionKo": "<gl>폐기물</gl> 생산을 무한히 확장합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "XuXu----",
+      "CrRuCrRu"
+     ],
+     "outputs": [
+      "XkXkXkXk"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier1_A",
+     "title": "Ruby Station",
+     "titleKo": "루비 가공소",
+     "descriptionKo": "<gl>연마된 폐기물</gl>을 정제된 <gl>루비</gl>로 교환합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "XuXuXuXu",
+      "RuRuRuRu:CuCuCuCu"
+     ],
+     "outputs": [
+      "XrXrXrXr"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier2"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier1_B",
+     "title": "Ruby Station B",
+     "titleKo": "루비 가공소 B",
+     "descriptionKo": "더 복잡한 투입물을 대가로 <gl>루비</gl>의 거래 조건이 더 좋아집니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XuXuXu--",
+      "XuXuXu--",
+      "RrRuRrRu:CuCrCuCr"
+     ],
+     "outputs": [
+      "XrXrXrXr",
+      "XrXrXrXr"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier2_A",
+     "title": "Sapphire Station",
+     "titleKo": "사파이어 가공소",
+     "descriptionKo": "<gl>루비</gl>를 정제된 <gl>사파이어</gl>로 교환합니다.",
+     "chunkCost": 8,
+     "inputs": [
+      "XrXrXrXr",
+      "RbRbRbRb",
+      "SrSrSrSr:CuCuCuCu"
+     ],
+     "outputs": [
+      "XbXbXbXb"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier3"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier2_B",
+     "title": "Sapphire Station B",
+     "titleKo": "사파이어 가공소 B",
+     "descriptionKo": "더 복잡한 투입물을 대가로 <gl>사파이어</gl>의 거래 조건이 더 좋아집니다.",
+     "chunkCost": 12,
+     "inputs": [
+      "XrXkXrXk",
+      "WyCbWyCb",
+      "Cw--Cw--"
+     ],
+     "outputs": [
+      "XbXbXbXb"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier3_A",
+     "title": "Emerald Station",
+     "titleKo": "에메랄드 가공소",
+     "descriptionKo": "<gl>사파이어</gl>를 정제된 <gl>에메랄드</gl>로 교환합니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XbXbXbXb",
+      "XbXbXbXb",
+      "CuCuCuCu:WbWbWbWb",
+      "WbCuWbCu"
+     ],
+     "outputs": [
+      "----XgXg",
+      "----XgXg"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier4"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier3_B",
+     "title": "Emerald Station B",
+     "titleKo": "에메랄드 가공소 B",
+     "descriptionKo": "더 효율적인 이 <gl>에메랄드</gl> 거래소를 활용하려면 커스텀 커넥터 플랫폼을 구축하세요.",
+     "chunkCost": 12,
+     "inputs": [
+      "XrXbXrXb:CwCwCwCw:XbWuXbWu:CuCuCuCu"
+     ],
+     "outputs": [
+      "----XgXg",
+      "----XgXg"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier4_A",
+     "title": "Gold Station",
+     "titleKo": "금 가공소",
+     "descriptionKo": "<gl>에메랄드</gl>를 정제된 <gl>금</gl>으로 교환합니다.",
+     "chunkCost": 12,
+     "inputs": [
+      "XgXgXgXg",
+      "RbSuRbSu:CgCgCgCg",
+      "RuRgRuRg:WgWuWgWu"
+     ],
+     "outputs": [
+      "Xy------",
+      "--Xy----",
+      "----Xy--",
+      "------Xy"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier5"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier4_B",
+     "title": "Gold Station B",
+     "titleKo": "금 가공소 B",
+     "descriptionKo": "더 복잡한 투입물을 대가로 <gl>금</gl>의 거래 조건이 더 좋아집니다.",
+     "chunkCost": 24,
+     "inputs": [
+      "XgWuXgWu:P-P-P-P-:SwSwSwSw",
+      "XgRuSuRu:P-P-P-P-:CgCgCgCg"
+     ],
+     "outputs": [
+      "Xy--XyXy",
+      "--Xy--Xy"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier5_A",
+     "title": "Aquamarine Station",
+     "titleKo": "아쿠아마린 가공소",
+     "descriptionKo": "<gl>금</gl>을 정제된 <gl>아쿠아마린</gl>으로 교환합니다.",
+     "chunkCost": 14,
+     "inputs": [
+      "XyXyXyXy",
+      "WrWrWrWr:SyWySuWy",
+      "CuRyCuRy:CyCyCyCy"
+     ],
+     "outputs": [
+      "XcXcXcXc"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier6"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier5_B",
+     "title": "Aquamarine Station B",
+     "titleKo": "아쿠아마린 가공소 B",
+     "descriptionKo": "더 복잡한 투입물을 대가로 <gl>아쿠아마린</gl>의 거래 조건이 더 좋아집니다.",
+     "chunkCost": 22,
+     "inputs": [
+      "XyXyXyXy:P-P-P-P-:P-P-P-P-:XyXyXyXy",
+      "------cb:------cb:------cc:------cc",
+      "cwcwcwcw:cmcmcmcm:cwcwcwcw:cmcmcmcm"
+     ],
+     "outputs": [
+      "XcXcXcXc",
+      "XcXcXcXc",
+      "XcXcXcXc"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier6_A",
+     "title": "Amethyst Station",
+     "titleKo": "자수정 가공소",
+     "descriptionKo": "<gl>아쿠아마린</gl>을 정제된 <gl>자수정</gl>으로 교환합니다.",
+     "chunkCost": 16,
+     "inputs": [
+      "XcXcXcXc",
+      "CcRcRcCc:CwCwCwCw",
+      "CwCwCwCw:ScScScSc:CwCwCwCw"
+     ],
+     "outputs": [
+      "XmXmXmXm"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier7"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier6_B",
+     "title": "Amethyst Station B",
+     "titleKo": "자수정 가공소 B",
+     "descriptionKo": "<gl>자수정</gl>의 거래 조건이 더 좋아지며, 창의적인 <gl>우주 벨트</gl> 경로 구성이 필요합니다.",
+     "chunkCost": 30,
+     "inputs": [
+      "XcCuXcCu",
+      "RmCmRmCm:Cr--Cr--:CwCwCwCw:cmcmcmcm",
+      "P-P-cycy:cmcmcrcr:cwcwcwcw:WmWmWrWr",
+      "P-P-cycy:cmcmcrcr:cwcwcwcw:WmWmWrWr"
+     ],
+     "outputs": [
+      "XmXmXmXm"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier7_A",
+     "title": "Diamond Station",
+     "titleKo": "다이아몬드 가공소",
+     "descriptionKo": "<gl>자수정</gl>을 정제된 <gl>다이아몬드</gl>로 교환합니다.",
+     "chunkCost": 100,
+     "inputs": [
+      "XmXmXmXm",
+      "WmWmWmWm:P-P-P-P-:CuRwCuRw",
+      "RmRmRmRm:RuRwRuRw:P-P-P-P-:RmRmRmRm",
+      "CwCwCwCw:P-P-P-P-:SmSbSmSb"
+     ],
+     "outputs": [
+      "Xw--Xw--"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier8"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Regular_Tier8_A",
+     "title": "Painite Station",
+     "titleKo": "페이나이트 가공소",
+     "descriptionKo": "<gl>다이아몬드</gl>를 정제된 <gl>페이나이트</gl>로 교환합니다.",
+     "chunkCost": 250,
+     "inputs": [
+      "XwXwXwXw",
+      "crCucrCu:P-P-P-P-:CwCwCwCw",
+      "SrcrSrcr:CwcwCwcw",
+      "cwWwcwWw:cwcwcwcw:WwWwWwWw"
+     ],
+     "outputs": [
+      "YkYkYkYk"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier9"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Regular_TierFinal_A",
+     "title": "Vortex Grand-Assembler",
+     "titleKo": "소용돌이 거대 조립기",
+     "descriptionKo": "<gl>소용돌이 플랫폼</gl>을 조립하고 발사합니다.",
+     "chunkCost": 1000,
+     "inputs": [
+      "SwCuYkCu:P-P-P-P-:CwCwCwCw",
+      "RbRbRbRb:WuYkWuWu:P-P-P-P-:CwCwCwCw",
+      "YkYkYkYk",
+      "WwcwWwcw:YkSgSgSg",
+      "P-P-P-P-:WuSyWuSy:--Yk----"
+     ],
+     "outputs": [],
+     "conversionsPerRocket": 1000,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier_Final"
+     ]
+    }
    ]
   },
   "converterHard": {
@@ -3077,6 +3874,357 @@
      ],
      "cost": 8,
      "requires": []
+    }
+   ],
+   "tradeStations": [
+    {
+     "id": "Layout_Converter_Hard_Tier0_A",
+     "title": "Polishing Station",
+     "titleKo": "연마소",
+     "descriptionKo": "<gl>폐기물</gl>을 <gl>연마된 폐기물</gl>로 변환합니다.",
+     "chunkCost": 4,
+     "inputs": [
+      "Xk------",
+      "--Wu----"
+     ],
+     "outputs": [
+      "XuXu----"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier1"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier0_B",
+     "title": "Polishing Station B",
+     "titleKo": "연마소 B",
+     "descriptionKo": "<gl>폐기물</gl> 생산을 무한히 확장합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "Xu--Xu--",
+      "SuSuSuSu:WrWrWrWr",
+      "--Xu--Xu"
+     ],
+     "outputs": [
+      "XkXkXkXk",
+      "XkXkXkXk"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier1_A",
+     "title": "Ruby Station",
+     "titleKo": "루비 가공소",
+     "descriptionKo": "<gl>연마된 폐기물</gl>을 정제된 <gl>루비</gl>로 교환합니다.",
+     "chunkCost": 6,
+     "inputs": [
+      "XuWuXuWu",
+      "XuWuXuWu",
+      "RrCrRrCr"
+     ],
+     "outputs": [
+      "XrXrXrXr"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier2"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier1_B",
+     "title": "Ruby Station B",
+     "titleKo": "루비 가공소 B",
+     "descriptionKo": "더 복잡한 투입물을 대가로 <gl>루비</gl>의 거래 조건이 더 좋아집니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "XrXr----",
+      "RrCrRrCr:RuCuRuCu",
+      "XrXr----"
+     ],
+     "outputs": [
+      "Su--Su--:Xr--Xr--",
+      "Su--Su--:Xr--Xr--",
+      "Su--Su--:Xr--Xr--"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier2_A",
+     "title": "Sapphire Station",
+     "titleKo": "사파이어 가공소",
+     "descriptionKo": "<gl>루비</gl>를 정제된 <gl>사파이어</gl>로 교환합니다.",
+     "chunkCost": 8,
+     "inputs": [
+      "RbCbRbCb:XrWbXrWb",
+      "SuXrSuXr",
+      "XkSuXkSu"
+     ],
+     "outputs": [
+      "XbXbXbXb"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier3"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier2_B",
+     "title": "Sapphire Station B",
+     "titleKo": "사파이어 가공소 B",
+     "descriptionKo": "더 복잡한 투입물을 대가로 <gl>사파이어</gl>의 거래 조건이 더 좋아집니다.",
+     "chunkCost": 12,
+     "inputs": [
+      "RbCbRbCb:XkWbXkWb:Su--Su--",
+      "XrSuXrSu:SuXrSuXr",
+      "RbCbRbCb:XkWbXkWb:Su--Su--"
+     ],
+     "outputs": [
+      "XbXbXbXb",
+      "XbXbXbXb"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier3_A",
+     "title": "Emerald Station",
+     "titleKo": "에메랄드 가공소",
+     "descriptionKo": "<gl>사파이어</gl>를 정제된 <gl>에메랄드</gl>로 교환합니다.",
+     "chunkCost": 10,
+     "inputs": [
+      "RgCgRgCg:XbWgXbWg:WgXbWgXb",
+      "XkSuXkSu:SuXrSuXr",
+      "WgCgWrCr"
+     ],
+     "outputs": [
+      "----XgXg",
+      "----XgXg"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier4"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier3_B",
+     "title": "Emerald Station B",
+     "titleKo": "에메랄드 가공소 B",
+     "descriptionKo": "더 효율적인 이 <gl>에메랄드</gl> 거래소를 활용하려면 커스텀 커넥터 플랫폼을 구축하세요.",
+     "chunkCost": 12,
+     "inputs": [
+      "RkSuRkSu:SuRrSuRr",
+      "RgCgRgCg:XbWgXbWg:WgXbWgXb",
+      "RgCgRgCg:XbWgXbWg:WgXbWgXb",
+      "RkSuRkSu:SuRrSuRr"
+     ],
+     "outputs": [
+      "----XgXg",
+      "XgXgXgXg",
+      "----XgXg"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier4_A",
+     "title": "Gold Station",
+     "titleKo": "금 가공소",
+     "descriptionKo": "<gl>에메랄드</gl>를 정제된 <gl>금</gl>으로 교환합니다.",
+     "chunkCost": 12,
+     "inputs": [
+      "RyCyRyCy:----Xk--:RuCuWuCu",
+      "XgSu----:SuXg----:WrCr----",
+      "XgSu----:SuXg----:WrCr----",
+      "----XrSu:----SuXr:----WgCg",
+      "----XrSu:----SuXr:----WgCg"
+     ],
+     "outputs": [
+      "Xy--Xy--",
+      "--Xy--Xy"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier5"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier4_B",
+     "title": "Gold Station B",
+     "titleKo": "금 가공소 B",
+     "descriptionKo": "더 복잡한 투입물을 대가로 <gl>금</gl>의 거래 조건이 더 좋아집니다.",
+     "chunkCost": 24,
+     "inputs": [
+      "RwCwRwCw:XyWwXyWw",
+      "RyCyRyCy:XrWyXrWy",
+      "RyCyRyCy:XrWyXrWy",
+      "RwCwRwCw:XyWwXyWw"
+     ],
+     "outputs": [
+      "XyXy--Xy:--CuRyCu",
+      "XyXyXy--:Cu--CuRy"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier5_A",
+     "title": "Aquamarine Station",
+     "titleKo": "아쿠아마린 가공소",
+     "descriptionKo": "<gl>금</gl>을 정제된 <gl>아쿠아마린</gl>으로 교환합니다.",
+     "chunkCost": 14,
+     "inputs": [
+      "XyXy--Xy:--CuRyCu",
+      "XbSwXgSw:SwXbSwXg:WgCgWbCb",
+      "RcCcRcCc:P-P-XkP-:----P---:RwCwWwCw"
+     ],
+     "outputs": [
+      "--XcXcXc",
+      "Xc------"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier6"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier5_B",
+     "title": "Aquamarine Station B",
+     "titleKo": "아쿠아마린 가공소 B",
+     "descriptionKo": "더 복잡한 투입물을 대가로 <gl>아쿠아마린</gl>의 거래 조건이 더 좋아집니다.",
+     "chunkCost": 22,
+     "inputs": [
+      "XcSwXcSw:XuWuXuWu:Xk--Xk--",
+      "XmSwXmSw:XuWuXuWu:Xk--Xk--",
+      "XySwXySw:XuWuXuWu:Xk--Xk--"
+     ],
+     "outputs": [
+      "XcXcXcXc",
+      "XcXcXcXc",
+      "XcXcXcXc"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier6_A",
+     "title": "Amethyst Station",
+     "titleKo": "자수정 가공소",
+     "descriptionKo": "<gl>아쿠아마린</gl>을 정제된 <gl>자수정</gl>으로 교환합니다.",
+     "chunkCost": 16,
+     "inputs": [
+      "cbcbcrcr:XrSwXbSw:SwXrSwXb:WbCbWrCr",
+      "XcXc--Xc:P-CuRcCu:Rw--Cw--",
+      "RmCmRmCm:cgcgXkcg:P-P-P-P-:RwCwWwCw"
+     ],
+     "outputs": [
+      "XmXmXmXm"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier7"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier6_B",
+     "title": "Amethyst Station B",
+     "titleKo": "자수정 가공소 B",
+     "descriptionKo": "<gl>자수정</gl>의 거래 조건이 더 좋아지며, 창의적인 <gl>우주 벨트</gl> 경로 구성이 필요합니다.",
+     "chunkCost": 30,
+     "inputs": [
+      "XcXc--Xc:P-CuRcCu:Rw--Cw--",
+      "XmXm--Xm:P-CuRmCu:Rw--Cw--",
+      "XyXy--Xy:P-CuRyCu:Rw--Cw--"
+     ],
+     "outputs": [
+      "XmXmXmXm:XuXuXuXu",
+      "XmXmXmXm:XuXuXuXu",
+      "XmXmXmXm:XuXuXuXu"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": []
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier7_A",
+     "title": "Diamond Station",
+     "titleKo": "다이아몬드 가공소",
+     "descriptionKo": "<gl>자수정</gl>을 정제된 <gl>다이아몬드</gl>로 교환합니다.",
+     "chunkCost": 100,
+     "inputs": [
+      "RwCwRwCw:XmXmXkXm:P-CuRmCu:Rw--Cw--",
+      "cgcb--cr:XgXb--Xr:SwSw--Sw:WgWb--Wr",
+      "RwCwRwCw:XmXmXkXm:P-CuRmCu:Rw--Cw--",
+      "XuWuXuWu:XkP-XkP-:P---P---:RwCwWwCw"
+     ],
+     "outputs": [
+      "XwXwXwXw"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier8"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Hard_Tier8_A",
+     "title": "Painite Station",
+     "titleKo": "페이나이트 가공소",
+     "descriptionKo": "<gl>다이아몬드</gl>를 정제된 <gl>페이나이트</gl>로 교환합니다.",
+     "chunkCost": 250,
+     "inputs": [
+      "--cccycm:--XcXyXm:--SkSkSk:--WcWyWm:WwWwWwWw",
+      "XrSwXrSw:XuWuXuWu:XkP-XkP-:P---P---:RwCwWwCw",
+      "XgSwXgSw:XuWuXuWu:XkP-XkP-:P---P---:RwCwWwCw",
+      "XbSwXbSw:XuWuXuWu:XkP-XkP-:P---P---:RwCwWwCw",
+      "RwCwRwCw:ckckckck:XwXwXkXw:ckCuRwCu:RwckCwck"
+     ],
+     "outputs": [
+      "YkYkYkYk"
+     ],
+     "conversionsPerRocket": 360,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier9"
+     ]
+    },
+    {
+     "id": "Layout_Converter_Hard_TierFinal_A",
+     "title": "Vortex Grand-Assembler",
+     "titleKo": "소용돌이 거대 조립기",
+     "descriptionKo": "<gl>소용돌이 플랫폼</gl>을 조립하고 발사합니다.",
+     "chunkCost": 1000,
+     "inputs": [
+      "cwcwcwcu:XwXwXwXu:SkSkSkSw:WwWwWwWu:WkWkWkRw",
+      "XcSwXcSw:XuWuXuWu:XkYkXkYk:cccccccc:RwCwWwCw",
+      "XmSwXmSw:XuWuXuWu:XkYkXkYk:cmcmcmcm:RwCwWwCw",
+      "XySwXySw:XuWuXuWu:XkYkXkYk:cycycycy:RwCwWwCw",
+      "ckckcuck:XkXkXuXk:SwSwSkSw:WkWkWuWk:WwWwRkWw"
+     ],
+     "outputs": [
+      "Yy--Yy--:P---P---:Cw--Cw--:P---P---:cc--cc--",
+      "Yy--Yy--:P---P---:Cw--Cw--:P---P---:cc--cc--"
+     ],
+     "conversionsPerRocket": 1000,
+     "convertersPerFullBelt": 2,
+     "requiredUpgradeIds": [
+      "ConverterMilestoneTier_Final"
+     ]
     }
    ]
   }

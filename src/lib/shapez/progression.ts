@@ -45,6 +45,8 @@ export interface ScenarioProgression {
   maxShapeLayers: number
   milestones: Milestone[]
   sideUpgrades: SideUpgrade[]
+  /** Shape-for-shape swaps; see `trade.ts`. Empty for 육각. */
+  tradeStations: unknown[]
 }
 
 const DATA = progressionData as unknown as {

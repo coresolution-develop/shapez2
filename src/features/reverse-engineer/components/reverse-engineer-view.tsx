@@ -22,6 +22,7 @@ import { PlanSteps } from '@/features/reverse-engineer/components/plan-steps'
 import { PresetPicker } from '@/features/reverse-engineer/components/preset-picker'
 import { ProgressPanel } from '@/features/reverse-engineer/components/progress-panel'
 import { ThroughputPanel } from '@/features/reverse-engineer/components/throughput-panel'
+import { TradePanel } from '@/features/reverse-engineer/components/trade-panel'
 import { shareUrl, useSessionState } from '@/features/reverse-engineer/utils/session-state'
 import { useShapeHistory } from '@/features/reverse-engineer/utils/shape-history'
 import {
@@ -34,6 +35,7 @@ import {
 import type { ScenarioKey } from '@/lib/shapez/progression'
 import { parseShapeCode } from '@/lib/shapez/shapeCode'
 import { solveShape } from '@/lib/shapez/solver'
+import { isTradeShape } from '@/lib/shapez/trade'
 import { computeThroughput } from '@/lib/shapez/throughput'
 import type { SpeedTier, StackerVariant } from '@/lib/shapez/throughput'
 import { COLOR_SKINS } from '@/lib/shapez/types'
@@ -141,6 +143,12 @@ export function ReverseEngineerView() {
                   <p className="text-muted-foreground">{parsed.shape.layers.length}개 레이어</p>
                 </div>
               </div>
+            ) : isTradeShape(code) ? (
+              // the stations themselves are laid out on the right, where the
+              // plan would otherwise be
+              <p className="text-sm text-muted-foreground">
+                무역소에서 받는 도형이라 기계로는 만들 수 없습니다.
+              </p>
             ) : (
               <p role="alert" className="text-sm text-destructive">
                 {parsed.error}
@@ -230,7 +238,14 @@ export function ReverseEngineerView() {
         </TabsList>
 
         <TabsContent value="plan" className="mt-4">
-          {solution === null ? (
+          {solution === null && isTradeShape(code) ? (
+            <TradePanel
+              scenario={scenarioKey}
+              code={code.trim()}
+              skin={skin}
+              onSelectShape={(next) => update('code', next)}
+            />
+          ) : solution === null ? (
             <p className="text-sm text-muted-foreground">
               유효한 도형 코드를 입력하면 가공 순서를 계산합니다.
             </p>
