@@ -11,19 +11,22 @@ const PLATFORM = (vectors as { name: string; code: string }[]).find((vector) =>
 )!
 
 const offsets = (ports: { offset: Offset }[]) =>
-  ports.map((port) => `${port.offset[0]},${port.offset[1]}`).sort()
+  ports.map((port) => `${port.offset[0]},${port.offset[1]},${port.offset[2]}`).sort()
 
 describe('port geometry', () => {
   it('agrees on which way a building faces', () => {
-    expect(forwardDirection(0)).toEqual([1, 0])
-    expect(forwardDirection(1)).toEqual([0, 1])
-    expect(forwardDirection(2)).toEqual([-1, 0])
-    expect(forwardDirection(3)).toEqual([0, -1])
+    expect(forwardDirection(0)).toEqual([1, 0, 0])
+    expect(forwardDirection(1)).toEqual([0, 1, 0])
+    expect(forwardDirection(2)).toEqual([-1, 0, 0])
+    expect(forwardDirection(3)).toEqual([0, -1, 0])
 
     for (const rotation of [0, 1, 2, 3]) {
       const [dx, dy] = forwardDirection(rotation)
-      expect(toLocal(dx, dy, rotation)).toEqual([1, 0])
-      expect(toWorld([1, 0], rotation)).toEqual([dx, dy])
+      expect(toLocal(dx, dy, 0, rotation)).toEqual([1, 0, 0])
+      expect(toWorld([1, 0, 0], rotation)).toEqual([dx, dy, 0])
+      // rotating never moves a port between floors
+      expect(toWorld([1, 0, 1], rotation)).toEqual([dx, dy, 1])
+      expect(toLocal(dx, dy, 1, rotation)).toEqual([1, 0, 1])
     }
   })
 
@@ -50,42 +53,42 @@ describe('port geometry', () => {
     it('finds the cutter has one input and two outputs', () => {
       const cutter = ports.get('CutterDefaultInternalVariant')!
       expect(cutter.instances).toBe(40)
-      expect(offsets(cutter.inputs)).toEqual(['-1,0'])
-      expect(offsets(cutter.outputs)).toEqual(['1,-1', '1,0'])
+      expect(offsets(cutter.inputs)).toEqual(['-1,0,0'])
+      expect(offsets(cutter.outputs)).toEqual(['1,-1,0', '1,0,0'])
       // the mirrored variant flips the second half to the other side
       const mirrored = ports.get('CutterDefaultInternalVariantMirrored')!
-      expect(offsets(mirrored.inputs)).toEqual(['-1,0'])
-      expect(offsets(mirrored.outputs)).toEqual(['1,0', '1,1'])
+      expect(offsets(mirrored.inputs)).toEqual(['-1,0,0'])
+      expect(offsets(mirrored.outputs)).toEqual(['1,0,0', '1,1,0'])
     })
 
     it('finds flow-control buildings', () => {
       const merger = ports.get('Merger2To1LInternalVariant')!
-      expect(offsets(merger.inputs)).toEqual(['-1,0', '0,-1'])
-      expect(offsets(merger.outputs)).toEqual(['1,0'])
+      expect(offsets(merger.inputs)).toEqual(['-1,0,0', '0,-1,0'])
+      expect(offsets(merger.outputs)).toEqual(['1,0,0'])
 
       const splitter = ports.get('Splitter1To2LInternalVariant')!
-      expect(offsets(splitter.inputs)).toEqual(['-1,0'])
-      expect(offsets(splitter.outputs)).toEqual(['0,-1', '1,0'])
+      expect(offsets(splitter.inputs)).toEqual(['-1,0,0'])
+      expect(offsets(splitter.outputs)).toEqual(['0,-1,0', '1,0,0'])
     })
 
     it('treats belt ports as a pure sink and a pure source', () => {
       const sender = ports.get('BeltPortSenderInternalVariant')!
-      expect(offsets(sender.inputs)).toEqual(['-1,0'])
+      expect(offsets(sender.inputs)).toEqual(['-1,0,0'])
       expect(sender.outputs).toHaveLength(0)
 
       const receiver = ports.get('BeltPortReceiverInternalVariant')!
       expect(receiver.inputs).toHaveLength(0)
-      expect(offsets(receiver.outputs)).toEqual(['1,0'])
+      expect(offsets(receiver.outputs)).toEqual(['1,0,0'])
     })
 
     it('reads turn belts as one in, one out at a right angle', () => {
       const left = ports.get('BeltDefaultLeftInternalVariant')!
-      expect(offsets(left.inputs)).toEqual(['-1,0'])
-      expect(offsets(left.outputs)).toEqual(['0,-1'])
+      expect(offsets(left.inputs)).toEqual(['-1,0,0'])
+      expect(offsets(left.outputs)).toEqual(['0,-1,0'])
 
       const right = ports.get('BeltDefaultLeftInternalVariantMirrored')!
-      expect(offsets(right.inputs)).toEqual(['-1,0'])
-      expect(offsets(right.outputs)).toEqual(['0,1'])
+      expect(offsets(right.inputs)).toEqual(['-1,0,0'])
+      expect(offsets(right.outputs)).toEqual(['0,1,0'])
     })
 
     it('keeps inputs upstream and outputs downstream', () => {

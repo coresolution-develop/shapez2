@@ -13,7 +13,15 @@
  */
 import type { BuildingEntry } from './blueprint'
 
-export type Offset = readonly [number, number]
+/**
+ * A port's position in the building's own frame: sideways, forward and *up*.
+ *
+ * The third component is the building floor. It is not decoration: the stacker
+ * is one tile in plan but spans two floors, and its two shape inputs sit at the
+ * same (x, y) on different floors. Without z they collapse into one port and
+ * the machine looks like it only takes one shape.
+ */
+export type Offset = readonly [number, number, number]
 
 /** Belts carry shapes, pipes carry paint — a machine can have both. */
 export type PortMedium = 'shape' | 'fluid'
@@ -43,17 +51,17 @@ export function forwardDirection(rotation: number): Offset {
   for (let i = 0; i < ((rotation % 4) + 4) % 4; i++) {
     ;[x, y] = [-y, x]
   }
-  return [x + 0, y + 0] // normalise -0
+  return [x + 0, y + 0, 0] // normalise -0
 }
 
 /** Rotates a world-space offset back into a building's local frame. */
-export function toLocal(dx: number, dy: number, rotation: number): Offset {
+export function toLocal(dx: number, dy: number, dz: number, rotation: number): Offset {
   let x = dx
   let y = dy
   for (let i = 0; i < ((rotation % 4) + 4) % 4; i++) {
     ;[x, y] = [y, -x]
   }
-  return [x + 0, y + 0] // normalise -0
+  return [x + 0, y + 0, dz] // normalise -0
 }
 
 /** Rotates a local offset out into world space. */
@@ -62,7 +70,7 @@ export function toWorld(offset: Offset, rotation: number): Offset {
   for (let i = 0; i < ((rotation % 4) + 4) % 4; i++) {
     ;[x, y] = [-y, x]
   }
-  return [x + 0, y + 0]
+  return [x + 0, y + 0, offset[2]]
 }
 
 const FLUID_FAMILY = /^(Pipe|FluidPort|Pump)/
@@ -85,13 +93,13 @@ export function mediumOf(type: string): PortMedium | null {
  * fluid senders come out as sources and mixers as pure outputs.
  */
 const SEED: Record<string, { inputs: Offset[]; outputs: Offset[] }> = {
-  BeltDefaultForwardInternalVariant: { inputs: [[-1, 0]], outputs: [[1, 0]] },
+  BeltDefaultForwardInternalVariant: { inputs: [[-1, 0, 0]], outputs: [[1, 0, 0]] },
 }
 
-const key = (offset: Offset) => `${offset[0]},${offset[1]}`
+const key = (offset: Offset) => `${offset[0]},${offset[1]},${offset[2]}`
 const parseKey = (value: string): Offset => {
-  const [x, y] = value.split(',').map(Number)
-  return [x, y]
+  const [x, y, z] = value.split(',').map(Number)
+  return [x, y, z]
 }
 const tileKey = (x: number, y: number, z: number) => `${x},${y},${z}`
 
@@ -165,6 +173,7 @@ export function derivePorts(buildings: BuildingEntry[]): Map<string, PortModel> 
         const local = toLocal(
           tile.x + dx - building.pos.x,
           tile.y + dy - building.pos.y,
+          tile.z - building.pos.z,
           building.rotation,
         )
         const offsetKey = key(local)
@@ -190,7 +199,12 @@ export function derivePorts(buildings: BuildingEntry[]): Map<string, PortModel> 
 
     const ahead = occupants.get(tileKey(carrier.pos.x + dx, carrier.pos.y + dy, z))
     if (ahead && ahead !== carrier) {
-      const local = toLocal(carrier.pos.x - ahead.pos.x, carrier.pos.y - ahead.pos.y, ahead.rotation)
+      const local = toLocal(
+        carrier.pos.x - ahead.pos.x,
+        carrier.pos.y - ahead.pos.y,
+        carrier.pos.z - ahead.pos.z,
+        ahead.rotation,
+      )
       const entry = tallyFor(ahead.type).inputs
       const current = entry.get(key(local))
       if (current) current.count++
@@ -202,6 +216,7 @@ export function derivePorts(buildings: BuildingEntry[]): Map<string, PortModel> 
       const local = toLocal(
         carrier.pos.x - behind.pos.x,
         carrier.pos.y - behind.pos.y,
+        carrier.pos.z - behind.pos.z,
         behind.rotation,
       )
       const entry = tallyFor(behind.type).outputs
@@ -249,7 +264,8 @@ export function derivePorts(buildings: BuildingEntry[]): Map<string, PortModel> 
     }
 
     if (inputs.size === 0 && outputs.size === 0) continue
-    const byOffset = (a: Port, b: Port) => a.offset[0] - b.offset[0] || a.offset[1] - b.offset[1]
+    const byOffset = (a: Port, b: Port) =>
+      a.offset[2] - b.offset[2] || a.offset[0] - b.offset[0] || a.offset[1] - b.offset[1]
     const all = [...inputs.values(), ...outputs.values()]
     const fluid = all.filter((port) => port.medium === 'fluid')
     result.set(type, {
