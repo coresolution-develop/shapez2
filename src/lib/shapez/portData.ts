@@ -277,6 +277,31 @@ export const CONFIRMED_PORTS: Record<string, ConfirmedPorts> = {
     fixture: 'lift rig',
   },
 
+  // ── measured on the three-way rig ───────────────────────────────────────
+  Splitter1To3InternalVariant: {
+    inputs: [[-1, 0, 0]],
+    outputs: [
+      [0, -1, 0],
+      [0, 1, 0],
+      [1, 0, 0],
+    ],
+    samples: 1,
+    source: 'fixture',
+    fixture: 'three-way rig',
+    note: 'Straight on and out both sides at once — one tile does what a tree of 1-to-2s needs three for.',
+  },
+  Merger3To1InternalVariant: {
+    inputs: [
+      [-1, 0, 0],
+      [0, -1, 0],
+      [0, 1, 0],
+    ],
+    outputs: [[1, 0, 0]],
+    samples: 1,
+    source: 'fixture',
+    fixture: 'three-way rig',
+  },
+
   PainterDefaultInternalVariant: {
     inputs: [[-1, 0, 0]],
     outputs: [[1, 0, 0]],

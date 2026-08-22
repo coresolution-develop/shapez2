@@ -28,5 +28,10 @@
   "name": "lift rig",
   "note": "Purpose-built in game: every turning lift wired belt-in belt-out, both up and down. The 1-to-3 splitter and 3-to-1 merger in it still only have their straight sides connected, so they are not recorded.",
   "code": "SHAPEZ2-5-H4sIALwAimoA/9Saa0vDMBSG/4oEP5bRtN16+VhvCBuIm+IFkUgzCcR0xNR5Yf/drlu1s2udIu6cDysbyXIeXt69OQl7I7vmZcJJRI7YA+/spZp3YpnxiRbKdIZcCybFKzMiVZ+f7iT/mGPtfPtFYpFzElHqBhaJT0j0WfP4UTKV5OMHymjBH6tjP+NZrDRf5uX6ZjOm3SeWj+U1r/+g6GYlL0hkW+SyeF4Vz1MSORYZ5aUP00wlxcRb+kzzyUMSqUxKi+yVb+KqPnEmZCLU/V+oV671z/qtlN1YwW6hYM8i/VJBe6FgzKXZ52OWSXOY6inTybEyXCsmz1m+ijLkQ8uZ9b/MPYTMfsHcrTC7NeY+H5svwAOhdb52sj3woAYOX+wArUHWMA8nUpgcko5SFxitX6Glm9h525bwUVlikc0BwmxuZwaZcwuxqY3QISFCh3wjNKjs6DWpPOD6nmt3lFJgwRwi3K5xMXsIs9lDqzOyWA4RNhshwp45RHg28RDqvPwROgh7o3XQfTE29GwCqsdY0tKCljZcEACV2EYF7WM0c/ALM0O5O6JuxR8Ui9QeKuiwHh/wTU3tRurC1fvpVIEK6RLYbr3GBSpziBF6JTsQOJo2Urc5evtJXYJ7rTe6UOXu4qJ2EJ7D55ZeDw2xm17SBqga0yW0X4eG3ONRr0LtYHFzFyO0U22XHFzBgY3aa6QGvpGv3NVgOb6U1GtOisDldqvgK39BQpAk7dQwBXfqNyG/2NpvZrPi9S6AAAMAyXmFyLInAAA=[]_2$"
+ },
+ {
+  "name": "three-way rig",
+  "note": "Purpose-built in game: the 1-to-3 splitter with all three outputs belted and the 3-to-1 merger with all three inputs fed.",
+  "code": "SHAPEZ2-5-H4sIAC4CimoA/9TY0WrCMBgF4FcZwcsgjWmr9rJuDmGDMUW2iYyMZhLIUonpNjd893Wt1Q6EOSbiuWhpSZr/49AmoZ+k4ZZzSSJyKV5ks5da2Yx1JudWGdccSquEVh/CqdRs75603PShZ78+SCgZk4gx3qEkviHRtuZgoYVJ8vYL46ySi3rb3zzlSN/DLCfT/UyNV5G35TUnByi6X8k7EnmU3Bfnh+J8SyJOySgv3U8zkxQdH9k7yzsPSWQyrSnpVRdxPZ84UzpRZnaI9Kqxjpzfj7J7J8j8IsKAkqsqQq+MMJbanctnkWnXT+2bsMnAOGmN0GORD2Mc2YS5okdGB4joEBBdBh3WzBzE7NfM7OTNHPbdaEO9Gz5szjvM19LOpOWjlJ2MFXeO41DzRRsw5w6guYu40fAQ0QwR3UJEI+41SjPzodA+IjpARIeI6DYiuoOI7iKi18s4mppBqluQasgFhkGuMAxyiVnv9RiH+klTqVuQagap9iDVO77G4VwrlzPZKOUn5w2gfjJV6vB/6ulqVRxfAgwAbmEW1x4dAAA=[]_2$"
  }
 ]
