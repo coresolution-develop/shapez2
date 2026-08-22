@@ -229,6 +229,52 @@ function place(
 }
 
 /**
+ * Every belt and machine must draw from either empty space or a real output.
+ *
+ * This is the check that was missing, and the game says so out loud: a belt
+ * whose back is against a face that emits nothing is flagged in game and the
+ * line never runs. It happens here when a line is started just past a stacker,
+ * because a stacker's upper tile is an *input*, not an output — so the belt
+ * behind it looks connected on the grid and is not.
+ */
+function unreachableFeeds(placements: BuildingPlacement[]): string[] {
+  const at = new Map<string, BuildingPlacement>()
+  const key = (x: number, y: number, z: number) => `${x},${y},${z}`
+
+  // everything here sits at rotation 0; a building covers its own floor plus any
+  // floor one of its ports reaches, which is how the stacker claims two
+  for (const placement of placements) {
+    const ports = portsFor(placement.type)!
+    const base = placement.layer ?? 0
+    const floors = new Set([base, ...ports.inputs.map((port) => base + port[2])])
+    for (const floor of floors) at.set(key(placement.x ?? 0, placement.y ?? 0, floor), placement)
+  }
+
+  const problems: string[] = []
+  for (const placement of placements) {
+    const ports = portsFor(placement.type)!
+    for (const input of ports.inputs) {
+      const x = (placement.x ?? 0) + input[0]
+      const y = (placement.y ?? 0) + input[1]
+      const z = (placement.layer ?? 0) + input[2]
+      const behind = at.get(key(x, y, z))
+      if (!behind) continue // open to the outside: the player feeds it
+
+      const emits = portsFor(behind.type)!.outputs.some(
+        (output) =>
+          (behind.x ?? 0) + output[0] === (placement.x ?? 0) &&
+          (behind.y ?? 0) + output[1] === (placement.y ?? 0) &&
+          (behind.layer ?? 0) + output[2] === (placement.layer ?? 0) + input[2],
+      )
+      if (!emits) {
+        problems.push(`${placement.type}@(${placement.x},${placement.y},${placement.layer ?? 0})`)
+      }
+    }
+  }
+  return problems
+}
+
+/**
  * Lays the plan out as one module: parallel lines on stacked floors, feeding
  * stackers, with the finished shape leaving on the ground floor.
  */
@@ -240,6 +286,24 @@ export function layoutModule(root: BuildNode): ModuleResult {
   // one belt after the last machine so the module has something to hook onto
   const outX = placed.at + 1
   cursor.placements.push({ type: BUILDING_IDS.belt, x: outX, y: 0, layer: placed.floor })
+
+  const blocked = unreachableFeeds(cursor.placements)
+  if (blocked.length > 0) {
+    return {
+      ok: false,
+      reason:
+        '결합이 여러 겹이라 어떤 줄의 입구가 다른 기계 뒤에 막힙니다 — 벨트를 꺾어 돌아가야 하는데 아직 지원하지 않습니다',
+    }
+  }
+
+  // a line the player feeds has to be reachable from outside the module
+  const buried = cursor.inputs.filter((input) => input.at.x !== 0)
+  if (buried.length > 0) {
+    return {
+      ok: false,
+      reason: '어떤 줄의 입구가 모듈 안쪽에 갇혀서 벨트를 넣을 수 없습니다 — 벨트 꺾기가 필요합니다',
+    }
+  }
 
   const floors = Math.max(...cursor.placements.map((p) => (p.layer ?? 0) + 1))
   cursor.inputs.sort((a, b) => a.at.z - b.at.z || a.at.x - b.at.x)

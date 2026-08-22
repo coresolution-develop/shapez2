@@ -102,7 +102,7 @@ describe('one-module layout', () => {
   })
 
   it('wires every machine it places', async () => {
-    for (const code of ['CrCrCrCr', 'RbRbRbRb:CrCrCrCr', 'RgRgRgRg:CwCwCwCw:SbSbSbSb']) {
+    for (const code of ['CrCrCrCr', 'RbRbRbRb:CrCrCrCr']) {
       const result = await generateModule(plan(code), code)
       expect(result.ok, code).toBe(true)
       if (!result.ok) continue
@@ -113,10 +113,24 @@ describe('one-module layout', () => {
     }
   })
 
-  it('refuses to exceed the game’s three machine floors', () => {
-    // a plan needing four stacked floors has nowhere to put the fourth
-    const deep = layoutModule(plan('RgRgRgRg:CwCwCwCw:SbSbSbSb:ScScScSc'))
-    if (!deep.ok) expect(deep.reason).toMatch(/층|배치할 수 없습니다/)
+  it('refuses a plan whose second stack buries a line’s entrance', () => {
+    // stacking twice puts the upper feed just past the first stacker, and a
+    // stacker's upper tile is an input — so that belt has nothing behind it and
+    // the player has no way to reach it either. The game flags exactly this.
+    const twice = layoutModule(plan('RgRgRgRg:CwCwCwCw:SbSbSbSb'))
+    expect(twice.ok).toBe(false)
+    if (!twice.ok) expect(twice.reason).toMatch(/입구|벨트/)
+  })
+
+  it('never lets a belt draw from a face that emits nothing', async () => {
+    // the check that was missing: a blueprint can be laid out correctly on the
+    // grid and still not run, which is what the game's warning marker means
+    for (const code of ['CrCrCrCr', 'RbRbRbRb:CrCrCrCr', 'CuRuCuRu:CuCuCuCu']) {
+      const result = await generateModule(plan(code), code)
+      if (!result.ok) continue
+      const blueprint = await decodeBlueprint(result.code)
+      expect(wiringProblems(blueprint.buildings), code).toEqual([])
+    }
   })
 
   it('says what the player still has to supply', () => {
@@ -152,7 +166,9 @@ describe('module coverage', () => {
     }
 
     expect(solved).toBeGreaterThan(300)
-    expect(modules / solved).toBeGreaterThan(0.6)
+    // every module that comes out of here connects; the number was 63% while
+    // broken layouts were still counted
+    expect(modules / solved).toBeGreaterThan(0.3)
   })
 
   it('names what is still missing rather than failing vaguely', () => {
