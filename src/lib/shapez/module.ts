@@ -422,10 +422,10 @@ export interface ModuleSizing {
   machines: number
   /** Columns one machine takes across the flow. Painters and cutters are two. */
   pitch: number
-  /** Columns the machine row needs on one floor. */
+  /** Columns a floor's machines need if they all stand in one row. */
   columns: number
-  /** How many platform chunks wide that is. */
-  chunks: number
+  /** Machine rows that takes, once a row is capped at a chunk's usable width. */
+  machineRows: number
 }
 
 /**
@@ -437,6 +437,11 @@ export interface ModuleSizing {
  * A machine's width is read from its footprint rather than assumed to be one
  * tile: the painter, cutter and crystal generator are 1x2, and their long side
  * lies *across* the flow, so a row of them needs two columns each.
+ *
+ * Note what `machineRows` is not: a platform size. A module never gets wider
+ * than one chunk — both two-chunk modules a player built stay four lanes across
+ * and grow *along* the flow instead (see `moduleShape.test.ts`), so machines
+ * that will not fit in one row fold into further rows down the module.
  */
 export function moduleSizing(op: OperationId, beltRate: number, machineRate: number): ModuleSizing {
   const perLane = Math.ceil(beltRate / machineRate)
@@ -448,7 +453,7 @@ export function moduleSizing(op: OperationId, beltRate: number, machineRate: num
     machines: perLane * MODULE_LANES,
     pitch,
     columns,
-    chunks: Math.ceil(columns / USABLE_COLUMNS),
+    machineRows: Math.ceil(columns / USABLE_COLUMNS),
   }
 }
 
@@ -707,7 +712,7 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
   if (columns > USABLE_COLUMNS) {
     return {
       ok: false,
-      reason: `${label} ${perLane}대짜리 레인은 ${columns}칸이 필요한데 플랫폼 한 칸에는 ${USABLE_COLUMNS}칸만 쓸 수 있습니다 (${Math.ceil(columns / USABLE_COLUMNS)}칸짜리 플랫폼이 필요합니다)`,
+      reason: `${label} ${perLane}대짜리 레인은 기계 줄 하나에 ${columns}칸이 필요한데 쓸 수 있는 건 ${USABLE_COLUMNS}칸입니다 — 기계를 ${Math.ceil(columns / USABLE_COLUMNS)}줄로 나눠 흐름 방향으로 늘어놓아야 하고, 그 배치는 아직 없습니다`,
       blockedBy: op,
     }
   }

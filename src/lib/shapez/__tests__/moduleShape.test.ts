@@ -83,6 +83,84 @@ describe('the shape of a real module', () => {
   })
 })
 
+/**
+ * How a module grows once one platform chunk is not enough.
+ *
+ * The guess was that it widens — more machine columns side by side. Both
+ * two-chunk modules a player built say otherwise: they stay four lanes wide and
+ * get *longer*, so the extra room lies along the flow, not across it. The
+ * crystal generator one runs left to right and the stacker one top to bottom,
+ * which is the same module turned ninety degrees, so the check is written in
+ * terms of "along the flow" rather than x and y.
+ */
+describe('a module on two platform chunks', () => {
+  const axes = (buildings: { pos: { x: number; y: number } }[]) => {
+    const xs = buildings.map((b) => b.pos.x)
+    const ys = buildings.map((b) => b.pos.y)
+    const width = { from: Math.min(...xs), to: Math.max(...xs) }
+    const height = { from: Math.min(...ys), to: Math.max(...ys) }
+    const size = (a: { from: number; to: number }) => a.to - a.from + 1
+    return size(width) > size(height)
+      ? { along: width, across: height }
+      : { along: height, across: width }
+  }
+
+  const TWO_CHUNK = ['crystal generator module, 1x2 platform', 'stacker module, 1x2 platform']
+
+  it('gets longer along the flow and stays one chunk across', async () => {
+    for (const name of TWO_CHUNK) {
+      const blueprint = await decodeBlueprint(codeFor(name))
+      const { along, across } = axes(blueprint.buildings)
+
+      // two chunks end to end: forty tiles, of which the outer two each side
+      // are margin, so the module runs the full 36
+      expect(along.to - along.from + 1, `${name} along`).toBe(2 * CHUNK_TILES - 2 * CHUNK_MARGIN)
+      // and still no wider than the usable part of a single chunk
+      expect(across.to - across.from + 1, `${name} across`).toBeLessThanOrEqual(USABLE_COLUMNS)
+    }
+  })
+
+  it('still takes twelve lanes in the middle four columns', async () => {
+    const blueprint = await decodeBlueprint(codeFor('crystal generator module, 1x2 platform'))
+    const edge = (prefix: string) => blueprint.buildings.filter((b) => b.type.startsWith(prefix))
+
+    // internal launcher/catcher pairs are used to hop across the module, so the
+    // twelve that matter are the ones on the outer edge
+    const along = axes(blueprint.buildings).along
+    const inbound = edge('BeltPortReceiver').filter((b) => b.pos.x === along.from)
+    const outbound = edge('BeltPortSender').filter((b) => b.pos.x === along.to)
+    expect(inbound).toHaveLength(MODULE_LANES)
+    expect(outbound).toHaveLength(MODULE_LANES)
+
+    for (const floor of [0, 1, 2]) {
+      expect(inbound.filter((b) => b.pos.z === floor), `floor ${floor}`).toHaveLength(
+        MODULE_LANES / 3,
+      )
+    }
+    const lanes = [...new Set(inbound.map((b) => b.pos.y))].sort((a, b) => a - b)
+    expect(lanes).toEqual([MODULE_FIRST_LANE, MODULE_FIRST_LANE + 1, MODULE_FIRST_LANE + 2, MODULE_FIRST_LANE + 3])
+  })
+
+  it('sizes its machines the same way a one-chunk module does', async () => {
+    // a third module, a third time the arithmetic holds: the crystal generator
+    // runs at 20/min, so a 120/min lane wants six of them
+    const blueprint = await decodeBlueprint(codeFor('crystal generator module, 1x2 platform'))
+    const generators = blueprint.buildings.filter((b) => b.type.startsWith('CrystalGenerator'))
+    const perLane = Math.ceil(BELT_BASE_RATE / ratedThroughput(OPERATION_SPECS.crystal, 100))
+    expect(perLane).toBe(6)
+    expect(generators).toHaveLength(MODULE_LANES * perLane)
+  })
+
+  it('cannot put a two-floor machine on all three floors', async () => {
+    // the crystal generator spans two building floors, so one on floor 0 fills
+    // floor 1 as well — the module carries none at all on the top floor
+    const blueprint = await decodeBlueprint(codeFor('crystal generator module, 1x2 platform'))
+    const generators = blueprint.buildings.filter((b) => b.type.startsWith('CrystalGenerator'))
+    const floors = [0, 1, 2].map((z) => generators.filter((b) => b.pos.z === z).length)
+    expect(floors).toEqual([48, 24, 0])
+  })
+})
+
 describe('sizing a module before placing anything', () => {
   const sizing = (op: keyof typeof OPERATION_SPECS) =>
     moduleSizing(op, BELT_BASE_RATE, ratedThroughput(OPERATION_SPECS[op], 100))
@@ -93,26 +171,24 @@ describe('sizing a module before placing anything', () => {
     expect(MODULE_LANES).toBe(12)
   })
 
-  it('says which operations fit on a single platform chunk', () => {
+  it('says which operations fit in a single row of machines', () => {
     // the rotator row is 8 columns wide, inside the 16 usable ones; the stacker
-    // needs 24 and spills onto a second chunk, which is exactly the platform
-    // the reference stacker module sits on
+    // needs 24, so its machines cannot all stand side by side
     expect(sizing('r90cw').columns).toBe(8)
-    expect(sizing('r90cw').chunks).toBe(1)
+    expect(sizing('r90cw').machineRows).toBe(1)
     expect(sizing('stack').columns).toBe(24)
-    expect(sizing('stack').chunks).toBe(2)
+    expect(sizing('stack').machineRows).toBe(2)
     expect(USABLE_COLUMNS).toBe(16)
   })
 
   it('counts a 1x2 machine as two columns, because that is what it occupies', () => {
     // the painter's second tile lies across the flow, not along it, so sixteen
-    // painters cannot share sixteen columns however they are arranged — a full
-    // painter module is a two-chunk module, like the stacker one
+    // painters cannot share sixteen columns however they are arranged
     expect(sizing('r90cw').pitch).toBe(1)
     expect(sizing('paint').pitch).toBe(2)
     expect(sizing('paint').perLane).toBe(4)
     expect(sizing('paint').columns).toBe(32)
-    expect(sizing('paint').chunks).toBe(2)
+    expect(sizing('paint').machineRows).toBe(2)
   })
 })
 
@@ -248,12 +324,12 @@ describe('generating a lane module', () => {
     }
   })
 
-  it('refuses a module that will not fit on one platform chunk', () => {
-    // sixteen painters to a floor need thirty-two columns, so a full-rate
-    // painter module is a two-chunk module and is not generated yet
+  it('refuses a module whose machines will not stand in one row', () => {
+    // sixteen painters to a floor need thirty-two columns, so they have to be
+    // split into rows down the module, which this does not do yet
     const painter = layoutLaneModule('paint', perLane('paint'))
     expect(painter.ok).toBe(false)
-    if (!painter.ok) expect(painter.reason).toContain('플랫폼')
+    if (!painter.ok) expect(painter.reason).toContain('기계 줄')
   })
 
   it('refuses machines a single-file lane cannot hold', () => {
