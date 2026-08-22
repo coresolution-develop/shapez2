@@ -3,5 +3,10 @@
   "name": "stacker two-floor rig",
   "note": "Purpose-built in game: two belt lines on separate floors into one straight stacker, one belt out. Built to settle where the stacker's second shape input sits.",
   "code": "SHAPEZ2-5-H4sIACKeiWoA/9SUQWsCQQyF/0oJHqfLTnspc1xtS8GDdEUs4iGtqR0aZyVmFZX97x2l1F6kFoR2LoEhmfceHyFbaOl6TuDgHmeUtSuhrOCa5uKDZiWJR/YbVF+Fw+uZ6WvGXPz4EQwMwFl7fWOg6IE7eBa154kP0zhxG1Q8Lb53f5noU2sntB6NT8vVWmLsRdfRWWxPMx2Cu7wy8AQuN9Dd18d97e+QEGuHXrFmvatkhTJ5CEoSkAcYZYJGgTa4UDM35g9D21RC2xRJ2wRJ5wmCzhPkfHShS8WXd5JSBf30Tf9N4LPcunHTNB8CDADSoc95rQYAAA==[]_2$"
+ },
+ {
+  "name": "unmeasured machines rig",
+  "note": "Purpose-built in game on a 1x1 platform: every machine whose geometry was still unknown, each wired belt-in belt-out — half destroyer, both extra rotators, pin pusher, halves swapper, bent stacker, and a lift up and down.",
+  "code": "SHAPEZ2-5-H4sIAC6miWoA/9SXbWvCMBSF/8oIfizSzPnSfmydmyDM2b2LjGyNW1iWljTRueF/X9dadVBRQST3Q0tL0nsPD4eb0x9UUbOYIhddkE9a9SNJqx7XNJZMqGpAJSOcfRPFIrF6e+F0ucc62fohstAdcjGutSzk9ZG76tlNOBFhun4ulGQ0WV/bT09e6a/MbDjaTVNlQtK1tOfwAE13a/mAXNtCj9n9KbsPkFuz0E3auhNpEWYbn/EXTjcHyBWacwv5xYO3zsfTjIdMvB2CXlHryPz+td2ZoJMRxKcW6hUI7RyhR7lq0zHRXHUiOSUy7ApFpSD8jqRlhEJLmHPruKKxvVF1n4m+Tt6pXEg3RvMCtA0LNIZsjxLWPTZW+DY2TXFujhZEyiWiB5EiKpJXgl5rEvr+vXF+zp2BgZDO3dGAODlAWrqE9CXhE5oEUxLHph4tZxD90YDojxLSvlapxtQlY9MIw7LFIiVhUPO5yBslqrO80Y6mwkzQDsg0iiEODWdjTjJqauS+aEL0hQPRFs1t8dkwZ9QhOgOknesQD27AoqGljRLUgSKvH+b9nxSK16NobX/Oo/k8u34FEGAAMwQyxGYXAAA=[]_2$"
  }
 ]

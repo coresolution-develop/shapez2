@@ -161,6 +161,77 @@ export const CONFIRMED_PORTS: Record<string, ConfirmedPorts> = {
     fixture: 'stacker two-floor rig',
     note: 'One tile in plan, two floors tall. Both shapes come in on -X, the bottom one on the lower floor and the top one on the upper; the result leaves on +X downstairs. The 1,017-building factory agreed on the plan-view offset across 72 instances but could not separate the floors, which is why this looked like a one-input machine until a rig was built for it.',
   },
+  // ── measured on the machine rig ─────────────────────────────────────────
+  CutterHalfInternalVariant: {
+    inputs: [[-1, 0, 0]],
+    outputs: [[1, 0, 0]],
+    samples: 1,
+    source: 'fixture',
+    fixture: 'unmeasured machines rig',
+    note: 'One tile. The discarded half is destroyed inside, so there is nothing to route away.',
+  },
+  RotatorOneQuadCCWInternalVariant: {
+    inputs: [[-1, 0, 0]],
+    outputs: [[1, 0, 0]],
+    samples: 1,
+    source: 'fixture',
+    fixture: 'unmeasured machines rig',
+  },
+  RotatorHalfInternalVariant: {
+    inputs: [[-1, 0, 0]],
+    outputs: [[1, 0, 0]],
+    samples: 1,
+    source: 'fixture',
+    fixture: 'unmeasured machines rig',
+  },
+  PinPusherDefaultInternalVariant: {
+    inputs: [[-1, 0, 0]],
+    outputs: [[1, 0, 0]],
+    samples: 1,
+    source: 'fixture',
+    fixture: 'unmeasured machines rig',
+  },
+  HalvesSwapperDefaultInternalVariant: {
+    inputs: [
+      [-1, -1, 0],
+      [-1, 0, 0],
+    ],
+    outputs: [
+      [1, -1, 0],
+      [1, 0, 0],
+    ],
+    samples: 1,
+    source: 'fixture',
+    fixture: 'unmeasured machines rig',
+    note: '1x2 in plan, both shapes side by side on one floor. Each lane keeps its own row through the machine.',
+  },
+  StackerDefaultInternalVariant: {
+    inputs: [
+      [-1, 0, 0],
+      [-1, 0, 1],
+    ],
+    outputs: [[0, -1, 0]],
+    samples: 1,
+    source: 'fixture',
+    fixture: 'unmeasured machines rig',
+    note: 'Two floors like the straight stacker, but the result leaves sideways — the game calls it 굽은 결합기 for that reason.',
+  },
+  Lift1UpForwardInternalVariant: {
+    inputs: [[-1, 0, 0]],
+    outputs: [[1, 0, 1]],
+    samples: 1,
+    source: 'fixture',
+    fixture: 'unmeasured machines rig',
+    note: 'Enters on its own floor and leaves one floor up, one tile on.',
+  },
+  Lift1DownForwardInternalVariant: {
+    inputs: [[-1, 0, 0]],
+    outputs: [[1, 0, -1]],
+    samples: 1,
+    source: 'fixture',
+    fixture: 'unmeasured machines rig',
+  },
+
   PainterDefaultInternalVariant: {
     inputs: [[-1, 0, 0]],
     outputs: [[1, 0, 0]],
@@ -200,15 +271,14 @@ export const CONFIRMED_PORTS: Record<string, ConfirmedPorts> = {
   },
 }
 
-/** Machines whose geometry is still unknown — a generator must refuse these. */
-export const UNKNOWN_PORTS = [
-  'RotatorOneQuadCCWInternalVariant',
-  'RotatorHalfInternalVariant',
-  'CutterHalfInternalVariant',
-  'PinPusherDefaultInternalVariant',
-  'HalvesSwapperDefaultInternalVariant',
-  'StackerDefaultInternalVariant',
-] as const
+/**
+ * Machines whose geometry is still unknown — a generator must refuse these.
+ *
+ * Empty at the moment: every shape machine in the game has now been measured,
+ * on the two rigs in `portFixtures.json`. It stays as a list because the check
+ * that uses it is what keeps a generator honest when the game adds something.
+ */
+export const UNKNOWN_PORTS: readonly string[] = []
 
 export function portsFor(type: string): ConfirmedPorts | null {
   return CONFIRMED_PORTS[type] ?? null

@@ -9,6 +9,8 @@ import { parseShapeCode } from '../shapeCode'
 import { solveShape } from '../solver'
 import { QUAD_CONFIG, operationConfig } from '../types'
 
+import presets from '../presets.json'
+
 const config = operationConfig(QUAD_CONFIG, 'normal')
 
 function plan(code: string) {
@@ -124,5 +126,55 @@ describe('one-module layout', () => {
     expect(result.notes.some((note) => note.includes('추출기'))).toBe(true)
     expect(result.notes.some((note) => note.includes('파이프'))).toBe(true)
     for (const input of result.inputs) expect(input.part).toBeTruthy()
+  })
+})
+
+/**
+ * A coverage floor, the same idea as the solver's: the share of real game
+ * shapes that come out as a finished module. Raise it when the layout
+ * improves, never lower it quietly.
+ */
+describe('module coverage', () => {
+  it('builds a module for most of the game’s own shapes', () => {
+    const codes = (presets as { scenario: string; code: string }[])
+      .filter((preset) => preset.scenario === 'default')
+      .map((preset) => preset.code)
+
+    let solved = 0
+    let modules = 0
+    for (const code of codes) {
+      const parsed = parseShapeCode(code, QUAD_CONFIG)
+      if (!parsed.ok) continue
+      const solution = solveShape(parsed.shape, config)
+      if (!solution.ok) continue
+      solved += 1
+      if (layoutModule(solution.root).ok) modules += 1
+    }
+
+    expect(solved).toBeGreaterThan(300)
+    expect(modules / solved).toBeGreaterThan(0.6)
+  })
+
+  it('names what is still missing rather than failing vaguely', () => {
+    // a mid-line cut has two halves to route, which needs belts that turn
+    const codes = (presets as { scenario: string; code: string }[])
+      .filter((preset) => preset.scenario === 'default')
+      .map((preset) => preset.code)
+
+    const reasons = new Set<string>()
+    for (const code of codes) {
+      const parsed = parseShapeCode(code, QUAD_CONFIG)
+      if (!parsed.ok) continue
+      const solution = solveShape(parsed.shape, config)
+      if (!solution.ok) continue
+      const result = layoutModule(solution.root)
+      if (!result.ok) reasons.add(result.reason)
+    }
+
+    expect(reasons.size).toBeGreaterThan(0)
+    for (const reason of reasons) {
+      expect(reason.length, reason).toBeGreaterThan(10)
+      expect(reason, reason).not.toMatch(/undefined/)
+    }
   })
 })

@@ -24,12 +24,17 @@ export const BUILDING_IDS = {
 } as const
 
 /** Which building performs each operation, where the geometry is measured. */
-export const OPERATION_BUILDING: Partial<Record<OperationId, string>> = {
+export const OPERATION_BUILDING: Record<OperationId, string> = {
   cut: 'CutterDefaultInternalVariant',
+  hcut: 'CutterHalfInternalVariant',
   r90cw: 'RotatorOneQuadInternalVariant',
-  paint: 'PainterDefaultInternalVariant',
-  crystal: 'CrystalGeneratorDefaultInternalVariant',
+  r90ccw: 'RotatorOneQuadCCWInternalVariant',
+  r180: 'RotatorHalfInternalVariant',
+  swap: 'HalvesSwapperDefaultInternalVariant',
   stack: 'StackerStraightInternalVariant',
+  paint: 'PainterDefaultInternalVariant',
+  pin: 'PinPusherDefaultInternalVariant',
+  crystal: 'CrystalGeneratorDefaultInternalVariant',
 }
 
 /** The game stacks machines three floors high, and the third needs unlocking. */
@@ -70,20 +75,31 @@ interface Cursor {
   free: Record<number, number>
 }
 
-/** A run of one-in-one-out steps, ending at whatever consumes it. */
-function linearRun(node: BuildNode): BuildNode[] | null {
+function isMerge(node: BuildNode): boolean {
+  return node.op !== null && node.inputs.length > 1
+}
+
+/**
+ * The run of one-in-one-out steps ending at `node`.
+ *
+ * Stops at an extractor or at a merge, and says which. Walking all the way back
+ * and giving up on the first merge was the earlier mistake: it threw away
+ * perfectly placeable lines just because something upstream had two inputs.
+ */
+function linearRun(node: BuildNode): { chain: BuildNode[]; from: BuildNode | null } {
   const chain: BuildNode[] = []
   let current: BuildNode = node
   while (true) {
     chain.unshift(current)
-    if (current.op === null) return chain
-    if (current.inputs.length !== 1) return null
-    current = current.inputs[0]
+    if (current.op === null) return { chain, from: null }
+    const next = current.inputs[0]
+    if (isMerge(next)) return { chain, from: next }
+    current = next
   }
 }
 
-function buildingFor(op: OperationId): string | null {
-  return OPERATION_BUILDING[op] ?? null
+function buildingFor(op: OperationId): string {
+  return OPERATION_BUILDING[op]
 }
 
 /**
@@ -99,18 +115,13 @@ function placeLine(
   y: number,
   z: number,
   cursor: Cursor,
+  /** False when an upstream machine already delivers into this floor. */
+  needsFeeding: boolean,
 ): ModuleFailure | { ok: true; at: number } {
   const machines = chain.filter((node) => node.op !== null)
 
   for (const node of machines) {
     const building = buildingFor(node.op!)
-    if (!building) {
-      return {
-        ok: false,
-        reason: `${OPERATIONS[node.op!].labelKo}의 입출력 위치를 아직 측정하지 못했습니다`,
-        blockedBy: node.op!,
-      }
-    }
     const ports = portsFor(building)
     if (!ports || ports.partialBelts) {
       return {
@@ -133,12 +144,14 @@ function placeLine(
 
   let x = cursor.free[z] ?? 0
 
-  cursor.inputs.push({ part: chain[0].sourcePart ?? '', at: { x, y, z } })
-  cursor.placements.push({ type: BUILDING_IDS.belt, x, y, layer: z })
-  x += 1
+  if (needsFeeding) {
+    cursor.inputs.push({ part: chain[0].sourcePart ?? '', at: { x, y, z } })
+    cursor.placements.push({ type: BUILDING_IDS.belt, x, y, layer: z })
+    x += 1
+  }
 
   for (const node of machines) {
-    cursor.placements.push({ type: buildingFor(node.op!)!, x, y, layer: z })
+    cursor.placements.push({ type: buildingFor(node.op!), x, y, layer: z })
     x += 1
     cursor.placements.push({ type: BUILDING_IDS.belt, x, y, layer: z })
     x += 1
@@ -166,16 +179,25 @@ function place(
   z: number,
   cursor: Cursor,
 ): ModuleFailure | { ok: true; at: number; floor: number } {
-  const chain = linearRun(node)
-  if (chain) {
-    const placed = placeLine(chain, y, z, cursor)
-    return placed.ok === true ? { ok: true, at: placed.at, floor: z } : placed
+  if (!isMerge(node)) {
+    const { chain, from } = linearRun(node)
+
+    // a line may continue straight out of a merge, on that merge's own floor
+    let floor = z
+    if (from) {
+      const upstream = place(from, y, z, cursor)
+      if (!upstream.ok) return upstream
+      floor = upstream.floor
+    }
+
+    const placed = placeLine(chain, y, floor, cursor, from === null)
+    return placed.ok === true ? { ok: true, at: placed.at, floor } : placed
   }
 
   if (node.op !== 'stack') {
     return {
       ok: false,
-      reason: `${OPERATIONS[node.op!].labelKo}는 아직 모듈로 배치할 수 없습니다`,
+      reason: `${OPERATIONS[node.op!].labelKo}는 도형 2개를 나란히 다뤄서 아직 모듈로 배치할 수 없습니다`,
       blockedBy: node.op ?? undefined,
     }
   }
@@ -200,7 +222,7 @@ function place(
   runBeltTo(at - 1, y, z, cursor)
   runBeltTo(at - 1, y, z + 1, cursor)
 
-  cursor.placements.push({ type: OPERATION_BUILDING.stack!, x: at, y, layer: z })
+  cursor.placements.push({ type: OPERATION_BUILDING.stack, x: at, y, layer: z })
   cursor.free[z] = at + 1
   cursor.free[z + 1] = at + 1
   return { ok: true, at, floor: z }
