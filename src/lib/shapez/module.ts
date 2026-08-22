@@ -12,7 +12,11 @@
  * not been measured are refused, as is anything that would need a belt to turn
  * a corner — that is the next piece of routing, not a thing to guess at.
  */
-import { encodeBuildingBlueprint, type BuildingPlacement } from './blueprint'
+import {
+  encodeBuildingBlueprint,
+  encodeIslandBlueprint,
+  type BuildingPlacement,
+} from './blueprint'
 import { OPERATIONS, type OperationId } from './operations'
 import type { BuildNode } from './plan'
 import { portsFor } from './portData'
@@ -410,6 +414,10 @@ export const MODULE_LANES_PER_FLOOR = 4
 export const MODULE_FLOORS = 3
 export const MODULE_LANES = MODULE_LANES_PER_FLOOR * MODULE_FLOORS
 
+/** The platforms a module is laid on, as measured from the reference modules. */
+export const PLATFORM_1X1 = 'Foundation_1x1'
+export const PLATFORM_1X2 = 'Foundation_1x2'
+
 /** A platform chunk is 20 tiles across, and the outer two are unusable. */
 export const CHUNK_TILES = 20
 export const CHUNK_MARGIN = 2
@@ -657,6 +665,8 @@ export interface LaneModule {
   ok: true
   op: OperationId
   placements: BuildingPlacement[]
+  /** The platform the module lays down, as both reference modules do. */
+  platform: string
   lanes: number
   /** Machines per lane — enough of them to keep a lane saturated. */
   perLane: number
@@ -792,6 +802,7 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
     ok: true,
     op,
     placements,
+    platform: PLATFORM_1X1,
     lanes: MODULE_LANES,
     perLane,
     machines,
@@ -800,6 +811,14 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
   }
 }
 
+/**
+ * A module is the platform as well as what stands on it.
+ *
+ * Emitting only the buildings looked right on screen and was useless in the
+ * game: there was nothing under them, so the player had to lay a foundation by
+ * hand and paste onto it. Both reference modules are platform blueprints, and
+ * so is this.
+ */
 export async function generateLaneModule(
   op: OperationId,
   perLane: number,
@@ -808,8 +827,8 @@ export async function generateLaneModule(
   const layout = layoutLaneModule(op, perLane)
   if (!layout.ok) return { layout, code: null }
 
-  const code = await encodeBuildingBlueprint(
-    layout.placements,
+  const code = await encodeIslandBlueprint(
+    [{ type: layout.platform, buildings: layout.placements }],
     icon ? [`shape:${icon}`, null, null, null] : [null, null, null, null],
   )
   return { layout, code }

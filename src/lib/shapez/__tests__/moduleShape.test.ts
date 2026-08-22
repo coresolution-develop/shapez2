@@ -214,20 +214,26 @@ describe('generating a lane module', () => {
   /**
    * The whole point of fanning out: the player built this module by hand, and a
    * generated one has to be the same module — not merely a plausible one. Every
-   * belt, splitter, merger, rotation and floor is compared.
+   * belt, splitter, merger, rotation and floor is compared, and so is the
+   * platform they all stand on.
    */
   it('reproduces the rotator module a player built, tile for tile', async () => {
     const reference = await decodeBlueprint(codeFor('rotator module, 1x1 platform'))
-    const mine = ours('r90cw')
+    const { code } = await generateLaneModule('r90cw', perLane('r90cw'))
+    const generated = await decodeBlueprint(code!)
 
-    const theirs = reference.buildings
-      .map((b) => `${tile(b.pos.x, b.pos.y, b.pos.z)} ${b.type} r${b.rotation}`)
-      .sort()
-    const generated = mine.placements
-      .map((p) => `${tile(p.x ?? 0, p.y ?? 0, p.layer ?? 0)} ${p.type} r${p.rotation ?? 0}`)
-      .sort()
+    // a module lays down its own ground: without this the player has to build a
+    // foundation by hand before the blueprint has anywhere to go
+    expect(generated.kind).toBe('island')
+    expect(generated.islands.map((i) => `${i.type} @${tile(i.pos.x, i.pos.y, i.pos.z)} r${i.rotation}`))
+      .toEqual(reference.islands.map((i) => `${i.type} @${tile(i.pos.x, i.pos.y, i.pos.z)} r${i.rotation}`))
 
-    expect(generated).toEqual(theirs)
+    const layout = (blueprint: typeof reference) =>
+      blueprint.buildings
+        .map((b) => `${tile(b.pos.x, b.pos.y, b.pos.z)} ${b.type} r${b.rotation}`)
+        .sort()
+
+    expect(layout(generated)).toEqual(layout(reference))
   })
 
   it('puts enough machines in to keep every lane full', () => {

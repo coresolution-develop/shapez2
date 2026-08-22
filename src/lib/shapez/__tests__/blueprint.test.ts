@@ -4,11 +4,27 @@ import {
   BlueprintError,
   decodeBlueprint,
   encodeBuildingBlueprint,
+  encodeIslandBlueprint,
   findBlueprintCodes,
   summarize,
 } from '../blueprint'
 
+import fixtures from './portFixtures.json'
 import vectors from './blueprintVectors.json'
+
+const codeFor = (name: string) =>
+  (fixtures as { name: string; code: string }[]).find((entry) => entry.name === name)!.code
+
+/** The gzipped JSON a blueprint code carries, as the game would read it. */
+async function payloadOf(code: string): Promise<unknown> {
+  const body = code.trim().split('-').slice(2).join('-').slice(0, -1)
+  const base64 = /^[A-Za-z0-9+/]*={0,2}/.exec(body)![0]
+  const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0))
+  const stream = new Blob([bytes as unknown as BlobPart])
+    .stream()
+    .pipeThrough(new DecompressionStream('gzip'))
+  return JSON.parse(await new Response(stream).text())
+}
 
 interface Vector {
   name: string
@@ -170,6 +186,40 @@ describe('blueprint encoding', () => {
 
   it('refuses to build an empty blueprint', async () => {
     await expect(encodeBuildingBlueprint([])).rejects.toThrow(BlueprintError)
+  })
+
+  /**
+   * A platform blueprint is checked against the game's own bytes rather than
+   * against ourselves: a module a player built is taken apart and written back
+   * out, and the two payloads have to be the same JSON. Round-tripping through
+   * our own decoder would happily agree with a wrapper the game rejects.
+   */
+  it('writes a platform blueprint the way the game writes one', async () => {
+    const reference = codeFor('rotator module, 1x1 platform')
+    const decoded = await decodeBlueprint(reference)
+
+    const rewritten = await encodeIslandBlueprint(
+      decoded.islands.map((island) => ({
+        type: island.type,
+        x: island.pos.x,
+        y: island.pos.y,
+        z: island.pos.z,
+        rotation: island.rotation,
+        buildings: island.buildings.map((building) => ({
+          type: building.type,
+          x: building.pos.x,
+          y: building.pos.y,
+          layer: building.pos.z,
+          rotation: building.rotation,
+        })),
+      })),
+    )
+
+    expect(await payloadOf(rewritten)).toEqual(await payloadOf(reference))
+  })
+
+  it('refuses to build a platform blueprint with no platform', async () => {
+    await expect(encodeIslandBlueprint([])).rejects.toThrow(BlueprintError)
   })
 })
 

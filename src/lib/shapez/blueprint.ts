@@ -497,6 +497,79 @@ export async function encodeBuildingBlueprint(
   return `${PREFIX}${SEPARATOR}${V5_MAJOR_VERSION}${SEPARATOR}${bytesToBase64(compressed)}${tail}_${tail.length}${SUFFIX}`
 }
 
+export interface IslandPlacement {
+  /** Platform id, e.g. `Foundation_1x1`. */
+  type: string
+  x?: number
+  y?: number
+  z?: number
+  /** Quarter turns clockwise. */
+  rotation?: number
+  /** Buildings standing on it, in the platform's own tile coordinates. */
+  buildings: BuildingPlacement[]
+}
+
+/**
+ * Builds a pasteable platform blueprint — the ground and what stands on it.
+ *
+ * A module is not a pile of buildings: pasting one is supposed to lay down the
+ * platform too, and a building blueprint has nothing to stand on. The wrapper
+ * is the only difference, so the building entries are byte-identical to the
+ * ones a building blueprint carries.
+ */
+export async function encodeIslandBlueprint(
+  islands: IslandPlacement[],
+  options: EncodeOptions | (string | null)[] = {},
+): Promise<string> {
+  if (islands.length === 0) throw new BlueprintError('플랫폼이 하나도 없는 청사진은 만들 수 없습니다')
+
+  const settings: EncodeOptions = Array.isArray(options) ? { icons: options } : options
+  const icons = settings.icons ?? [null, null, null, null]
+
+  const payload = {
+    $type: `${NET}.SerializableBlueprint, ${NET}`,
+    V: V5_GAME_VERSION,
+    BP: {
+      $type: 'Island',
+      Entries: {
+        $type: `${NET}.SerializableIslandEntry[], ${NET}`,
+        $values: islands.map((island) => ({
+          $type: `${NET}.SerializableIslandEntry, ${NET}`,
+          X: island.x ?? 0,
+          Y: island.y ?? 0,
+          Z: island.z ?? 0,
+          R: island.rotation ?? 0,
+          T: island.type,
+          S: null,
+          C: null,
+          B: {
+            $type: 'Building',
+            Entries: {
+              $type: `${NET}.SerializableBuildingEntry[], ${NET}`,
+              $values: island.buildings.map((building) => ({
+                $type: `${NET}.SerializableBuildingEntry, ${NET}`,
+                X: building.x ?? 0,
+                Y: building.y ?? 0,
+                L: building.layer ?? 0,
+                R: building.rotation ?? 0,
+                T: building.type,
+                C: null,
+              })),
+            },
+          },
+        })),
+      },
+    },
+  }
+
+  const tail = icons.some((icon) => icon !== null)
+    ? JSON.stringify([{ Type: ICON_TYPE, Content: JSON.stringify({ Data: icons }) }])
+    : '[]'
+
+  const compressed = await gzipCompress(JSON.stringify(payload))
+  return `${PREFIX}${SEPARATOR}${V5_MAJOR_VERSION}${SEPARATOR}${bytesToBase64(compressed)}${tail}_${tail.length}${SUFFIX}`
+}
+
 /** Finds every blueprint code embedded in a chunk of text. */
 export function findBlueprintCodes(text: string): string[] {
   const codes: string[] = []

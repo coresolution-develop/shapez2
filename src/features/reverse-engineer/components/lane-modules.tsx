@@ -101,7 +101,9 @@ export function LaneModules({ root, tier }: LaneModulesProps) {
         <h3 className="text-sm font-medium">작업 모듈 (벨트 {MODULE_LANES}줄)</h3>
         <p className="text-xs text-muted-foreground">
           작업 하나를 플랫폼 한 칸에 담은 모듈입니다. 위 가장자리로 {MODULE_LANES}줄이 들어와
-          아래로 나가고, 레인이 가득 찬 채 나갈 만큼 기계가 들어 있습니다.
+          아래로 나가고, 레인이 가득 찬 채 나갈 만큼 기계가 들어 있습니다.{' '}
+          <strong className="font-medium text-foreground">플랫폼까지 같이 나오니</strong> 빈 땅에
+          그대로 붙여넣으면 됩니다.
         </p>
       </div>
 
