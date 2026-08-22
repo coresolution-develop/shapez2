@@ -102,7 +102,7 @@ describe('one-module layout', () => {
   })
 
   it('wires every machine it places', async () => {
-    for (const code of ['CrCrCrCr', 'RbRbRbRb:CrCrCrCr']) {
+    for (const code of ['CrCrCrCr', 'RbRbRbRb:CrCrCrCr', 'RgRgRgRg:CwCwCwCw:SbSbSbSb']) {
       const result = await generateModule(plan(code), code)
       expect(result.ok, code).toBe(true)
       if (!result.ok) continue
@@ -113,13 +113,18 @@ describe('one-module layout', () => {
     }
   })
 
-  it('refuses a plan whose second stack buries a line’s entrance', () => {
-    // stacking twice puts the upper feed just past the first stacker, and a
-    // stacker's upper tile is an input — so that belt has nothing behind it and
-    // the player has no way to reach it either. The game flags exactly this.
-    const twice = layoutModule(plan('RgRgRgRg:CwCwCwCw:SbSbSbSb'))
-    expect(twice.ok).toBe(false)
-    if (!twice.ok) expect(twice.reason).toMatch(/입구|벨트/)
+  it('gives every line the player feeds its own row, starting at the left edge', () => {
+    // stacking twice used to bury the second feed behind the first stacker;
+    // each fed line now owns a row and turns into the spine at the end
+    const result = layoutModule(plan('RgRgRgRg:CwCwCwCw:SbSbSbSb'))
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.inputs.length).toBeGreaterThan(2)
+    for (const input of result.inputs) expect(input.at.x, input.part).toBe(0)
+    expect(new Set(result.inputs.map((input) => `${input.at.y},${input.at.z}`)).size).toBe(
+      result.inputs.length,
+    )
   })
 
   it('never lets a belt draw from a face that emits nothing', async () => {
@@ -166,9 +171,9 @@ describe('module coverage', () => {
     }
 
     expect(solved).toBeGreaterThan(300)
-    // every module that comes out of here connects; the number was 63% while
-    // broken layouts were still counted
-    expect(modules / solved).toBeGreaterThan(0.3)
+    // every module that comes out of here passes the reachability check, so
+    // unlike the earlier 63% this one is blueprints that actually run
+    expect(modules / solved).toBeGreaterThan(0.6)
   })
 
   it('names what is still missing rather than failing vaguely', () => {

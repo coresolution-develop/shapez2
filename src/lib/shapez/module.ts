@@ -16,6 +16,16 @@ import { encodeBuildingBlueprint, type BuildingPlacement } from './blueprint'
 import { OPERATIONS, type OperationId } from './operations'
 import type { BuildNode } from './plan'
 import { portsFor } from './portData'
+import { toWorld } from './ports'
+import buildings from './buildings.json'
+
+const FOOTPRINTS = (buildings as { buildingVariants: Record<string, { tiles: number[][] }> })
+  .buildingVariants
+
+/** Tiles a building covers, in its own frame. Painters and cutters are 1x2. */
+function footprint(type: string): number[][] {
+  return FOOTPRINTS[type]?.tiles ?? [[0, 0, 0]]
+}
 
 /** Internal variant ids for the carriers the module places. */
 export const BUILDING_IDS = {
@@ -71,8 +81,10 @@ interface Cursor {
   placements: BuildingPlacement[]
   inputs: ModuleInput[]
   notes: Set<string>
-  /** Next free column on each floor. */
-  free: Record<number, number>
+  /** Rightmost column used so far, on any row or floor. */
+  used: number
+  /** Next free row for a line the player feeds. */
+  nextRow: number
 }
 
 function isMerge(node: BuildNode): boolean {
@@ -103,26 +115,51 @@ function buildingFor(op: OperationId): string {
 }
 
 /**
- * Places one straight line on floor `z`, starting wherever that floor is free.
+ * Belt pieces, by what they have to do. Rotation 0 means "takes from -X".
  *
- * Returns the column its shape comes out at. Laying out left to right with a
- * per-floor cursor is what keeps a nested stacker from being overrun: a stacker
- * claims its column on two floors at once, so both cursors move past it and the
- * next line up cannot be placed on top of it.
+ * A belt only accepts from the one face behind it, so joining two lines means
+ * steering one into the other's row rather than merging them sideways.
  */
+const BELT = {
+  /** Straight along +X. */
+  along: { type: BUILDING_IDS.belt, rotation: 0 },
+  /** Straight along +Y, used to climb rows. */
+  across: { type: BUILDING_IDS.belt, rotation: 1 },
+  /** Takes from -X, turns to +Y. */
+  toRows: { type: 'BeltDefaultLeftInternalVariantMirrored', rotation: 0 },
+  /** Takes from -Y, turns to +X. */
+  toLine: { type: 'BeltDefaultLeftInternalVariant', rotation: 1 },
+} as const
+
+/** The row every stacker sits on; feeds arrive from the rows below it. */
+const SPINE_ROW = 0
+
+/**
+ * Rows are two apart, not one: a painter, cutter or crystal generator is two
+ * tiles deep and spills into the row in front of it. Packing lines one apart
+ * put a painter's second tile straight through its neighbour's belt.
+ */
+const ROW_PITCH = 2
+
+function put(cursor: Cursor, type: string, x: number, y: number, z: number, rotation = 0): void {
+  cursor.placements.push({ type, x, y, layer: z, rotation })
+  cursor.used = Math.max(cursor.used, x)
+}
+
+/** Places one straight line on its own row, left to right. */
 function placeLine(
   chain: BuildNode[],
   y: number,
   z: number,
+  startX: number,
   cursor: Cursor,
-  /** False when an upstream machine already delivers into this floor. */
+  /** False when an upstream machine already delivers into this row. */
   needsFeeding: boolean,
 ): ModuleFailure | { ok: true; at: number } {
   const machines = chain.filter((node) => node.op !== null)
 
   for (const node of machines) {
-    const building = buildingFor(node.op!)
-    const ports = portsFor(building)
+    const ports = portsFor(buildingFor(node.op!))
     if (!ports || ports.partialBelts) {
       return {
         ok: false,
@@ -142,56 +179,76 @@ function placeLine(
     }
   }
 
-  let x = cursor.free[z] ?? 0
-
+  let x = startX
   if (needsFeeding) {
     cursor.inputs.push({ part: chain[0].sourcePart ?? '', at: { x, y, z } })
-    cursor.placements.push({ type: BUILDING_IDS.belt, x, y, layer: z })
+    put(cursor, BELT.along.type, x, y, z)
     x += 1
   }
 
   for (const node of machines) {
-    cursor.placements.push({ type: buildingFor(node.op!), x, y, layer: z })
+    put(cursor, buildingFor(node.op!), x, y, z)
     x += 1
-    cursor.placements.push({ type: BUILDING_IDS.belt, x, y, layer: z })
+    put(cursor, BELT.along.type, x, y, z)
     x += 1
   }
 
-  cursor.free[z] = x
   return { ok: true, at: x - 1 }
 }
 
-/** Fills floor `z` with belt from wherever it is free up to `upto`. */
-function runBeltTo(upto: number, y: number, z: number, cursor: Cursor): void {
-  for (let x = cursor.free[z] ?? 0; x <= upto; x++) {
-    cursor.placements.push({ type: BUILDING_IDS.belt, x, y, layer: z })
+/**
+ * Steers a line's output to `(toX, SPINE_ROW)` on the same floor.
+ *
+ * Straight along its own row, one turn up into the column, straight across the
+ * rows in between, then one turn back onto the spine. `toX` is always past
+ * everything already placed, so the column it climbs is free by construction.
+ */
+function steer(
+  from: { at: number; row: number },
+  toX: number,
+  z: number,
+  cursor: Cursor,
+): void {
+  if (from.row === SPINE_ROW) {
+    for (let x = from.at + 1; x <= toX; x++) put(cursor, BELT.along.type, x, from.row, z)
+    return
   }
-  cursor.free[z] = Math.max(cursor.free[z] ?? 0, upto + 1)
+
+  for (let x = from.at + 1; x < toX; x++) put(cursor, BELT.along.type, x, from.row, z)
+  put(cursor, BELT.toRows.type, toX, from.row, z, BELT.toRows.rotation)
+  for (let y = from.row + 1; y < SPINE_ROW; y++) {
+    put(cursor, BELT.across.type, toX, y, z, BELT.across.rotation)
+  }
+  put(cursor, BELT.toLine.type, toX, SPINE_ROW, z, BELT.toLine.rotation)
 }
 
 /**
- * Places whatever produces `node`'s shape, and says which column and floor it
- * comes out at.
+ * Places whatever produces `node`'s shape, and says where it comes out.
  */
 function place(
   node: BuildNode,
-  y: number,
+  row: number,
   z: number,
   cursor: Cursor,
-): ModuleFailure | { ok: true; at: number; floor: number } {
+): ModuleFailure | { ok: true; at: number; row: number; floor: number } {
   if (!isMerge(node)) {
     const { chain, from } = linearRun(node)
 
-    // a line may continue straight out of a merge, on that merge's own floor
-    let floor = z
     if (from) {
-      const upstream = place(from, y, z, cursor)
+      // this line continues straight out of a stacker, on its row and floor
+      const upstream = place(from, row, z, cursor)
       if (!upstream.ok) return upstream
-      floor = upstream.floor
+      const placed = placeLine(chain, upstream.row, upstream.floor, upstream.at + 1, cursor, false)
+      return placed.ok === true
+        ? { ok: true, at: placed.at, row: upstream.row, floor: upstream.floor }
+        : placed
     }
 
-    const placed = placeLine(chain, y, floor, cursor, from === null)
-    return placed.ok === true ? { ok: true, at: placed.at, floor } : placed
+    // a line the player feeds gets its own row so its entrance stays reachable
+    const own = cursor.nextRow
+    cursor.nextRow -= ROW_PITCH
+    const placed = placeLine(chain, own, z, 0, cursor, true)
+    return placed.ok === true ? { ok: true, at: placed.at, row: own, floor: z } : placed
   }
 
   if (node.op !== 'stack') {
@@ -211,21 +268,19 @@ function place(
   }
 
   const [bottom, top] = node.inputs
-  const lower = place(bottom, y, z, cursor)
+  const lower = place(bottom, row, z, cursor)
   if (!lower.ok) return lower
-  const upper = place(top, y, z + 1, cursor)
+  const upper = place(top, row, z + 1, cursor)
   if (!upper.ok) return upper
 
-  // the stacker takes one column on both floors, so both feeds belt across to
-  // the column just before it
-  const at = Math.max(cursor.free[z] ?? 0, cursor.free[z + 1] ?? 0)
-  runBeltTo(at - 1, y, z, cursor)
-  runBeltTo(at - 1, y, z + 1, cursor)
+  // put the stacker two columns past everything, so the column it is fed from
+  // is free on both floors and on every row the feeds have to climb
+  const at = cursor.used + 2
+  steer(lower, at - 1, z, cursor)
+  steer(upper, at - 1, z + 1, cursor)
 
-  cursor.placements.push({ type: OPERATION_BUILDING.stack, x: at, y, layer: z })
-  cursor.free[z] = at + 1
-  cursor.free[z + 1] = at + 1
-  return { ok: true, at, floor: z }
+  put(cursor, OPERATION_BUILDING.stack, at, SPINE_ROW, z)
+  return { ok: true, at, row: SPINE_ROW, floor: z }
 }
 
 /**
@@ -241,31 +296,35 @@ function unreachableFeeds(placements: BuildingPlacement[]): string[] {
   const at = new Map<string, BuildingPlacement>()
   const key = (x: number, y: number, z: number) => `${x},${y},${z}`
 
-  // everything here sits at rotation 0; a building covers its own floor plus any
-  // floor one of its ports reaches, which is how the stacker claims two
+  const spread = (placement: BuildingPlacement) =>
+    portsFor(placement.type)!.inputs.map((port) => toWorld(port, placement.rotation ?? 0))
+
   for (const placement of placements) {
-    const ports = portsFor(placement.type)!
-    const base = placement.layer ?? 0
-    const floors = new Set([base, ...ports.inputs.map((port) => base + port[2])])
-    for (const floor of floors) at.set(key(placement.x ?? 0, placement.y ?? 0, floor), placement)
+    for (const tile of footprint(placement.type)) {
+      const [dx, dy, dz] = toWorld(tile as [number, number, number], placement.rotation ?? 0)
+      const cell = key((placement.x ?? 0) + dx, (placement.y ?? 0) + dy, (placement.layer ?? 0) + dz)
+      if (at.has(cell)) return [`두 건물이 같은 칸(${cell})을 차지합니다`]
+      at.set(cell, placement)
+    }
   }
 
   const problems: string[] = []
   for (const placement of placements) {
-    const ports = portsFor(placement.type)!
-    for (const input of ports.inputs) {
-      const x = (placement.x ?? 0) + input[0]
-      const y = (placement.y ?? 0) + input[1]
-      const z = (placement.layer ?? 0) + input[2]
+    for (const port of spread(placement)) {
+      const x = (placement.x ?? 0) + port[0]
+      const y = (placement.y ?? 0) + port[1]
+      const z = (placement.layer ?? 0) + port[2]
       const behind = at.get(key(x, y, z))
       if (!behind) continue // open to the outside: the player feeds it
 
-      const emits = portsFor(behind.type)!.outputs.some(
-        (output) =>
-          (behind.x ?? 0) + output[0] === (placement.x ?? 0) &&
-          (behind.y ?? 0) + output[1] === (placement.y ?? 0) &&
-          (behind.layer ?? 0) + output[2] === (placement.layer ?? 0) + input[2],
-      )
+      const emits = portsFor(behind.type)!.outputs
+        .map((output) => toWorld(output, behind.rotation ?? 0))
+        .some(
+          (output) =>
+            (behind.x ?? 0) + output[0] === (placement.x ?? 0) &&
+            (behind.y ?? 0) + output[1] === (placement.y ?? 0) &&
+            (behind.layer ?? 0) + output[2] === z,
+        )
       if (!emits) {
         problems.push(`${placement.type}@(${placement.x},${placement.y},${placement.layer ?? 0})`)
       }
@@ -279,34 +338,31 @@ function unreachableFeeds(placements: BuildingPlacement[]): string[] {
  * stackers, with the finished shape leaving on the ground floor.
  */
 export function layoutModule(root: BuildNode): ModuleResult {
-  const cursor: Cursor = { placements: [], inputs: [], notes: new Set(), free: {} }
-  const placed = place(root, 0, 0, cursor)
+  const cursor: Cursor = {
+    placements: [],
+    inputs: [],
+    notes: new Set(),
+    used: -1,
+    nextRow: SPINE_ROW,
+  }
+  const placed = place(root, SPINE_ROW, 0, cursor)
   if (!placed.ok) return placed
 
   // one belt after the last machine so the module has something to hook onto
   const outX = placed.at + 1
-  cursor.placements.push({ type: BUILDING_IDS.belt, x: outX, y: 0, layer: placed.floor })
+  put(cursor, BELT.along.type, outX, placed.row, placed.floor)
 
   const blocked = unreachableFeeds(cursor.placements)
   if (blocked.length > 0) {
     return {
       ok: false,
-      reason:
-        '결합이 여러 겹이라 어떤 줄의 입구가 다른 기계 뒤에 막힙니다 — 벨트를 꺾어 돌아가야 하는데 아직 지원하지 않습니다',
-    }
-  }
-
-  // a line the player feeds has to be reachable from outside the module
-  const buried = cursor.inputs.filter((input) => input.at.x !== 0)
-  if (buried.length > 0) {
-    return {
-      ok: false,
-      reason: '어떤 줄의 입구가 모듈 안쪽에 갇혀서 벨트를 넣을 수 없습니다 — 벨트 꺾기가 필요합니다',
+      reason: `배치가 어긋났습니다: ${blocked[0]}`,
     }
   }
 
   const floors = Math.max(...cursor.placements.map((p) => (p.layer ?? 0) + 1))
-  cursor.inputs.sort((a, b) => a.at.z - b.at.z || a.at.x - b.at.x)
+  const rows = cursor.placements.map((p) => p.y ?? 0)
+  cursor.inputs.sort((a, b) => a.at.z - b.at.z || b.at.y - a.at.y)
 
   const notes = [
     '추출기는 포함하지 않았습니다. 자원 패치 위에 따로 놓고 각 줄 맨 앞 벨트에 연결하세요.',
@@ -321,8 +377,12 @@ export function layoutModule(root: BuildNode): ModuleResult {
     code: '',
     placements: cursor.placements,
     inputs: cursor.inputs,
-    output: { x: outX, y: 0, z: placed.floor },
-    size: { width: outX + 1, height: 1, floors },
+    output: { x: outX, y: placed.row, z: placed.floor },
+    size: {
+      width: outX + 1,
+      height: Math.max(...rows) - Math.min(...rows) + 1,
+      floors,
+    },
     notes,
   }
 }
