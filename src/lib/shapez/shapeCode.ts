@@ -27,6 +27,13 @@ export interface ParseFailure {
 export type ParseResult = ParseSuccess | ParseFailure
 
 /**
+ * Parts that only ever come out of a 제조 (Converter) trade station — the gems
+ * and the vortex shape. No machine produces them, so the simulator has no rules
+ * for them; they are named here only so the error says what they actually are.
+ */
+export const TRADE_PARTS = ['X', 'Y']
+
+/**
  * Parses a shape code such as `CuRuCuRu:P-cg----`.
  * Layers are bottom-to-top, parts run clockwise from the top-right.
  */
@@ -53,19 +60,23 @@ export function parseShapeCode(code: string, forceConfig?: ShapesConfig): ParseR
   }
 
   const candidates = forceConfig ? [forceConfig] : SHAPES_CONFIGS
-  let lastError = '알 수 없는 도형 코드입니다'
+  let error: string | null = null
 
   for (const config of candidates) {
-    if (expectedLength !== config.numPartsPerLayer * 2) {
-      lastError = `레이어당 ${expectedLength / 2}개 파트는 지원되지 않습니다 (quad=4, hex=6)`
-      continue
-    }
+    // A config with the wrong part count is simply not this code's config; only
+    // report that if no config fits, so a genuine "unknown part" error from the
+    // config that *did* fit isn't buried under a misleading length complaint.
+    if (expectedLength !== config.numPartsPerLayer * 2) continue
     const attempt = parseWithConfig(layerCodes, config)
     if (attempt.ok) return attempt
-    lastError = attempt.error
+    error ??= attempt.error
   }
 
-  return { ok: false, error: lastError }
+  return {
+    ok: false,
+    error:
+      error ?? `레이어당 ${expectedLength / 2}개 파트는 지원되지 않습니다 (quad=4, hex=6)`,
+  }
 }
 
 function parseWithConfig(layerCodes: string[], config: ShapesConfig): ParseResult {
@@ -91,6 +102,12 @@ function parseWithConfig(layerCodes: string[], config: ShapesConfig): ParseResul
 
       const type = config.partsByCode[typeChar]
       if (!type) {
+        if (TRADE_PARTS.includes(typeChar)) {
+          return {
+            ok: false,
+            error: `${typeChar}는 무역소에서 받는 도형이라 기계로 만들 수 없습니다`,
+          }
+        }
         return { ok: false, error: `유효하지 않은 도형 문자: ${typeChar}` }
       }
 

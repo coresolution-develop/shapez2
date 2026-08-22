@@ -24,8 +24,13 @@ import { ProgressPanel } from '@/features/reverse-engineer/components/progress-p
 import { ThroughputPanel } from '@/features/reverse-engineer/components/throughput-panel'
 import { shareUrl, useSessionState } from '@/features/reverse-engineer/utils/session-state'
 import { useShapeHistory } from '@/features/reverse-engineer/utils/shape-history'
-import { SCENARIO_NAMES_KO } from '@/lib/shapez/namesKo'
-import { PROGRESSION, allUnlocks, unlocksFor } from '@/lib/shapez/progression'
+import {
+  PROGRESSION,
+  SCENARIO_KEYS,
+  allUnlocks,
+  scenarioNameKo,
+  unlocksFor,
+} from '@/lib/shapez/progression'
 import type { ScenarioKey } from '@/lib/shapez/progression'
 import { parseShapeCode } from '@/lib/shapez/shapeCode'
 import { solveShape } from '@/lib/shapez/solver'
@@ -34,11 +39,8 @@ import type { SpeedTier, StackerVariant } from '@/lib/shapez/throughput'
 import { COLOR_SKINS } from '@/lib/shapez/types'
 import type { ColorSkinId } from '@/lib/shapez/types'
 
-/** The classic mode's scenarios. 제조 has no data yet, so it isn't offered. */
-const SCENARIOS: ScenarioKey[] = ['default', 'hard', 'hexagonal', 'insane']
-
 const scenarioLabel = (key: ScenarioKey) =>
-  `${SCENARIO_NAMES_KO[key] ?? key} · 최대 ${PROGRESSION[key]?.maxShapeLayers ?? 4}레이어`
+  `${scenarioNameKo(key)} · 최대 ${PROGRESSION[key]?.maxShapeLayers ?? 4}레이어`
 
 export function ReverseEngineerView() {
   const { state, update, hydrated } = useSessionState()
@@ -156,7 +158,7 @@ export function ReverseEngineerView() {
                     <SelectValue>{(value: ScenarioKey) => scenarioLabel(value)}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {SCENARIOS.map((value) => (
+                    {SCENARIO_KEYS.map((value) => (
                       <SelectItem key={value} value={value}>
                         {scenarioLabel(value)}
                       </SelectItem>

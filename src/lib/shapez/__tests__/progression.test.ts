@@ -16,23 +16,23 @@ function progressAt(milestone: number, sideUpgrades: string[] = []) {
 
 describe('progression', () => {
   it('unlocks buildings in the order the game does', () => {
-    expect(progressAt(1).operations).toEqual(new Set(['hcut', 'r90cw']))
-    expect(progressAt(2).operations.has('stack')).toBe(true)
-    expect(progressAt(4).operations.has('paint')).toBe(false)
-    expect(progressAt(5).operations.has('paint')).toBe(true)
-    expect(progressAt(6).operations.has('pin')).toBe(false)
-    expect(progressAt(7).operations.has('pin')).toBe(true)
-    expect(progressAt(12).operations.has('crystal')).toBe(true)
+    // 인증 hands over the starter kit, 결합기 included
+    expect(progressAt(1).operations).toEqual(new Set(['hcut', 'r90cw', 'stack']))
+    expect(progressAt(1).operations.has('paint')).toBe(false)
+    expect(progressAt(2).operations.has('paint')).toBe(true)
+    expect(progressAt(3).operations.has('pin')).toBe(false)
+    expect(progressAt(4).operations.has('pin')).toBe(true)
+    expect(progressAt(7).operations.has('crystal')).toBe(true)
 
-    // side upgrades are bought separately, never handed out by a milestone
-    expect(progressAt(12).operations.has('cut')).toBe(false)
-    expect(progressAt(12).operations.has('swap')).toBe(false)
-    expect(progressAt(1, ['RNFullCutter']).operations.has('cut')).toBe(true)
+    // shop items are bought separately, never handed out by a milestone
+    expect(progressAt(13).operations.has('cut')).toBe(false)
+    expect(progressAt(13).operations.has('swap')).toBe(false)
+    expect(progressAt(1, ['CBCutting_FullCutter']).operations.has('cut')).toBe(true)
   })
 
   it('gates secondary colours behind the mixer', () => {
-    expect(progressAt(5).colors).toEqual(new Set(['r', 'g', 'b']))
-    expect(progressAt(8).colors).toEqual(new Set(['r', 'g', 'b', 'c', 'm', 'y', 'w']))
+    expect(progressAt(2).colors).toEqual(new Set(['r', 'g', 'b']))
+    expect(progressAt(5).colors).toEqual(new Set(['r', 'g', 'b', 'c', 'm', 'y', 'w']))
   })
 
   it('never uses a building the player has not unlocked', () => {
@@ -41,7 +41,7 @@ describe('progression', () => {
       .slice(0, 200)
       .map((preset) => preset.code)
 
-    for (const milestone of [1, 2, 5, 7, 12]) {
+    for (const milestone of [1, 2, 4, 5, 7]) {
       const unlocks = progressAt(milestone)
       for (const code of codes) {
         const parsed = parseShapeCode(code, QUAD_CONFIG)
@@ -67,18 +67,18 @@ describe('progression', () => {
     if (!parsed.ok) throw new Error(parsed.error)
 
     const early = solveShape(parsed.shape, config, {
-      unlocks: progressAt(4),
+      unlocks: progressAt(1),
       scenario: 'default',
     })
     expect(early.ok).toBe(false)
     if (!early.ok) {
       expect(early.error).toContain('해금')
       expect(early.hint).toContain('색칠기')
-      expect(early.hint).toContain('마일스톤 5')
+      expect(early.hint).toContain('마일스톤 2')
     }
 
     const later = solveShape(parsed.shape, config, {
-      unlocks: progressAt(5),
+      unlocks: progressAt(2),
       scenario: 'default',
     })
     expect(later.ok).toBe(true)
@@ -89,7 +89,7 @@ describe('progression', () => {
     if (!parsed.ok) throw new Error(parsed.error)
 
     const result = solveShape(parsed.shape, config, {
-      unlocks: progressAt(5),
+      unlocks: progressAt(2),
       scenario: 'default',
     })
     expect(result.ok).toBe(false)
@@ -108,7 +108,7 @@ describe('progression', () => {
         return solveShape(parsed.shape, config, { unlocks, scenario: 'default' }).ok
       }).length
 
-    const early = solvedAt(progressAt(2))
+    const early = solvedAt(progressAt(1))
     const full = solvedAt(allUnlocks())
     expect(early).toBeGreaterThan(0)
     expect(early).toBeLessThan(full)
@@ -128,5 +128,43 @@ describe('progression', () => {
     for (const building of Object.values(OPERATION_BUILDINGS)) {
       expect(known.has(building.variant), building.variant).toBe(true)
     }
+  })
+})
+
+/**
+ * 제조 (Converter) is a trading mode: the milestones ask for gem shapes that
+ * come out of a trade station, alongside the ordinary shapes you feed it. The
+ * app can plan the second kind and has to say so plainly about the first.
+ */
+describe('제조 (Converter) mode', () => {
+  it('reads the trade tiers as milestones with their delivery shapes', () => {
+    const converter = PROGRESSION.converter
+    expect(converter.milestones).toHaveLength(11)
+    expect(converter.milestones[1].titleKo).toBe('루비 및 기차')
+
+    const ruby = converter.milestones.find((m) => m.id === 'ConverterMilestoneTier2')
+    expect(ruby?.goals.map((goal) => goal.shape)).toContain('RuRuRuRu:CuCuCuCu')
+  })
+
+  it('plans the shapes you feed a trade station', () => {
+    const feed = parseShapeCode('RuRuRuRu:CuCuCuCu', QUAD_CONFIG)
+    if (!feed.ok) throw new Error(feed.error)
+    expect(solveShape(feed.shape, config, { unlocks: allUnlocks() }).ok).toBe(true)
+  })
+
+  it('says a traded gem shape cannot be built rather than calling it invalid', () => {
+    const gem = parseShapeCode('XuXuXuXu')
+    expect(gem.ok).toBe(false)
+    if (!gem.ok) {
+      expect(gem.error).toContain('무역소')
+      // the old message blamed the layer width, which was never the problem
+      expect(gem.error).not.toContain('레이어당')
+    }
+  })
+
+  it('keeps hex codes reporting a real reason too', () => {
+    const bad = parseShapeCode('HuHuHuHuHuZu')
+    expect(bad.ok).toBe(false)
+    if (!bad.ok) expect(bad.error).toContain('Z')
   })
 })

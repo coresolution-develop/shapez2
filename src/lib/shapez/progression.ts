@@ -5,35 +5,74 @@
  * path, and side upgrades are bought separately with research points. A plan is
  * only useful if it sticks to what you already have.
  */
-import { buildingNameKo, milestoneNameKo } from './namesKo'
+import { buildingNameKo } from './namesKo'
 import type { OperationId } from './operations'
 import progressionData from './progression.json'
 import type { ColorCode } from './types'
+
+/** A shape a milestone asks you to deliver, and how many of it. */
+export interface Goal {
+  shape: string
+  amount: number
+}
 
 export interface Milestone {
   index: number
   id: string
   title: string
+  /** The game's own Korean name; empty only if the game has none. */
+  titleKo: string
   unlocks: string[]
+  goals: Goal[]
 }
 
 export interface SideUpgrade {
   id: string
   title: string
+  titleKo: string
   unlocks: string[]
   cost: number | null
   requires: string[]
 }
 
 export interface ScenarioProgression {
+  id: string
+  title: string
+  titleKo: string
+  gameMode: string
+  gameModeTitle: string
+  gameModeTitleKo: string
   maxShapeLayers: number
   milestones: Milestone[]
   sideUpgrades: SideUpgrade[]
 }
 
-export const PROGRESSION = progressionData as unknown as Record<string, ScenarioProgression>
+const DATA = progressionData as unknown as {
+  gameVersion: string
+  scenarios: Record<string, ScenarioProgression>
+}
+
+/** The game build this data was read out of, for the "is this current?" note. */
+export const GAME_VERSION = DATA.gameVersion
+
+export const PROGRESSION = DATA.scenarios
 
 export type ScenarioKey = keyof typeof PROGRESSION & string
+
+export const SCENARIO_KEYS = Object.keys(PROGRESSION) as ScenarioKey[]
+
+/** "제조 · 일반" — the two names the game puts on its mode-select screen. */
+export function scenarioNameKo(key: ScenarioKey): string {
+  const scenario = PROGRESSION[key]
+  if (!scenario) return key
+  return `${scenario.gameModeTitleKo || scenario.gameModeTitle} · ${
+    scenario.titleKo || scenario.title
+  }`
+}
+
+export function milestoneNameKo(milestone: Milestone): string {
+  return milestone.titleKo || milestone.title
+}
 
 /** Which building each operation needs, and what to call it in Korean. */
 export const OPERATION_BUILDINGS: Record<OperationId, { variant: string; nameKo: string }> = {
@@ -140,12 +179,12 @@ export function sideUpgradeForVariant(scenario: ScenarioKey, variant: string): S
 export function unlockHint(scenario: ScenarioKey, variant: string, nameKo: string): string {
   const milestone = milestoneForVariant(scenario, variant)
   if (milestone) {
-    return `${nameKo} (마일스톤 ${milestone.index} · ${milestoneNameKo(milestone.id, milestone.title)})`
+    return `${nameKo} (마일스톤 ${milestone.index} · ${milestoneNameKo(milestone)})`
   }
   const upgrade = sideUpgradeForVariant(scenario, variant)
   if (upgrade) {
     const cost = upgrade.cost === null ? '' : ` · 연구포인트 ${upgrade.cost}`
-    return `${nameKo} (사이드 업그레이드 「${upgrade.title}」${cost})`
+    return `${nameKo} (상점 「${upgrade.titleKo || upgrade.title}」${cost})`
   }
   return nameKo
 }

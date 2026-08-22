@@ -10,12 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { milestoneNameKo } from '@/lib/shapez/namesKo'
-import presets from '@/lib/shapez/presets.json'
-import { PROGRESSION, unlocksFor } from '@/lib/shapez/progression'
+import { GAME_VERSION, PROGRESSION, milestoneNameKo, unlocksFor } from '@/lib/shapez/progression'
 import type { ScenarioKey } from '@/lib/shapez/progression'
 import { parseShapeCode } from '@/lib/shapez/shapeCode'
-import { HEX_CONFIG, QUAD_CONFIG } from '@/lib/shapez/types'
 import type { ColorSkinId } from '@/lib/shapez/types'
 
 interface ProgressPanelProps {
@@ -41,16 +38,7 @@ export function ProgressPanel({
   const limited = milestone > 0
   const unlocks = limited ? unlocksFor({ scenario: scenarioKey, milestone, sideUpgrades }) : null
 
-  const goals = (presets as { scenario: string; category: string; label: string; code: string }[])
-    .filter(
-      (preset) =>
-        preset.scenario === scenarioKey &&
-        preset.category === 'milestone' &&
-        preset.label.startsWith(`M${milestone} `),
-    )
-    .slice(0, 8)
-
-  const shapesConfig = scenarioKey === 'hexagonal' ? HEX_CONFIG : QUAD_CONFIG
+  const goals = scenario.milestones.find((entry) => entry.index === milestone)?.goals ?? []
 
   return (
     <section className="space-y-4 rounded-lg border bg-card p-4">
@@ -67,9 +55,7 @@ export function ProgressPanel({
                   ? '제한 없음 (모든 건물 사용)'
                   : (() => {
                       const entry = scenario.milestones.find((m) => m.index === Number(value))
-                      return `마일스톤 ${value} 완료 · ${
-                        entry ? milestoneNameKo(entry.id, entry.title) : ''
-                      }`
+                      return `마일스톤 ${value} 완료 · ${entry ? milestoneNameKo(entry) : ''}`
                     })()
               }
             </SelectValue>
@@ -78,7 +64,7 @@ export function ProgressPanel({
             <SelectItem value="0">제한 없음 (모든 건물 사용)</SelectItem>
             {scenario.milestones.map((entry) => (
               <SelectItem key={entry.index} value={String(entry.index)}>
-                마일스톤 {entry.index} 완료 · {milestoneNameKo(entry.id, entry.title)}
+                마일스톤 {entry.index} 완료 · {milestoneNameKo(entry)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -87,9 +73,8 @@ export function ProgressPanel({
           설정하면 그 시점에 지을 수 있는 건물로만 가공 순서를 짭니다.
         </p>
         <p className="text-xs text-muted-foreground">
-          해금 데이터는 게임 빌드 1058 기준이라 현재 버전과 다를 수 있고,{' '}
-          <strong className="font-medium text-foreground">제조 모드는 아직 지원하지 않습니다</strong>.
-          맞지 않으면 「제한 없음」으로 두세요.
+          해금 순서는 게임 <strong className="font-medium text-foreground">{GAME_VERSION}</strong>{' '}
+          설치본에서 그대로 읽어온 값입니다.
         </p>
       </div>
 
@@ -120,7 +105,7 @@ export function ProgressPanel({
                           : 'bg-background hover:bg-accent'
                       }`}
                     >
-                      {upgrade.title}
+                      {upgrade.titleKo || upgrade.title}
                       {upgrade.cost === null ? '' : ` · ${upgrade.cost}RP`}
                     </button>
                   </li>
@@ -143,22 +128,34 @@ export function ProgressPanel({
               <p className="text-xs font-medium text-muted-foreground">
                 마일스톤 {milestone} 납품 도형
               </p>
+              {goals.some((goal) => !parseShapeCode(goal.shape).ok) ? (
+                <p className="text-xs text-muted-foreground">
+                  회색으로 뜨는 것은 무역소에서 교환해 받는 도형이라 기계로 만들 수 없습니다. 나머지
+                  도형을 눌러 가공 순서를 보세요.
+                </p>
+              ) : null}
               <ul className="flex flex-wrap gap-2">
                 {goals.map((goal) => {
-                  const parsed = parseShapeCode(goal.code, shapesConfig)
+                  const parsed = parseShapeCode(goal.shape)
                   return (
-                    <li key={goal.code}>
+                    <li key={goal.shape}>
                       <button
                         type="button"
-                        onClick={() => onSelectShape(goal.code)}
-                        className="flex items-center gap-1.5 rounded-md border bg-background p-1.5 transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                        title={goal.code}
+                        onClick={() => onSelectShape(goal.shape)}
+                        className={`flex items-center gap-1.5 rounded-md border p-1.5 transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none ${
+                          parsed.ok ? 'bg-background' : 'bg-muted/50'
+                        }`}
+                        title={
+                          parsed.ok
+                            ? `${goal.shape} · ${goal.amount.toLocaleString('ko-KR')}개`
+                            : parsed.error
+                        }
                       >
                         {parsed.ok ? (
-                          <ShapeView shape={parsed.shape} size={32} skin={skin} title={goal.code} />
+                          <ShapeView shape={parsed.shape} size={32} skin={skin} title={goal.shape} />
                         ) : null}
                         <code className="font-mono text-[11px] text-muted-foreground">
-                          {goal.code}
+                          {goal.shape}
                         </code>
                       </button>
                     </li>

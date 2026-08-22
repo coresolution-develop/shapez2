@@ -13,7 +13,7 @@
     "gen:vectors": "python3 scripts/genVectors.py > src/lib/shapez/__tests__/opVectors.json",
     "gen:buildings": "python3 scripts/extractBuildings.py > src/lib/shapez/buildings.json",
     "gen:blueprints": "python3 scripts/genBlueprintVectors.py > src/lib/shapez/__tests__/blueprintVectors.json",
-    "gen:progression": "python3 scripts/extractProgression.py > src/lib/shapez/progression.json",
+    "gen:progression": "python3 scripts/extractScenarios.py > src/lib/shapez/progression.json",
     "gen:names": "python3 scripts/extractKoreanNames.py > src/lib/shapez/namesKo.json"
   },
   "dependencies": {

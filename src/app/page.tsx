@@ -1,5 +1,6 @@
 import { ThemeToggle } from '@/components/theme-toggle'
 import { ReverseEngineerView } from '@/features/reverse-engineer/components/reverse-engineer-view'
+import { GAME_VERSION } from '@/lib/shapez/progression'
 
 export default function Home() {
   return (
@@ -18,8 +19,8 @@ export default function Home() {
       <ReverseEngineerView />
 
       <footer className="mt-10 border-t pt-6 text-xs text-muted-foreground">
-        도형 규칙·해금 순서·프리셋 도형은 공식 <code className="font-mono">shapez2</code> 파이썬
-        패키지의 게임 데이터를 기준으로 합니다.
+        도형 규칙과 프리셋 도형은 공식 <code className="font-mono">shapez2</code> 파이썬 패키지를,
+        시나리오 해금 순서와 한국어 명칭은 게임 {GAME_VERSION} 설치본을 기준으로 합니다.
       </footer>
     </main>
   )

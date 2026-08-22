@@ -1,1 +1,3084 @@
-{"default":{"maxShapeLayers":4,"milestones":[{"index":1,"id":"RNInitial","title":"Rotate & Cut","unlocks":["BeltDefaultVariant","ExtractorDefaultVariant","CutterHalfVariant","RotatorOneQuadVariant","BeltPortSenderVariant","BeltPortReceiverVariant","Merger2To1Variant","Merger3To1Variant","MergerTShapeVariant","Splitter1To2Variant","Splitter1To3Variant","SplitterTShapeVariant"]},{"index":2,"id":"RNStackerLayer2","title":"Stacker & 2nd Floor","unlocks":["StackerStraightVariant","Lift1LayerVariant"]},{"index":3,"id":"RNBlueprints","title":"Blueprints","unlocks":[]},{"index":4,"id":"RNIslandBuilding","title":"Space Platforms","unlocks":[]},{"index":5,"id":"RNFluids","title":"Fluids & Painting","unlocks":["PainterDefaultVariant","PumpDefaultVariant","PipeDefaultVariant","Pipe1LayerVariant","FluidPortSenderVariant","FluidPortReceiverVariant"]},{"index":6,"id":"RNTrains","title":"Trains","unlocks":[]},{"index":7,"id":"RNPinPusher","title":"Pin Pusher","unlocks":["PinPusherDefaultVariant"]},{"index":8,"id":"RNColorMixing","title":"Color Mixing","unlocks":["MixerDefaultVariant"]},{"index":9,"id":"RNIslandLayer3","title":"3rd Platform Floor","unlocks":[]},{"index":10,"id":"RNCrystals","title":"Crystals","unlocks":["CrystalGeneratorDefaultVariant"]},{"index":11,"id":"RNTrainHubDelivery","title":"Train Delivery","unlocks":[]},{"index":12,"id":"RNEndOfGame","title":"Final Qualification","unlocks":[]}],"sideUpgrades":[{"id":"RNFullCutter","title":"Cutter","unlocks":["CutterDefaultVariant"],"cost":6,"requires":[]},{"id":"RNHalvesSwapper","title":"Swapper","unlocks":["HalvesSwapperDefaultVariant"],"cost":12,"requires":[]},{"id":"RNTrash","title":"Trash","unlocks":["TrashDefaultVariant"],"cost":4,"requires":[]},{"id":"RNRotatorCCW","title":"90° CCW Rotator","unlocks":["RotatorOneQuadCCWVariant"],"cost":4,"requires":[]},{"id":"RNRotatorHalf","title":"180° Rotator","unlocks":["RotatorHalfVariant"],"cost":6,"requires":[]},{"id":"RNBentStacker","title":"Stacker (Bent)","unlocks":["StackerDefaultVariant"],"cost":6,"requires":[]},{"id":"RNLabel","title":"Label","unlocks":["LabelDefaultVariant"],"cost":4,"requires":[]},{"id":"RNOverflowSplitter","title":"Overflow Splitter","unlocks":["SplitterOverflowVariant"],"cost":20,"requires":[]},{"id":"RNLayer3","title":"3rd Building Floor","unlocks":["Lift2LayerVariant","Pipe2LayerVariant"],"cost":50,"requires":[]},{"id":"RNSandboxTools","title":"Sandbox Tools","unlocks":["SandboxFluidProducerDefaultVariant","SandboxItemProducerDefaultVariant"],"cost":50000,"requires":[]},{"id":"RNWireBasics","title":"Wire Basics","unlocks":["WireDefaultVariant","ConstantSignalDefaultVariant","BeltFilterDefaultVariant","BeltReaderDefaultVariant","PipeGateDefaultVariant","DisplayDefaultVariant","ButtonDefaultVariant","WireBridgeVariant","WireTransmitterSenderVariant","WireTransmitterReceiverVariant"],"cost":15,"requires":[]},{"id":"RNWireLogicGates","title":"Logic Gates","unlocks":["LogicGateAndVariant","LogicGateOrVariant","LogicGateIfVariant","LogicGateXOrVariant","LogicGateNotVariant","LogicGateCompareVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireVirtualProcessing","title":"Simulated Buildings","unlocks":["VirtualRotatorDefaultVariant","VirtualAnalyzerDefaultVariant","VirtualUnstackerDefaultVariant","VirtualStackerDefaultVariant","VirtualHalfCutterDefaultVariant","VirtualPainterDefaultVariant","VirtualPinPusherDefaultVariant","VirtualCrystalGeneratorDefaultVariant","VirtualHalvesSwapperDefaultVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireTransmission","title":"Global Wire Transmission","unlocks":["ControlledSignalReceiverVariant","ControlledSignalTransmitterVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireOperatorReceiver","title":"Operator Shape Receiver","unlocks":["WireGlobalTransmitterReceiverVariant"],"cost":8,"requires":["RNWireBasics"]},{"id":"RNFluidTank","title":"Fluid Tank","unlocks":["FluidStorageDefaultVariant"],"cost":10,"requires":[]}]},"hard":{"maxShapeLayers":4,"milestones":[{"index":1,"id":"RNInitial","title":"Rotate & Cut","unlocks":["BeltDefaultVariant","ExtractorDefaultVariant","CutterHalfVariant","RotatorOneQuadVariant","BeltPortSenderVariant","BeltPortReceiverVariant","Merger2To1Variant","Merger3To1Variant","MergerTShapeVariant","Splitter1To2Variant","Splitter1To3Variant","SplitterTShapeVariant"]},{"index":2,"id":"RNStackerLayer2","title":"Stacker & 2nd Floor","unlocks":["StackerStraightVariant","Lift1LayerVariant"]},{"index":3,"id":"RNBlueprints","title":"Blueprints","unlocks":[]},{"index":4,"id":"RNIslandBuilding","title":"Space Platforms","unlocks":[]},{"index":5,"id":"RNFluids","title":"Fluids & Painting","unlocks":["PainterDefaultVariant","PumpDefaultVariant","PipeDefaultVariant","Pipe1LayerVariant","FluidPortSenderVariant","FluidPortReceiverVariant"]},{"index":6,"id":"RNTrains","title":"Trains","unlocks":[]},{"index":7,"id":"RNColorMixing","title":"Color Mixing","unlocks":["MixerDefaultVariant"]},{"index":8,"id":"RNPinPusher","title":"Pin Pusher","unlocks":["PinPusherDefaultVariant"]},{"index":9,"id":"RNIslandLayer3","title":"3rd Platform Floor","unlocks":[]},{"index":10,"id":"RNCrystals","title":"Crystals","unlocks":["CrystalGeneratorDefaultVariant"]},{"index":11,"id":"RNTrainHubDelivery","title":"Train Delivery","unlocks":[]},{"index":12,"id":"RNEndOfGame","title":"Final Qualification","unlocks":[]}],"sideUpgrades":[{"id":"RNFullCutter","title":"Cutter","unlocks":["CutterDefaultVariant"],"cost":6,"requires":[]},{"id":"RNHalvesSwapper","title":"Swapper","unlocks":["HalvesSwapperDefaultVariant"],"cost":12,"requires":[]},{"id":"RNTrash","title":"Trash","unlocks":["TrashDefaultVariant"],"cost":4,"requires":[]},{"id":"RNRotatorCCW","title":"90° CCW Rotator","unlocks":["RotatorOneQuadCCWVariant"],"cost":4,"requires":[]},{"id":"RNRotatorHalf","title":"180° Rotator","unlocks":["RotatorHalfVariant"],"cost":6,"requires":[]},{"id":"RNBentStacker","title":"Stacker (Bent)","unlocks":["StackerDefaultVariant"],"cost":6,"requires":[]},{"id":"RNLabel","title":"Label","unlocks":["LabelDefaultVariant"],"cost":4,"requires":[]},{"id":"RNOverflowSplitter","title":"Overflow Splitter","unlocks":["SplitterOverflowVariant"],"cost":20,"requires":[]},{"id":"RNLayer3","title":"3rd Building Floor","unlocks":["Lift2LayerVariant","Pipe2LayerVariant"],"cost":50,"requires":[]},{"id":"RNSandboxTools","title":"Sandbox Tools","unlocks":["SandboxFluidProducerDefaultVariant","SandboxItemProducerDefaultVariant"],"cost":50000,"requires":[]},{"id":"RNWireBasics","title":"Wire Basics","unlocks":["WireDefaultVariant","ConstantSignalDefaultVariant","BeltFilterDefaultVariant","BeltReaderDefaultVariant","PipeGateDefaultVariant","DisplayDefaultVariant","ButtonDefaultVariant","WireBridgeVariant","WireTransmitterSenderVariant","WireTransmitterReceiverVariant"],"cost":15,"requires":[]},{"id":"RNWireLogicGates","title":"Logic Gates","unlocks":["LogicGateAndVariant","LogicGateOrVariant","LogicGateIfVariant","LogicGateXOrVariant","LogicGateNotVariant","LogicGateCompareVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireVirtualProcessing","title":"Simulated Buildings","unlocks":["VirtualRotatorDefaultVariant","VirtualAnalyzerDefaultVariant","VirtualUnstackerDefaultVariant","VirtualStackerDefaultVariant","VirtualHalfCutterDefaultVariant","VirtualPainterDefaultVariant","VirtualPinPusherDefaultVariant","VirtualCrystalGeneratorDefaultVariant","VirtualHalvesSwapperDefaultVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireTransmission","title":"Global Wire Transmission","unlocks":["ControlledSignalReceiverVariant","ControlledSignalTransmitterVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireOperatorReceiver","title":"Operator Shape Receiver","unlocks":["WireGlobalTransmitterReceiverVariant"],"cost":8,"requires":["RNWireBasics"]},{"id":"RNFluidTank","title":"Fluid Tank","unlocks":["FluidStorageDefaultVariant"],"cost":10,"requires":[]}]},"insane":{"maxShapeLayers":5,"milestones":[{"index":1,"id":"RNInitial","title":"Rotate & Cut","unlocks":["BeltDefaultVariant","ExtractorDefaultVariant","CutterHalfVariant","RotatorOneQuadVariant","BeltPortSenderVariant","BeltPortReceiverVariant","Merger2To1Variant","Merger3To1Variant","MergerTShapeVariant","Splitter1To2Variant","Splitter1To3Variant","SplitterTShapeVariant","StackerStraightVariant","Lift1LayerVariant"]},{"index":2,"id":"RNFluids","title":"Fluids & Painting","unlocks":["PainterDefaultVariant","PumpDefaultVariant","PipeDefaultVariant","Pipe1LayerVariant","FluidPortSenderVariant","FluidPortReceiverVariant"]},{"index":3,"id":"RNTrains","title":"Trains","unlocks":[]},{"index":4,"id":"RNColorMixing","title":"Color Mixing","unlocks":["MixerDefaultVariant"]},{"index":5,"id":"RNPinPusher","title":"Pin Pusher","unlocks":["PinPusherDefaultVariant"]},{"index":6,"id":"RNIslandLayer3","title":"3rd Platform Floor","unlocks":[]},{"index":7,"id":"RNCrystals","title":"Crystals","unlocks":["CrystalGeneratorDefaultVariant"]},{"index":8,"id":"RNTrainHubDelivery","title":"Train Delivery","unlocks":[]},{"index":9,"id":"RNEndOfGame","title":"Final Qualification","unlocks":[]}],"sideUpgrades":[{"id":"RNFullCutter","title":"Cutter","unlocks":["CutterDefaultVariant"],"cost":6,"requires":[]},{"id":"RNHalvesSwapper","title":"Swapper","unlocks":["HalvesSwapperDefaultVariant"],"cost":12,"requires":[]},{"id":"RNTrash","title":"Trash","unlocks":["TrashDefaultVariant"],"cost":4,"requires":[]},{"id":"RNRotatorCCW","title":"90° CCW Rotator","unlocks":["RotatorOneQuadCCWVariant"],"cost":4,"requires":[]},{"id":"RNRotatorHalf","title":"180° Rotator","unlocks":["RotatorHalfVariant"],"cost":6,"requires":[]},{"id":"RNBentStacker","title":"Stacker (Bent)","unlocks":["StackerDefaultVariant"],"cost":6,"requires":[]},{"id":"RNLabel","title":"Label","unlocks":["LabelDefaultVariant"],"cost":4,"requires":[]},{"id":"RNOverflowSplitter","title":"Overflow Splitter","unlocks":["SplitterOverflowVariant"],"cost":20,"requires":[]},{"id":"RNLayer3","title":"3rd Building Floor","unlocks":["Lift2LayerVariant","Pipe2LayerVariant"],"cost":50,"requires":[]},{"id":"RNSandboxTools","title":"Sandbox Tools","unlocks":["SandboxFluidProducerDefaultVariant","SandboxItemProducerDefaultVariant"],"cost":50000,"requires":[]},{"id":"RNWireBasics","title":"Wire Basics","unlocks":["WireDefaultVariant","ConstantSignalDefaultVariant","BeltFilterDefaultVariant","BeltReaderDefaultVariant","PipeGateDefaultVariant","DisplayDefaultVariant","ButtonDefaultVariant","WireBridgeVariant","WireTransmitterSenderVariant","WireTransmitterReceiverVariant"],"cost":15,"requires":[]},{"id":"RNWireLogicGates","title":"Logic Gates","unlocks":["LogicGateAndVariant","LogicGateOrVariant","LogicGateIfVariant","LogicGateXOrVariant","LogicGateNotVariant","LogicGateCompareVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireVirtualProcessing","title":"Simulated Buildings","unlocks":["VirtualRotatorDefaultVariant","VirtualAnalyzerDefaultVariant","VirtualUnstackerDefaultVariant","VirtualStackerDefaultVariant","VirtualHalfCutterDefaultVariant","VirtualPainterDefaultVariant","VirtualPinPusherDefaultVariant","VirtualCrystalGeneratorDefaultVariant","VirtualHalvesSwapperDefaultVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireTransmission","title":"Global Wire Transmission","unlocks":["ControlledSignalReceiverVariant","ControlledSignalTransmitterVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireOperatorReceiver","title":"Operator Shape Receiver","unlocks":["WireGlobalTransmitterReceiverVariant"],"cost":8,"requires":["RNWireBasics"]},{"id":"RNFluidTank","title":"Fluid Tank","unlocks":["FluidStorageDefaultVariant"],"cost":10,"requires":[]}]},"hexagonal":{"maxShapeLayers":4,"milestones":[{"index":1,"id":"RNInitial","title":"Rotate & Cut","unlocks":["BeltDefaultVariant","ExtractorDefaultVariant","CutterDefaultVariant","TrashDefaultVariant","RotatorOneQuadVariant","BeltPortSenderVariant","BeltPortReceiverVariant","Merger2To1Variant","Merger3To1Variant","MergerTShapeVariant","Splitter1To2Variant","Splitter1To3Variant","SplitterTShapeVariant"]},{"index":2,"id":"RNStackerLayer2","title":"Stacker & 2nd Floor","unlocks":["StackerStraightVariant","Lift1LayerVariant"]},{"index":3,"id":"RNIslandBuilding","title":"Space Platforms","unlocks":[]},{"index":4,"id":"RNFluids","title":"Fluids & Painting","unlocks":["PainterDefaultVariant","PumpDefaultVariant","PipeDefaultVariant","Pipe1LayerVariant","FluidPortSenderVariant","FluidPortReceiverVariant"]},{"index":5,"id":"RNTrains","title":"Trains","unlocks":[]},{"index":6,"id":"RNColorMixing","title":"Color Mixing","unlocks":["MixerDefaultVariant"]},{"index":7,"id":"RNPinPusher","title":"Pin Pusher","unlocks":["PinPusherDefaultVariant"]},{"index":8,"id":"RNIslandLayer3","title":"3rd Platform Floor","unlocks":[]},{"index":9,"id":"RNCrystals","title":"Crystals","unlocks":["CrystalGeneratorDefaultVariant"]},{"index":10,"id":"RNTrainHubDelivery","title":"Train Delivery","unlocks":[]},{"index":11,"id":"RNEndOfGame","title":"Final Qualification","unlocks":[]}],"sideUpgrades":[{"id":"RNHalfCutter","title":"Half Destroyer","unlocks":["CutterHalfVariant"],"cost":6,"requires":[]},{"id":"RNHalvesSwapper","title":"Swapper","unlocks":["HalvesSwapperDefaultVariant"],"cost":12,"requires":[]},{"id":"RNRotatorCCW","title":"90° CCW Rotator","unlocks":["RotatorOneQuadCCWVariant"],"cost":4,"requires":[]},{"id":"RNRotatorHalf","title":"180° Rotator","unlocks":["RotatorHalfVariant"],"cost":6,"requires":[]},{"id":"RNBentStacker","title":"Stacker (Bent)","unlocks":["StackerDefaultVariant"],"cost":6,"requires":[]},{"id":"RNLabel","title":"Label","unlocks":["LabelDefaultVariant"],"cost":4,"requires":[]},{"id":"RNOverflowSplitter","title":"Overflow Splitter","unlocks":["SplitterOverflowVariant"],"cost":20,"requires":[]},{"id":"RNLayer3","title":"3rd Building Floor","unlocks":["Lift2LayerVariant","Pipe2LayerVariant"],"cost":50,"requires":[]},{"id":"RNSandboxTools","title":"Sandbox Tools","unlocks":["SandboxFluidProducerDefaultVariant","SandboxItemProducerDefaultVariant"],"cost":50000,"requires":[]},{"id":"RNWireBasics","title":"Wire Basics","unlocks":["WireDefaultVariant","ConstantSignalDefaultVariant","BeltFilterDefaultVariant","BeltReaderDefaultVariant","PipeGateDefaultVariant","DisplayDefaultVariant","ButtonDefaultVariant","WireBridgeVariant","WireTransmitterSenderVariant","WireTransmitterReceiverVariant"],"cost":15,"requires":[]},{"id":"RNWireLogicGates","title":"Logic Gates","unlocks":["LogicGateAndVariant","LogicGateOrVariant","LogicGateIfVariant","LogicGateXOrVariant","LogicGateNotVariant","LogicGateCompareVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireVirtualProcessing","title":"Simulated Buildings","unlocks":["VirtualRotatorDefaultVariant","VirtualAnalyzerDefaultVariant","VirtualUnstackerDefaultVariant","VirtualStackerDefaultVariant","VirtualHalfCutterDefaultVariant","VirtualPainterDefaultVariant","VirtualPinPusherDefaultVariant","VirtualCrystalGeneratorDefaultVariant","VirtualHalvesSwapperDefaultVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireTransmission","title":"Global Wire Transmission","unlocks":["ControlledSignalReceiverVariant","ControlledSignalTransmitterVariant"],"cost":10,"requires":["RNWireBasics"]},{"id":"RNWireOperatorReceiver","title":"Operator Shape Receiver","unlocks":["WireGlobalTransmitterReceiverVariant"],"cost":8,"requires":["RNWireBasics"]},{"id":"RNFluidTank","title":"Fluid Tank","unlocks":["FluidStorageDefaultVariant"],"cost":10,"requires":[]}]}}
+{
+ "gameVersion": "1.2.0-rc3",
+ "scenarios": {
+  "default": {
+   "id": "default-scenario",
+   "title": "Regular",
+   "titleKo": "일반",
+   "gameMode": "RegularGameMode",
+   "gameModeTitle": "Classic",
+   "gameModeTitleKo": "클래식",
+   "maxShapeLayers": 4,
+   "milestones": [
+    {
+     "index": 1,
+     "id": "Milestone_Initial",
+     "title": "Certification",
+     "titleKo": "인증",
+     "unlocks": [
+      "BeltDefaultVariant",
+      "Merger2To1Variant",
+      "Merger3To1Variant",
+      "MergerTShapeVariant",
+      "Splitter1To2Variant",
+      "Splitter1To3Variant",
+      "SplitterTShapeVariant",
+      "BeltPortSenderVariant",
+      "BeltPortReceiverVariant",
+      "Lift1LayerVariant",
+      "ExtractorDefaultVariant",
+      "CutterHalfVariant",
+      "RotatorOneQuadVariant",
+      "StackerStraightVariant"
+     ],
+     "goals": []
+    },
+    {
+     "index": 2,
+     "id": "Milestone_FluidPainting",
+     "title": "Fluids & Painting",
+     "titleKo": "유체 및 색칠",
+     "unlocks": [
+      "PumpDefaultVariant",
+      "PipeDefaultVariant",
+      "Pipe1LayerVariant",
+      "Pipe2LayerVariant",
+      "FluidPortSenderVariant",
+      "FluidPortReceiverVariant",
+      "PainterDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "CrCr----",
+       "amount": 1200
+      },
+      {
+       "shape": "CrCrCrCr",
+       "amount": 2000
+      },
+      {
+       "shape": "RbRbRbRb:CrCrCrCr",
+       "amount": 8000
+      },
+      {
+       "shape": "Rb------",
+       "amount": 1200
+      },
+      {
+       "shape": "RbRb----",
+       "amount": 2000
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "id": "Milestone_ShapeTrains",
+     "title": "Trains",
+     "titleKo": "기차",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "RgRgRgRg",
+       "amount": 3000
+      },
+      {
+       "shape": "RuRgRuRg",
+       "amount": 4000
+      },
+      {
+       "shape": "RuRgRuRg:SbSbSbSb",
+       "amount": 14000
+      },
+      {
+       "shape": "SuSuSuSu",
+       "amount": 3000
+      },
+      {
+       "shape": "SbSbSbSb",
+       "amount": 4000
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "id": "Milestone_PinPusher",
+     "title": "Pin Pusher",
+     "titleKo": "핀 누름기",
+     "unlocks": [
+      "PinPusherDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "--Wr--Wr",
+       "amount": 4000
+      },
+      {
+       "shape": "WgWrWgWr",
+       "amount": 5000
+      },
+      {
+       "shape": "RbCbCbCb:RuCuCuCu:WgWrWgWr",
+       "amount": 20000
+      },
+      {
+       "shape": "RbCbCbCb",
+       "amount": 4000
+      },
+      {
+       "shape": "RbCbCbCb:RuCuCuCu",
+       "amount": 5000
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "id": "Milestone_ColorMixing",
+     "title": "Color Mixing",
+     "titleKo": "색상 혼합",
+     "unlocks": [
+      "MixerDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "P-P-P-P-:RbRbRbRb",
+       "amount": 6000
+      },
+      {
+       "shape": "Su----Su:P-----P-:Rb----Rb",
+       "amount": 8000
+      },
+      {
+       "shape": "SuP-P-Su:P-P-P-P-:RbCgCgRb",
+       "amount": 25000
+      },
+      {
+       "shape": "--P-P---:--CgCg--",
+       "amount": 6000
+      },
+      {
+       "shape": "--P-P---:--P-P---:--CgCg--",
+       "amount": 8000
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "id": "Milestone_SpaceFloor3",
+     "title": "3rd Space Level",
+     "titleKo": "3번째 우주 층",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "CcCc----",
+       "amount": 7000
+      },
+      {
+       "shape": "CcCcP-P-:----CcCc",
+       "amount": 10000
+      },
+      {
+       "shape": "CcCcP-P-:WwWwCcCc:----WwWw",
+       "amount": 30000
+      },
+      {
+       "shape": "WyWyWyWy",
+       "amount": 7000
+      },
+      {
+       "shape": "WwWw----",
+       "amount": 10000
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "id": "Milestone_Crystals",
+     "title": "Crystals",
+     "titleKo": "결정체",
+     "unlocks": [
+      "CrystalGeneratorDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "Ry--Ry--",
+       "amount": 9000
+      },
+      {
+       "shape": "RyP-RyP-:--Ru--Ru",
+       "amount": 12000
+      },
+      {
+       "shape": "RyP-RyP-:SwRuSwRu",
+       "amount": 40000
+      },
+      {
+       "shape": "Sb--Sb--",
+       "amount": 9000
+      },
+      {
+       "shape": "Sm--Sm--",
+       "amount": 12000
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "id": "Milestone_VortexDelivery",
+     "title": "Train Vortex Delivery",
+     "titleKo": "기차 소용돌이 전달",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "Rr--Wr--",
+       "amount": 10000
+      },
+      {
+       "shape": "RrcrWrcr",
+       "amount": 12000
+      },
+      {
+       "shape": "RrcrWrcr:CwcwCwcw",
+       "amount": 50000
+      },
+      {
+       "shape": "Cy--Cy--",
+       "amount": 10000
+      },
+      {
+       "shape": "Cw--Cw--",
+       "amount": 12000
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "id": "Milestone_FinalConverters",
+     "title": "Full Clearance",
+     "titleKo": "완전 권한",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "--Rm--Cm",
+       "amount": 6000
+      },
+      {
+       "shape": "--Rw--Cw",
+       "amount": 10000
+      },
+      {
+       "shape": "cwRwcwCw:cwcwcwcw:CcCcCcCc:CcCcCcCc",
+       "amount": 75000
+      },
+      {
+       "shape": "P-P-P-P-:CuCuCuCu:CuCuCuCu",
+       "amount": 6000
+      },
+      {
+       "shape": "P-P-P-P-:CcCcCcCc:CcCcCcCc",
+       "amount": 10000
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "id": "Milestone_PostFinal_Tier0",
+     "title": "Beyond the Vortex",
+     "titleKo": "소용돌이 너머",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "Xr--Xr--",
+       "amount": 7000
+      },
+      {
+       "shape": "XrXbXrXb",
+       "amount": 11000
+      },
+      {
+       "shape": "XrXbXrXb:WbWbWbWb:--Xg--Xg",
+       "amount": 90000
+      },
+      {
+       "shape": "--Xg--Xg",
+       "amount": 7000
+      },
+      {
+       "shape": "WbWbWbWb:--Xg--Xg",
+       "amount": 11000
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "id": "Milestone_PostFinal_Tier1",
+     "title": "Deep Operations",
+     "titleKo": "심층 운영",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "XyXy----",
+       "amount": 8000
+      },
+      {
+       "shape": "XyXyXcXc",
+       "amount": 12000
+      },
+      {
+       "shape": "XyXyXcXc:XmP-XmP-:--Wm--Wm",
+       "amount": 120000
+      },
+      {
+       "shape": "Xm--Xm--",
+       "amount": 8000
+      },
+      {
+       "shape": "XmP-XmP-:--Wm--Wm",
+       "amount": 12000
+      }
+     ]
+    },
+    {
+     "index": 12,
+     "id": "Milestone_PostFinal_Tier2",
+     "title": "Expert Operator",
+     "titleKo": "숙련 운영자",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "--Xk--Xk",
+       "amount": 9000
+      },
+      {
+       "shape": "--Xk--Xk:--Sw--Sw",
+       "amount": 14000
+      },
+      {
+       "shape": "XwXkXwXk:SySwSySw:P-P-P-P-:SwSySwSy",
+       "amount": 150000
+      },
+      {
+       "shape": "Xw--Xw--",
+       "amount": 9000
+      },
+      {
+       "shape": "Xw--Xw--:Sy--Sy--",
+       "amount": 14000
+      }
+     ]
+    },
+    {
+     "index": 13,
+     "id": "Milestone_PostFinal_Tier3",
+     "title": "Vortex Singularity",
+     "titleKo": "소용돌이 특이점",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "YkYwYkYw",
+       "amount": 16000
+      },
+      {
+       "shape": "YkYwYkYw:P-P-P-P-:YwYkYwYk",
+       "amount": 18000
+      },
+      {
+       "shape": "YkYwYkYw:P-P-P-P-:YwYkYwYk:WuWbWgWr",
+       "amount": 200000
+      },
+      {
+       "shape": "WuWb----",
+       "amount": 16000
+      },
+      {
+       "shape": "WuWbWgWr",
+       "amount": 18000
+      }
+     ]
+    }
+   ],
+   "sideUpgrades": [
+    {
+     "id": "CBSandbox",
+     "title": "Sandbox Tools",
+     "titleKo": "샌드박스 도구",
+     "unlocks": [
+      "SandboxFluidProducerDefaultVariant",
+      "SandboxItemProducerDefaultVariant"
+     ],
+     "cost": 50000,
+     "requires": []
+    },
+    {
+     "id": "CBCutting_FullCutter",
+     "title": "Cutter",
+     "titleKo": "절단기",
+     "unlocks": [
+      "CutterDefaultVariant"
+     ],
+     "cost": 3,
+     "requires": []
+    },
+    {
+     "id": "CBCutting_Swapper",
+     "title": "Swapper",
+     "titleKo": "교환기",
+     "unlocks": [
+      "HalvesSwapperDefaultVariant"
+     ],
+     "cost": 12,
+     "requires": []
+    },
+    {
+     "id": "CBBelts_Trash",
+     "title": "Trash",
+     "titleKo": "휴지통",
+     "unlocks": [
+      "TrashDefaultVariant"
+     ],
+     "cost": 4,
+     "requires": []
+    },
+    {
+     "id": "CBRotating_ReverseRotator",
+     "title": "Reverse Rotator",
+     "titleKo": "역회전기",
+     "unlocks": [
+      "RotatorOneQuadCCWVariant"
+     ],
+     "cost": 2,
+     "requires": []
+    },
+    {
+     "id": "CBRotating_Rotator180",
+     "title": "180° Rotator",
+     "titleKo": "180° 회전기",
+     "unlocks": [
+      "RotatorHalfVariant"
+     ],
+     "cost": 6,
+     "requires": []
+    },
+    {
+     "id": "CBStacking_BentStacker",
+     "title": "Bent Stacker",
+     "titleKo": "굽은 결합기",
+     "unlocks": [
+      "StackerDefaultVariant"
+     ],
+     "cost": 6,
+     "requires": []
+    },
+    {
+     "id": "CBBelts_OverflowSplitter",
+     "title": "Overflow Splitter",
+     "titleKo": "오버플로 분배기",
+     "unlocks": [
+      "SplitterOverflowVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBSpecial_FactoryFloor3",
+     "title": "3rd Machine Level",
+     "titleKo": "3번째 기계 층",
+     "unlocks": [
+      "Lift2LayerVariant"
+     ],
+     "cost": 50,
+     "requires": []
+    },
+    {
+     "id": "CBFluids_Storage",
+     "title": "Fluid Tank",
+     "titleKo": "유체 탱크",
+     "unlocks": [
+      "FluidStorageDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBDecorations_Labels",
+     "title": "Label",
+     "titleKo": "라벨",
+     "unlocks": [
+      "LabelDefaultVariant"
+     ],
+     "cost": 4,
+     "requires": []
+    },
+    {
+     "id": "CBWires_Core",
+     "title": "Wire Basics",
+     "titleKo": "전선 기초",
+     "unlocks": [
+      "WireDefaultVariant",
+      "WireBridgeVariant",
+      "WireTransmitterSenderVariant",
+      "WireTransmitterReceiverVariant",
+      "BeltFilterDefaultVariant",
+      "BeltReaderDefaultVariant",
+      "PipeGateDefaultVariant",
+      "ConstantSignalDefaultVariant",
+      "DisplayDefaultVariant",
+      "Display2x2Variant",
+      "Display3x3Variant",
+      "ButtonDefaultVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBWires_LogicGates",
+     "title": "Logic Gates",
+     "titleKo": "논리 회로",
+     "unlocks": [
+      "LogicGateAndVariant",
+      "LogicGateOrVariant",
+      "LogicGateIfVariant",
+      "LogicGateXOrVariant",
+      "LogicGateNotVariant",
+      "LogicGateCompareVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_VirtualProcessing",
+     "title": "Simulated Machines",
+     "titleKo": "시뮬레이션 기계",
+     "unlocks": [
+      "VirtualRotatorDefaultVariant",
+      "VirtualRotatorCCWVariant",
+      "VirtualAnalyzerDefaultVariant",
+      "VirtualUnstackerDefaultVariant",
+      "VirtualStackerDefaultVariant",
+      "VirtualHalfCutterDefaultVariant",
+      "VirtualPainterDefaultVariant",
+      "VirtualPinPusherDefaultVariant",
+      "VirtualCrystalGeneratorDefaultVariant",
+      "VirtualHalvesSwapperDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_UniversalTransmission",
+     "title": "Global Wire Transmission",
+     "titleKo": "글로벌 전선 송신",
+     "unlocks": [
+      "ControlledSignalReceiverVariant",
+      "ControlledSignalTransmitterVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_GoalReceiver",
+     "title": "Operator Shape Receiver",
+     "titleKo": "운영자 도형 수신기",
+     "unlocks": [
+      "WireGlobalTransmitterReceiverVariant"
+     ],
+     "cost": 8,
+     "requires": []
+    }
+   ]
+  },
+  "hard": {
+   "id": "hard-scenario",
+   "title": "Hard",
+   "titleKo": "어려움",
+   "gameMode": "RegularGameMode",
+   "gameModeTitle": "Classic",
+   "gameModeTitleKo": "클래식",
+   "maxShapeLayers": 4,
+   "milestones": [
+    {
+     "index": 1,
+     "id": "Milestone_Initial",
+     "title": "Certification",
+     "titleKo": "인증",
+     "unlocks": [
+      "BeltDefaultVariant",
+      "Merger2To1Variant",
+      "Merger3To1Variant",
+      "MergerTShapeVariant",
+      "Splitter1To2Variant",
+      "Splitter1To3Variant",
+      "SplitterTShapeVariant",
+      "BeltPortSenderVariant",
+      "BeltPortReceiverVariant",
+      "Lift1LayerVariant",
+      "ExtractorDefaultVariant",
+      "CutterHalfVariant",
+      "RotatorOneQuadVariant",
+      "StackerStraightVariant"
+     ],
+     "goals": []
+    },
+    {
+     "index": 2,
+     "id": "Milestone_FluidPainting",
+     "title": "Fluids & Painting",
+     "titleKo": "유체 및 색칠",
+     "unlocks": [
+      "PumpDefaultVariant",
+      "PipeDefaultVariant",
+      "Pipe1LayerVariant",
+      "Pipe2LayerVariant",
+      "FluidPortSenderVariant",
+      "FluidPortReceiverVariant",
+      "PainterDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "Cr--Cr--",
+       "amount": 1200
+      },
+      {
+       "shape": "Cu--Cu--:Cr--Cr--",
+       "amount": 2000
+      },
+      {
+       "shape": "RuRuCuCu:RbRbCrCr",
+       "amount": 8000
+      },
+      {
+       "shape": "Rb--Rb--",
+       "amount": 1200
+      },
+      {
+       "shape": "Ru--Ru--:Rb--Rb--",
+       "amount": 2000
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "id": "Milestone_ShapeTrains",
+     "title": "Trains",
+     "titleKo": "기차",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "RbRbRuRu",
+       "amount": 3000
+      },
+      {
+       "shape": "RbRbRuRu:RuRuRbRb",
+       "amount": 4000
+      },
+      {
+       "shape": "RbRuRbRu:RuRbRuRb:SrSgSrSg",
+       "amount": 14000
+      },
+      {
+       "shape": "Sg--Sg--",
+       "amount": 3000
+      },
+      {
+       "shape": "SrSgSrSg",
+       "amount": 4000
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "id": "Milestone_ColorMixing",
+     "title": "Color Mixing",
+     "titleKo": "색상 혼합",
+     "unlocks": [
+      "MixerDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "RgCgCgCg",
+       "amount": 6000
+      },
+      {
+       "shape": "SrSrSrSr:RgCgCgCg",
+       "amount": 8000
+      },
+      {
+       "shape": "SrSrSrSr:WrWrWrWr:RuCuRuCu:RgCgCgCg",
+       "amount": 25000
+      },
+      {
+       "shape": "WrWrWrWr",
+       "amount": 6000
+      },
+      {
+       "shape": "WrWrWrWr:RuCuRuCu",
+       "amount": 8000
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "id": "Milestone_PinPusher",
+     "title": "Pin Pusher",
+     "titleKo": "핀 누름기",
+     "unlocks": [
+      "PinPusherDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "CbRbRbCb:Cu----Cu",
+       "amount": 4000
+      },
+      {
+       "shape": "CmRmRmCm:Cw----Cw",
+       "amount": 5000
+      },
+      {
+       "shape": "--SmSm--:SrRmRmCm:----CwCw",
+       "amount": 30000
+      },
+      {
+       "shape": "SrSrSr--",
+       "amount": 4000
+      },
+      {
+       "shape": "SrSmSm--",
+       "amount": 5000
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "id": "Milestone_SpaceFloor3",
+     "title": "3rd Space Level",
+     "titleKo": "3번째 우주 층",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "P-CcRcCc",
+       "amount": 7000
+      },
+      {
+       "shape": "P-CcRcCc:P-CwRwCw:Rw------",
+       "amount": 10000
+      },
+      {
+       "shape": "P-CcRcCc:P-CwRwCw:RwWrP-Wr:P---Wr--",
+       "amount": 45000
+      },
+      {
+       "shape": "P-WuP-Wu:Wu--Wu--",
+       "amount": 7000
+      },
+      {
+       "shape": "P-WrP-Wr:Wr--Wr--",
+       "amount": 10000
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "id": "Milestone_Crystals",
+     "title": "Crystals",
+     "titleKo": "결정체",
+     "unlocks": [
+      "CrystalGeneratorDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "----CyCy",
+       "amount": 9000
+      },
+      {
+       "shape": "----CyCy:------P-:------P-:------Wy",
+       "amount": 12000
+      },
+      {
+       "shape": "CyCyCyCy:P-CrCrP-:P-P-P-P-:WyRwRwWy",
+       "amount": 60000
+      },
+      {
+       "shape": "--Cr----:--P-----:--Ru----",
+       "amount": 9000
+      },
+      {
+       "shape": "--CrCr--:--P-P---:--RwRw--",
+       "amount": 12000
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "id": "Milestone_VortexDelivery",
+     "title": "Train Vortex Delivery",
+     "titleKo": "기차 소용돌이 전달",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "RucbRucb:RucwRucw",
+       "amount": 10000
+      },
+      {
+       "shape": "WwcbWwcb:--cw--cw",
+       "amount": 12000
+      },
+      {
+       "shape": "WwcbWwcb:P-cwP-cw:WgP---P-",
+       "amount": 90000
+      },
+      {
+       "shape": "Wgcgcgcg",
+       "amount": 10000
+      },
+      {
+       "shape": "P-P-P-P-:Wgcgcgcg",
+       "amount": 12000
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "id": "Milestone_FinalConverters",
+     "title": "Full Clearance",
+     "titleKo": "완전 권한",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "cwRwcwcw",
+       "amount": 10000
+      },
+      {
+       "shape": "cwRwcwcw:cwCwcwcw",
+       "amount": 15000
+      },
+      {
+       "shape": "cwRwcwcw:cwCwcwcw:cccccccc",
+       "amount": 150000
+      },
+      {
+       "shape": "P-P-P-P-:crcrcrCu",
+       "amount": 10000
+      },
+      {
+       "shape": "P-P-----",
+       "amount": 15000
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "id": "Milestone_PostFinal_Tier0",
+     "title": "Beyond the Vortex",
+     "titleKo": "소용돌이 너머",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "Xr--P---:----Xr--",
+       "amount": 7000
+      },
+      {
+       "shape": "XrP-P-P-:--XgXrP-:------Xg",
+       "amount": 11000
+      },
+      {
+       "shape": "XrP-P-P-:--XgXrP-:--WwXbXg:Xb----Ww",
+       "amount": 90000
+      },
+      {
+       "shape": "Xb--Xb--",
+       "amount": 7000
+      },
+      {
+       "shape": "XbWwXbWw",
+       "amount": 11000
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "id": "Milestone_PostFinal_Tier1",
+     "title": "Deep Operations",
+     "titleKo": "심층 운영",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "Xy------:Xm------",
+       "amount": 8000
+      },
+      {
+       "shape": "Xy--Xm--:Xm--Xy--",
+       "amount": 12000
+      },
+      {
+       "shape": "XycrXyXc:XmcrXmXc:--cr----",
+       "amount": 120000
+      },
+      {
+       "shape": "CucrCuCu:CucrCuCu:CucrCuCu",
+       "amount": 8000
+      },
+      {
+       "shape": "--cr--Xc:--cr--Xc:--cr----",
+       "amount": 12000
+      }
+     ]
+    },
+    {
+     "index": 12,
+     "id": "Milestone_PostFinal_Tier2",
+     "title": "Expert Operator",
+     "titleKo": "숙련 운영자",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "--Xw--Xw",
+       "amount": 9000
+      },
+      {
+       "shape": "XkP-XkP-:--Xw--Xw",
+       "amount": 14000
+      },
+      {
+       "shape": "cbP-cbP-:ccXwccXw:Xk--Xk--",
+       "amount": 150000
+      },
+      {
+       "shape": "cbRucbRu:--Ru--Ru",
+       "amount": 9000
+      },
+      {
+       "shape": "cb--cb--:cc--cc--",
+       "amount": 12000
+      }
+     ]
+    },
+    {
+     "index": 13,
+     "id": "Milestone_PostFinal_Tier3",
+     "title": "Vortex Singularity",
+     "titleKo": "소용돌이 특이점",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "Yk--Yw--",
+       "amount": 16000
+      },
+      {
+       "shape": "RrWrYwWr:Yk------",
+       "amount": 18000
+      },
+      {
+       "shape": "cwP---P-:--cw--cw:RrWrYwWr:Yk------",
+       "amount": 200000
+      },
+      {
+       "shape": "CucwCucw",
+       "amount": 16000
+      },
+      {
+       "shape": "cwP---P-:--cw--cw",
+       "amount": 18000
+      }
+     ]
+    }
+   ],
+   "sideUpgrades": [
+    {
+     "id": "CBSandbox",
+     "title": "Sandbox Tools",
+     "titleKo": "샌드박스 도구",
+     "unlocks": [
+      "SandboxFluidProducerDefaultVariant",
+      "SandboxItemProducerDefaultVariant"
+     ],
+     "cost": 50000,
+     "requires": []
+    },
+    {
+     "id": "CBCutting_FullCutter",
+     "title": "Cutter",
+     "titleKo": "절단기",
+     "unlocks": [
+      "CutterDefaultVariant"
+     ],
+     "cost": 3,
+     "requires": []
+    },
+    {
+     "id": "CBCutting_Swapper",
+     "title": "Swapper",
+     "titleKo": "교환기",
+     "unlocks": [
+      "HalvesSwapperDefaultVariant"
+     ],
+     "cost": 12,
+     "requires": []
+    },
+    {
+     "id": "CBBelts_Trash",
+     "title": "Trash",
+     "titleKo": "휴지통",
+     "unlocks": [
+      "TrashDefaultVariant"
+     ],
+     "cost": 4,
+     "requires": []
+    },
+    {
+     "id": "CBRotating_ReverseRotator",
+     "title": "Reverse Rotator",
+     "titleKo": "역회전기",
+     "unlocks": [
+      "RotatorOneQuadCCWVariant"
+     ],
+     "cost": 2,
+     "requires": []
+    },
+    {
+     "id": "CBRotating_Rotator180",
+     "title": "180° Rotator",
+     "titleKo": "180° 회전기",
+     "unlocks": [
+      "RotatorHalfVariant"
+     ],
+     "cost": 6,
+     "requires": []
+    },
+    {
+     "id": "CBStacking_BentStacker",
+     "title": "Bent Stacker",
+     "titleKo": "굽은 결합기",
+     "unlocks": [
+      "StackerDefaultVariant"
+     ],
+     "cost": 6,
+     "requires": []
+    },
+    {
+     "id": "CBBelts_OverflowSplitter",
+     "title": "Overflow Splitter",
+     "titleKo": "오버플로 분배기",
+     "unlocks": [
+      "SplitterOverflowVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBSpecial_FactoryFloor3",
+     "title": "3rd Machine Level",
+     "titleKo": "3번째 기계 층",
+     "unlocks": [
+      "Lift2LayerVariant"
+     ],
+     "cost": 50,
+     "requires": []
+    },
+    {
+     "id": "CBFluids_Storage",
+     "title": "Fluid Tank",
+     "titleKo": "유체 탱크",
+     "unlocks": [
+      "FluidStorageDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBDecorations_Labels",
+     "title": "Label",
+     "titleKo": "라벨",
+     "unlocks": [
+      "LabelDefaultVariant"
+     ],
+     "cost": 4,
+     "requires": []
+    },
+    {
+     "id": "CBWires_Core",
+     "title": "Wire Basics",
+     "titleKo": "전선 기초",
+     "unlocks": [
+      "WireDefaultVariant",
+      "WireBridgeVariant",
+      "WireTransmitterSenderVariant",
+      "WireTransmitterReceiverVariant",
+      "BeltFilterDefaultVariant",
+      "BeltReaderDefaultVariant",
+      "PipeGateDefaultVariant",
+      "ConstantSignalDefaultVariant",
+      "DisplayDefaultVariant",
+      "Display2x2Variant",
+      "Display3x3Variant",
+      "ButtonDefaultVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBWires_LogicGates",
+     "title": "Logic Gates",
+     "titleKo": "논리 회로",
+     "unlocks": [
+      "LogicGateAndVariant",
+      "LogicGateOrVariant",
+      "LogicGateIfVariant",
+      "LogicGateXOrVariant",
+      "LogicGateNotVariant",
+      "LogicGateCompareVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_VirtualProcessing",
+     "title": "Simulated Machines",
+     "titleKo": "시뮬레이션 기계",
+     "unlocks": [
+      "VirtualRotatorDefaultVariant",
+      "VirtualRotatorCCWVariant",
+      "VirtualAnalyzerDefaultVariant",
+      "VirtualUnstackerDefaultVariant",
+      "VirtualStackerDefaultVariant",
+      "VirtualHalfCutterDefaultVariant",
+      "VirtualPainterDefaultVariant",
+      "VirtualPinPusherDefaultVariant",
+      "VirtualCrystalGeneratorDefaultVariant",
+      "VirtualHalvesSwapperDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_UniversalTransmission",
+     "title": "Global Wire Transmission",
+     "titleKo": "글로벌 전선 송신",
+     "unlocks": [
+      "ControlledSignalReceiverVariant",
+      "ControlledSignalTransmitterVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_GoalReceiver",
+     "title": "Operator Shape Receiver",
+     "titleKo": "운영자 도형 수신기",
+     "unlocks": [
+      "WireGlobalTransmitterReceiverVariant"
+     ],
+     "cost": 8,
+     "requires": []
+    }
+   ]
+  },
+  "hexagonal": {
+   "id": "hexagonal-scenario",
+   "title": "Hexagonal",
+   "titleKo": "육각",
+   "gameMode": "RegularGameMode",
+   "gameModeTitle": "Classic",
+   "gameModeTitleKo": "클래식",
+   "maxShapeLayers": 4,
+   "milestones": [
+    {
+     "index": 1,
+     "id": "Milestone_Initial",
+     "title": "Certification",
+     "titleKo": "인증",
+     "unlocks": [
+      "BeltDefaultVariant",
+      "Merger2To1Variant",
+      "Merger3To1Variant",
+      "MergerTShapeVariant",
+      "Splitter1To2Variant",
+      "Splitter1To3Variant",
+      "SplitterTShapeVariant",
+      "BeltPortSenderVariant",
+      "BeltPortReceiverVariant",
+      "Lift1LayerVariant",
+      "ExtractorDefaultVariant",
+      "CutterHalfVariant",
+      "RotatorOneQuadVariant",
+      "StackerStraightVariant"
+     ],
+     "goals": []
+    },
+    {
+     "index": 2,
+     "id": "Milestone_FluidPainting",
+     "title": "Fluids & Painting",
+     "titleKo": "유체 및 색칠",
+     "unlocks": [
+      "PumpDefaultVariant",
+      "PipeDefaultVariant",
+      "Pipe1LayerVariant",
+      "Pipe2LayerVariant",
+      "FluidPortSenderVariant",
+      "FluidPortReceiverVariant",
+      "PainterDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "HrHrHrHrHrHr:GbGbGbGbGbGb",
+       "amount": 1200
+      },
+      {
+       "shape": "HrHrHr------:GbGbGb------",
+       "amount": 1500
+      },
+      {
+       "shape": "HrHrHrFgFgFg:GbGbGbGuGuGu",
+       "amount": 6000
+      },
+      {
+       "shape": "FgFgFgFgFgFg:GuGuGuGuGuGu",
+       "amount": 1200
+      },
+      {
+       "shape": "------FgFgFg:------GuGuGu",
+       "amount": 1500
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "id": "Milestone_ShapeTrains",
+     "title": "Trains",
+     "titleKo": "기차",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "HbHbHbHbHbHb",
+       "amount": 3000
+      },
+      {
+       "shape": "HbHbHbHbHbHb:GgGgGgGgGgGg",
+       "amount": 4000
+      },
+      {
+       "shape": "HbHbHbHbHbHb:GgGgGgGgGgGg:FrFrFrFrFrFr",
+       "amount": 14000
+      },
+      {
+       "shape": "FuFuFuFuFuFu",
+       "amount": 3000
+      },
+      {
+       "shape": "FrFrFrFrFrFr",
+       "amount": 4000
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "id": "Milestone_ColorMixing",
+     "title": "Color Mixing",
+     "titleKo": "색상 혼합",
+     "unlocks": [
+      "MixerDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "------GrGrGr",
+       "amount": 4000
+      },
+      {
+       "shape": "--Gr--Gr--Gr",
+       "amount": 5000
+      },
+      {
+       "shape": "FbGrFbGrFbGr:Gr--Gr--Gr--",
+       "amount": 30000
+      },
+      {
+       "shape": "FbFbFb------",
+       "amount": 4000
+      },
+      {
+       "shape": "Fb--Fb--Fb--",
+       "amount": 5000
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "id": "Milestone_PinPusher",
+     "title": "Pin Pusher",
+     "titleKo": "핀 누름기",
+     "unlocks": [
+      "PinPusherDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "HbGbHbHbGbHb",
+       "amount": 6000
+      },
+      {
+       "shape": "HbGbHbHbGbHb:HgGgHgHgGgHg",
+       "amount": 8000
+      },
+      {
+       "shape": "HbGbHbHbGbHb:HgGgHgHgGgHg:FmFmFmFmFmFm:HyHyHyHyHyHy",
+       "amount": 35000
+      },
+      {
+       "shape": "FmFmFmFmFmFm",
+       "amount": 6000
+      },
+      {
+       "shape": "FmFmFmFmFmFm:HyHyHyHyHyHy",
+       "amount": 8000
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "id": "Milestone_SpaceFloor3",
+     "title": "3rd Space Level",
+     "titleKo": "3번째 우주 층",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "P---P---P---:Fc--Fc--Fc--",
+       "amount": 7000
+      },
+      {
+       "shape": "P-FcP-FcP-Fc:Fc--Fc--Fc--",
+       "amount": 10000
+      },
+      {
+       "shape": "P-FcP-FcP-Fc:FcFwFcFwFcFw:P---P---P---:Fw--Fw--Fw--",
+       "amount": 45000
+      },
+      {
+       "shape": "--P---P---P-:--Fw--Fw--Fw",
+       "amount": 7000
+      },
+      {
+       "shape": "FwP-FwP-FwP-:--Fw--Fw--Fw",
+       "amount": 10000
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "id": "Milestone_Crystals",
+     "title": "Crystals",
+     "titleKo": "결정체",
+     "unlocks": [
+      "CrystalGeneratorDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "HyHyHyHyHyHy:HuHuHuHuHuHu",
+       "amount": 9000
+      },
+      {
+       "shape": "HyHyHyHyHyHy:HrHrHrHrHrHr:--P---P---P-:--Fw--Fw--Fw",
+       "amount": 12000
+      },
+      {
+       "shape": "HyHyHyHyHyHy:HrHrHrHrHrHr:GgP-GgP-GgP-:P-FwP-FwP-Fw",
+       "amount": 60000
+      },
+      {
+       "shape": "Gg--Gg--Gg--",
+       "amount": 9000
+      },
+      {
+       "shape": "Gg--Gg--Gg--:P---P---P---:Gu--Gu--Gu--",
+       "amount": 12000
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "id": "Milestone_VortexDelivery",
+     "title": "Train Vortex Delivery",
+     "titleKo": "기차 소용돌이 전달",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "HucrHucrHucr",
+       "amount": 10000
+      },
+      {
+       "shape": "HwcrHwcrHwcr",
+       "amount": 12000
+      },
+      {
+       "shape": "HwcrHwcrHwcr:cccccccccccc:FwFwFwFwFwFw",
+       "amount": 90000
+      },
+      {
+       "shape": "P-P-P-P-P-P-:FwFwFwFwFwFw",
+       "amount": 10000
+      },
+      {
+       "shape": "cccccccccccc:FwFwFwFwFwFw",
+       "amount": 12000
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "id": "Milestone_Final",
+     "title": "Final Qualification",
+     "titleKo": "최종 자격 취득",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "Fw----FwFwFw",
+       "amount": 8000
+      },
+      {
+       "shape": "Fw----FwFwFw:Gw----GwGwGw",
+       "amount": 10000
+      },
+      {
+       "shape": "FwcwcwFwFwFw:GwcwcwGwGwGw:cccccccccccc:HcGcGcHcHcHc",
+       "amount": 150000
+      },
+      {
+       "shape": "HgGgGgHgHgHg",
+       "amount": 8000
+      },
+      {
+       "shape": "P-P-P-P-P-P-:HcGcGcHcHcHc",
+       "amount": 10000
+      }
+     ]
+    }
+   ],
+   "sideUpgrades": [
+    {
+     "id": "CBSandbox",
+     "title": "Sandbox Tools",
+     "titleKo": "샌드박스 도구",
+     "unlocks": [
+      "SandboxFluidProducerDefaultVariant",
+      "SandboxItemProducerDefaultVariant"
+     ],
+     "cost": 50000,
+     "requires": []
+    },
+    {
+     "id": "CBCutting_FullCutter",
+     "title": "Cutter",
+     "titleKo": "절단기",
+     "unlocks": [
+      "CutterDefaultVariant"
+     ],
+     "cost": 3,
+     "requires": []
+    },
+    {
+     "id": "CBCutting_Swapper",
+     "title": "Swapper",
+     "titleKo": "교환기",
+     "unlocks": [
+      "HalvesSwapperDefaultVariant"
+     ],
+     "cost": 12,
+     "requires": []
+    },
+    {
+     "id": "CBBelts_Trash",
+     "title": "Trash",
+     "titleKo": "휴지통",
+     "unlocks": [
+      "TrashDefaultVariant"
+     ],
+     "cost": 4,
+     "requires": []
+    },
+    {
+     "id": "CBRotating_ReverseRotator",
+     "title": "Reverse Rotator",
+     "titleKo": "역회전기",
+     "unlocks": [
+      "RotatorOneQuadCCWVariant"
+     ],
+     "cost": 2,
+     "requires": []
+    },
+    {
+     "id": "CBRotating_Rotator180",
+     "title": "180° Rotator",
+     "titleKo": "180° 회전기",
+     "unlocks": [
+      "RotatorHalfVariant"
+     ],
+     "cost": 6,
+     "requires": []
+    },
+    {
+     "id": "CBStacking_BentStacker",
+     "title": "Bent Stacker",
+     "titleKo": "굽은 결합기",
+     "unlocks": [
+      "StackerDefaultVariant"
+     ],
+     "cost": 6,
+     "requires": []
+    },
+    {
+     "id": "CBBelts_OverflowSplitter",
+     "title": "Overflow Splitter",
+     "titleKo": "오버플로 분배기",
+     "unlocks": [
+      "SplitterOverflowVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBSpecial_FactoryFloor3",
+     "title": "3rd Machine Level",
+     "titleKo": "3번째 기계 층",
+     "unlocks": [
+      "Lift2LayerVariant"
+     ],
+     "cost": 50,
+     "requires": []
+    },
+    {
+     "id": "CBFluids_Storage",
+     "title": "Fluid Tank",
+     "titleKo": "유체 탱크",
+     "unlocks": [
+      "FluidStorageDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBDecorations_Labels",
+     "title": "Label",
+     "titleKo": "라벨",
+     "unlocks": [
+      "LabelDefaultVariant"
+     ],
+     "cost": 4,
+     "requires": []
+    },
+    {
+     "id": "CBWires_Core",
+     "title": "Wire Basics",
+     "titleKo": "전선 기초",
+     "unlocks": [
+      "WireDefaultVariant",
+      "WireBridgeVariant",
+      "WireTransmitterSenderVariant",
+      "WireTransmitterReceiverVariant",
+      "BeltFilterDefaultVariant",
+      "BeltReaderDefaultVariant",
+      "PipeGateDefaultVariant",
+      "ConstantSignalDefaultVariant",
+      "DisplayDefaultVariant",
+      "Display2x2Variant",
+      "Display3x3Variant",
+      "ButtonDefaultVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBWires_LogicGates",
+     "title": "Logic Gates",
+     "titleKo": "논리 회로",
+     "unlocks": [
+      "LogicGateAndVariant",
+      "LogicGateOrVariant",
+      "LogicGateIfVariant",
+      "LogicGateXOrVariant",
+      "LogicGateNotVariant",
+      "LogicGateCompareVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_VirtualProcessing",
+     "title": "Simulated Machines",
+     "titleKo": "시뮬레이션 기계",
+     "unlocks": [
+      "VirtualRotatorDefaultVariant",
+      "VirtualRotatorCCWVariant",
+      "VirtualAnalyzerDefaultVariant",
+      "VirtualUnstackerDefaultVariant",
+      "VirtualStackerDefaultVariant",
+      "VirtualHalfCutterDefaultVariant",
+      "VirtualPainterDefaultVariant",
+      "VirtualPinPusherDefaultVariant",
+      "VirtualCrystalGeneratorDefaultVariant",
+      "VirtualHalvesSwapperDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_UniversalTransmission",
+     "title": "Global Wire Transmission",
+     "titleKo": "글로벌 전선 송신",
+     "unlocks": [
+      "ControlledSignalReceiverVariant",
+      "ControlledSignalTransmitterVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_GoalReceiver",
+     "title": "Operator Shape Receiver",
+     "titleKo": "운영자 도형 수신기",
+     "unlocks": [
+      "WireGlobalTransmitterReceiverVariant"
+     ],
+     "cost": 8,
+     "requires": []
+    }
+   ]
+  },
+  "insane": {
+   "id": "insane-scenario",
+   "title": "Insane",
+   "titleKo": "광기",
+   "gameMode": "RegularGameMode",
+   "gameModeTitle": "Classic",
+   "gameModeTitleKo": "클래식",
+   "maxShapeLayers": 5,
+   "milestones": [
+    {
+     "index": 1,
+     "id": "Milestone_Initial",
+     "title": "Certification",
+     "titleKo": "인증",
+     "unlocks": [
+      "BeltDefaultVariant",
+      "Merger2To1Variant",
+      "Merger3To1Variant",
+      "MergerTShapeVariant",
+      "Splitter1To2Variant",
+      "Splitter1To3Variant",
+      "SplitterTShapeVariant",
+      "BeltPortSenderVariant",
+      "BeltPortReceiverVariant",
+      "Lift1LayerVariant",
+      "ExtractorDefaultVariant",
+      "CutterHalfVariant",
+      "RotatorOneQuadVariant",
+      "StackerStraightVariant"
+     ],
+     "goals": []
+    },
+    {
+     "index": 2,
+     "id": "Milestone_FluidPainting",
+     "title": "Fluids & Painting",
+     "titleKo": "유체 및 색칠",
+     "unlocks": [
+      "PumpDefaultVariant",
+      "PipeDefaultVariant",
+      "Pipe1LayerVariant",
+      "Pipe2LayerVariant",
+      "FluidPortSenderVariant",
+      "FluidPortReceiverVariant",
+      "PainterDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "Cu--Cu--:Cr--Cr--",
+       "amount": 1200
+      },
+      {
+       "shape": "Cu--Cu--:Cr--Cr--:Rb--Rb--:Ru--Ru--",
+       "amount": 2000
+      },
+      {
+       "shape": "CuRbCuRb:CrRuCrRu:CuRbCuRb:CuRuCuRu",
+       "amount": 8000
+      },
+      {
+       "shape": "Rb--Rb--:Ru--Ru--",
+       "amount": 1200
+      },
+      {
+       "shape": "Rb--Rb--:Ru--Ru--:Cu--Cu--:Cu--Cu--",
+       "amount": 2000
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "id": "Milestone_ShapeTrains",
+     "title": "Trains",
+     "titleKo": "기차",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "Ru----Rb",
+       "amount": 3000
+      },
+      {
+       "shape": "RuCbCuRb:--WrWr--",
+       "amount": 4000
+      },
+      {
+       "shape": "RuCbCuRb:SgWrWrSg:WrCgCgWr:WrCrCrWr",
+       "amount": 14000
+      },
+      {
+       "shape": "WrCrWrCr",
+       "amount": 3000
+      },
+      {
+       "shape": "SgCgSgCg:WrCrWrCr",
+       "amount": 4000
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "id": "Milestone_ColorMixing",
+     "title": "Color Mixing",
+     "titleKo": "색상 혼합",
+     "unlocks": [
+      "MixerDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "SbSrSbSb",
+       "amount": 6000
+      },
+      {
+       "shape": "SbSrSbSb:WrRrWrWr",
+       "amount": 6000
+      },
+      {
+       "shape": "SbSrSbRr:WrRrWrSb:CgRuCgWr:CuWgCuWu",
+       "amount": 24000
+      },
+      {
+       "shape": "CgRuCgRr",
+       "amount": 6000
+      },
+      {
+       "shape": "CgRuCgRr:CuWgCuWu",
+       "amount": 6000
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "id": "Milestone_PinPusher",
+     "title": "Pin Pusher",
+     "titleKo": "핀 누름기",
+     "unlocks": [
+      "PinPusherDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "CbWbCbWb:CrWrCrWr",
+       "amount": 8000
+      },
+      {
+       "shape": "CcWmCcWm:CwWcCwWc",
+       "amount": 10000
+      },
+      {
+       "shape": "Cc--Cc--:CwWwCwWw:--Wc--Wc:RmWmRmWm:Cw--Cw--",
+       "amount": 20000
+      },
+      {
+       "shape": "WwWwRwWw",
+       "amount": 8000
+      },
+      {
+       "shape": "WwWwRwWw:WcWcWcWc:Wm--Wm--",
+       "amount": 10000
+      },
+      {
+       "shape": "Ww--Rw--:Wc--Wc--:WmWmWmWm:--Wc--Wc:RwCwRwCw",
+       "amount": 20000
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "id": "Milestone_SpaceFloor3",
+     "title": "3rd Space Level",
+     "titleKo": "3번째 우주 층",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "SbWbRbWu",
+       "amount": 7000
+      },
+      {
+       "shape": "Sb--Rb--:Wb--Wu--",
+       "amount": 10000
+      },
+      {
+       "shape": "SbCrRbCr:WbWyWuWy:WyP-WyP-:----Cr--",
+       "amount": 45000
+      },
+      {
+       "shape": "--CrWuCr:WuWuCrWu",
+       "amount": 7000
+      },
+      {
+       "shape": "--CrWyCr:WyWyCrWy:--P---P-",
+       "amount": 10000
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "id": "Milestone_Crystals",
+     "title": "Crystals",
+     "titleKo": "결정체",
+     "unlocks": [
+      "CrystalGeneratorDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "RmCy----:RwCw----",
+       "amount": 8000
+      },
+      {
+       "shape": "RyCmRyCm:P-CwP-Cw",
+       "amount": 12000
+      },
+      {
+       "shape": "RyRyRyRy:P-RmRmP-:CmRwRwCm:P-P-P-P-:--CmCm--",
+       "amount": 30000
+      },
+      {
+       "shape": "CmP-CmP-:--Cy--Cy",
+       "amount": 8000
+      },
+      {
+       "shape": "P-CyP-Cw:CmP-CmP-:--Cy--Cy",
+       "amount": 12000
+      },
+      {
+       "shape": "CmCmCmCm:CyCwCwCy:CwP-P-Cw:CyCyCyCy:P-CwCwP-",
+       "amount": 30000
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "id": "Milestone_VortexDelivery",
+     "title": "Train Vortex Delivery",
+     "titleKo": "기차 소용돌이 전달",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "RmCmCmCm:cyCuCucy:RcCcCcCc",
+       "amount": 10000
+      },
+      {
+       "shape": "RuCmRuCm:CuccCucc:WucmWucm",
+       "amount": 12000
+      },
+      {
+       "shape": "RmCcWcCm:--cm--cc:RcccCmcm:cmcccccm:cw--cw--",
+       "amount": 45000
+      },
+      {
+       "shape": "CcCcWcCc:CucycyCu:CmCmCmCm",
+       "amount": 10000
+      },
+      {
+       "shape": "WuCcWuCc:RucmRucm:WuccWucc",
+       "amount": 12000
+      },
+      {
+       "shape": "RmCmWcCc:--Cu--Cu:RcCcCmCm:cwWucwWu",
+       "amount": 45000
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "id": "Milestone_FinalConverters",
+     "title": "Full Clearance",
+     "titleKo": "완전 권한",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "--Rw----:--cc----:--Cw----",
+       "amount": 10000
+      },
+      {
+       "shape": "--Rw--Cw:--cc--cc:--Cw--Cw",
+       "amount": 18000
+      },
+      {
+       "shape": "CwRwCwCw:CcCcCcCc:--Cw--Cw:cccccccc",
+       "amount": 150000
+      },
+      {
+       "shape": "Cw------:P-------:Cc------",
+       "amount": 10000
+      },
+      {
+       "shape": "Cwcr----:crcr----:Cccr----",
+       "amount": 18000
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "id": "Milestone_PostFinal_Tier0",
+     "title": "Beyond the Vortex",
+     "titleKo": "소용돌이 너머",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "P-XrXrP-:cr----cr:P-----P-",
+       "amount": 7000
+      },
+      {
+       "shape": "P-XrXrP-:crXgXgcr:cg----cg:P-----P-",
+       "amount": 11000
+      },
+      {
+       "shape": "P-XrXrP-:crXgXgcr:cgXbXbcg:cbP-P-cb:P-CwCwP-",
+       "amount": 90000
+      },
+      {
+       "shape": "P-XbXbP-:cb----cb",
+       "amount": 7000
+      },
+      {
+       "shape": "P-XbXbP-:cbP-P-cb:--CwCw--",
+       "amount": 11000
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "id": "Milestone_PostFinal_Tier1",
+     "title": "Deep Operations",
+     "titleKo": "심층 운영",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "cccccccc:XyXy--Xy",
+       "amount": 8000
+      },
+      {
+       "shape": "cccccccc:XyXyXmXy:--P-P-P-:--WmWmWm",
+       "amount": 12000
+      },
+      {
+       "shape": "cccccccc:XyXyXmXy:cccccccc:XmXcXcXc:ccWmWmWm",
+       "amount": 120000
+      },
+      {
+       "shape": "XmXcXcXc",
+       "amount": 8000
+      },
+      {
+       "shape": "XmXcXcXc:cc------",
+       "amount": 12000
+      }
+     ]
+    },
+    {
+     "index": 12,
+     "id": "Milestone_PostFinal_Tier2",
+     "title": "Expert Operator",
+     "titleKo": "숙련 운영자",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "XkcwXkcw",
+       "amount": 9000
+      },
+      {
+       "shape": "XkcwXkcw:XwCkXwCk",
+       "amount": 14000
+      },
+      {
+       "shape": "XkP-XkP-:XwcwXwcw:cwCkcwCk:CkXwCkXw:cw--cw--",
+       "amount": 150000
+      },
+      {
+       "shape": "CkXwCkXw",
+       "amount": 9000
+      },
+      {
+       "shape": "CkXwCkXw:cw--cw--",
+       "amount": 14000
+      }
+     ]
+    },
+    {
+     "index": 13,
+     "id": "Milestone_PostFinal_Tier3",
+     "title": "Vortex Singularity",
+     "titleKo": "소용돌이 특이점",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "Yk--Yk--",
+       "amount": 16000
+      },
+      {
+       "shape": "YkP-YkP-:--Yk--Yk:------Wr",
+       "amount": 18000
+      },
+      {
+       "shape": "YkP-YkP-:P-YkP-Yk:P-P-P-Wr:YwYwYwXk:--Sw--Wm",
+       "amount": 200000
+      },
+      {
+       "shape": "P---P-Xk:Yw--Yw--",
+       "amount": 16000
+      },
+      {
+       "shape": "P-P-P-Xk:P-YwP-Wm:YwSwYw--",
+       "amount": 18000
+      }
+     ]
+    }
+   ],
+   "sideUpgrades": [
+    {
+     "id": "CBSandbox",
+     "title": "Sandbox Tools",
+     "titleKo": "샌드박스 도구",
+     "unlocks": [
+      "SandboxFluidProducerDefaultVariant",
+      "SandboxItemProducerDefaultVariant"
+     ],
+     "cost": 50000,
+     "requires": []
+    },
+    {
+     "id": "CBCutting_FullCutter",
+     "title": "Cutter",
+     "titleKo": "절단기",
+     "unlocks": [
+      "CutterDefaultVariant"
+     ],
+     "cost": 3,
+     "requires": []
+    },
+    {
+     "id": "CBCutting_Swapper",
+     "title": "Swapper",
+     "titleKo": "교환기",
+     "unlocks": [
+      "HalvesSwapperDefaultVariant"
+     ],
+     "cost": 12,
+     "requires": []
+    },
+    {
+     "id": "CBBelts_Trash",
+     "title": "Trash",
+     "titleKo": "휴지통",
+     "unlocks": [
+      "TrashDefaultVariant"
+     ],
+     "cost": 4,
+     "requires": []
+    },
+    {
+     "id": "CBRotating_ReverseRotator",
+     "title": "Reverse Rotator",
+     "titleKo": "역회전기",
+     "unlocks": [
+      "RotatorOneQuadCCWVariant"
+     ],
+     "cost": 2,
+     "requires": []
+    },
+    {
+     "id": "CBRotating_Rotator180",
+     "title": "180° Rotator",
+     "titleKo": "180° 회전기",
+     "unlocks": [
+      "RotatorHalfVariant"
+     ],
+     "cost": 6,
+     "requires": []
+    },
+    {
+     "id": "CBStacking_BentStacker",
+     "title": "Bent Stacker",
+     "titleKo": "굽은 결합기",
+     "unlocks": [
+      "StackerDefaultVariant"
+     ],
+     "cost": 6,
+     "requires": []
+    },
+    {
+     "id": "CBBelts_OverflowSplitter",
+     "title": "Overflow Splitter",
+     "titleKo": "오버플로 분배기",
+     "unlocks": [
+      "SplitterOverflowVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBSpecial_FactoryFloor3",
+     "title": "3rd Machine Level",
+     "titleKo": "3번째 기계 층",
+     "unlocks": [
+      "Lift2LayerVariant"
+     ],
+     "cost": 50,
+     "requires": []
+    },
+    {
+     "id": "CBFluids_Storage",
+     "title": "Fluid Tank",
+     "titleKo": "유체 탱크",
+     "unlocks": [
+      "FluidStorageDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBDecorations_Labels",
+     "title": "Label",
+     "titleKo": "라벨",
+     "unlocks": [
+      "LabelDefaultVariant"
+     ],
+     "cost": 4,
+     "requires": []
+    },
+    {
+     "id": "CBWires_Core",
+     "title": "Wire Basics",
+     "titleKo": "전선 기초",
+     "unlocks": [
+      "WireDefaultVariant",
+      "WireBridgeVariant",
+      "WireTransmitterSenderVariant",
+      "WireTransmitterReceiverVariant",
+      "BeltFilterDefaultVariant",
+      "BeltReaderDefaultVariant",
+      "PipeGateDefaultVariant",
+      "ConstantSignalDefaultVariant",
+      "DisplayDefaultVariant",
+      "Display2x2Variant",
+      "Display3x3Variant",
+      "ButtonDefaultVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBWires_LogicGates",
+     "title": "Logic Gates",
+     "titleKo": "논리 회로",
+     "unlocks": [
+      "LogicGateAndVariant",
+      "LogicGateOrVariant",
+      "LogicGateIfVariant",
+      "LogicGateXOrVariant",
+      "LogicGateNotVariant",
+      "LogicGateCompareVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_VirtualProcessing",
+     "title": "Simulated Machines",
+     "titleKo": "시뮬레이션 기계",
+     "unlocks": [
+      "VirtualRotatorDefaultVariant",
+      "VirtualRotatorCCWVariant",
+      "VirtualAnalyzerDefaultVariant",
+      "VirtualUnstackerDefaultVariant",
+      "VirtualStackerDefaultVariant",
+      "VirtualHalfCutterDefaultVariant",
+      "VirtualPainterDefaultVariant",
+      "VirtualPinPusherDefaultVariant",
+      "VirtualCrystalGeneratorDefaultVariant",
+      "VirtualHalvesSwapperDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_UniversalTransmission",
+     "title": "Global Wire Transmission",
+     "titleKo": "글로벌 전선 송신",
+     "unlocks": [
+      "ControlledSignalReceiverVariant",
+      "ControlledSignalTransmitterVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_GoalReceiver",
+     "title": "Operator Shape Receiver",
+     "titleKo": "운영자 도형 수신기",
+     "unlocks": [
+      "WireGlobalTransmitterReceiverVariant"
+     ],
+     "cost": 8,
+     "requires": []
+    }
+   ]
+  },
+  "converter": {
+   "id": "converter-regular-scenario",
+   "title": "Regular",
+   "titleKo": "일반",
+   "gameMode": "ConverterGameMode",
+   "gameModeTitle": "Manufacture",
+   "gameModeTitleKo": "제조",
+   "maxShapeLayers": 4,
+   "milestones": [
+    {
+     "index": 1,
+     "id": "ConverterMilestoneTier_Initial",
+     "title": "Waste Processing Kit",
+     "titleKo": "폐기물 가공 키트",
+     "unlocks": [
+      "BeltDefaultVariant",
+      "Merger2To1Variant",
+      "Merger3To1Variant",
+      "MergerTShapeVariant",
+      "Splitter1To2Variant",
+      "Splitter1To3Variant",
+      "SplitterTShapeVariant",
+      "BeltPortSenderVariant",
+      "BeltPortReceiverVariant",
+      "Lift1LayerVariant",
+      "ExtractorDefaultVariant",
+      "CutterHalfVariant",
+      "RotatorOneQuadVariant",
+      "StackerStraightVariant"
+     ],
+     "goals": []
+    },
+    {
+     "index": 2,
+     "id": "ConverterMilestoneTier1",
+     "title": "Ruby & Trains",
+     "titleKo": "루비 및 기차",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "XkXk----",
+       "amount": 2500
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "id": "ConverterMilestoneTier2",
+     "title": "Sapphire & Painting",
+     "titleKo": "사파이어 및 색칠",
+     "unlocks": [
+      "PumpDefaultVariant",
+      "PipeDefaultVariant",
+      "Pipe1LayerVariant",
+      "Pipe2LayerVariant",
+      "FluidPortSenderVariant",
+      "FluidPortReceiverVariant",
+      "PainterDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "XuXuXuXu",
+       "amount": 4000
+      },
+      {
+       "shape": "RuRuRuRu:CuCuCuCu",
+       "amount": 2500
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "id": "ConverterMilestoneTier3",
+     "title": "Emerald",
+     "titleKo": "에메랄드",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "XrXrXrXr",
+       "amount": 7500
+      },
+      {
+       "shape": "RbRbRbRb",
+       "amount": 4000
+      },
+      {
+       "shape": "SrSrSrSr:CuCuCuCu",
+       "amount": 2500
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "id": "ConverterMilestoneTier4",
+     "title": "Gold",
+     "titleKo": "금",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "XbXbXbXb",
+       "amount": 12500
+      },
+      {
+       "shape": "WbCuWbCu",
+       "amount": 5000
+      },
+      {
+       "shape": "CuCuCuCu:WbWbWbWb",
+       "amount": 3000
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "id": "ConverterMilestoneTier5",
+     "title": "Aquamarine & Mixing",
+     "titleKo": "아쿠아마린 및 혼합",
+     "unlocks": [
+      "MixerDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "XgXgXgXg",
+       "amount": 15000
+      },
+      {
+       "shape": "RbSuRbSu:CgCgCgCg",
+       "amount": 7500
+      },
+      {
+       "shape": "RuRgRuRg:WgWuWgWu",
+       "amount": 4000
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "id": "ConverterMilestoneTier6",
+     "title": "Amethyst & 3rd Space Level",
+     "titleKo": "자수정 및 3번째 우주 층",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "XyXyXyXy",
+       "amount": 20000
+      },
+      {
+       "shape": "WrWrWrWr:SyWySuWy",
+       "amount": 10000
+      },
+      {
+       "shape": "CuRyCuRy:CyCyCyCy",
+       "amount": 5000
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "id": "ConverterMilestoneTier7",
+     "title": "Diamonds & Support Pins",
+     "titleKo": "다이아몬드 및 지지 핀",
+     "unlocks": [
+      "PinPusherDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "XcXcXcXc",
+       "amount": 50000
+      },
+      {
+       "shape": "CcRcRcCc:CwCwCwCw",
+       "amount": 35000
+      },
+      {
+       "shape": "CwCwCwCw:ScScScSc:CwCwCwCw",
+       "amount": 20000
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "id": "ConverterMilestoneTier8",
+     "title": "Painite & Crystals",
+     "titleKo": "페이나이트 및 결정체",
+     "unlocks": [
+      "CrystalGeneratorDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "XmXmXmXm",
+       "amount": 80000
+      },
+      {
+       "shape": "WmWmWmWm:P-P-P-P-:CuRwCuRw",
+       "amount": 40000
+      },
+      {
+       "shape": "RmRmRmRm:RuRwRuRw:P-P-P-P-:RmRmRmRm",
+       "amount": 20000
+      },
+      {
+       "shape": "CwCwCwCw:P-P-P-P-:SmSbSmSb",
+       "amount": 10000
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "id": "ConverterMilestoneTier9",
+     "title": "Vortex Grand-Assembler",
+     "titleKo": "소용돌이 거대 조립기",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "XwXwXwXw",
+       "amount": 100000
+      },
+      {
+       "shape": "crCucrCu:P-P-P-P-:CwCwCwCw",
+       "amount": 50000
+      },
+      {
+       "shape": "SrcrSrcr:CwcwCwcw",
+       "amount": 35000
+      },
+      {
+       "shape": "cwWwcwWw:cwcwcwcw:WwWwWwWw",
+       "amount": 20000
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "id": "ConverterMilestoneTier_Final",
+     "title": "Vortex Launch",
+     "titleKo": "소용돌이 발사",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "YkYkYkYk",
+       "amount": 100000
+      },
+      {
+       "shape": "SwCuYkCu:P-P-P-P-:CwCwCwCw",
+       "amount": 75000
+      },
+      {
+       "shape": "RbRbRbRb:WuYkWuWu:P-P-P-P-:CwCwCwCw",
+       "amount": 60000
+      },
+      {
+       "shape": "WwcwWwcw:YkSgSgSg",
+       "amount": 45000
+      },
+      {
+       "shape": "P-P-P-P-:WuSyWuSy:--Yk----",
+       "amount": 30000
+      }
+     ]
+    }
+   ],
+   "sideUpgrades": [
+    {
+     "id": "CBSandbox",
+     "title": "Sandbox Tools",
+     "titleKo": "샌드박스 도구",
+     "unlocks": [
+      "SandboxFluidProducerDefaultVariant",
+      "SandboxItemProducerDefaultVariant"
+     ],
+     "cost": 50000,
+     "requires": []
+    },
+    {
+     "id": "CBCutting_FullCutter",
+     "title": "Cutter",
+     "titleKo": "절단기",
+     "unlocks": [
+      "CutterDefaultVariant"
+     ],
+     "cost": 3,
+     "requires": []
+    },
+    {
+     "id": "CBCutting_Swapper",
+     "title": "Swapper",
+     "titleKo": "교환기",
+     "unlocks": [
+      "HalvesSwapperDefaultVariant"
+     ],
+     "cost": 12,
+     "requires": []
+    },
+    {
+     "id": "CBBelts_Trash",
+     "title": "Trash",
+     "titleKo": "휴지통",
+     "unlocks": [
+      "TrashDefaultVariant"
+     ],
+     "cost": 4,
+     "requires": []
+    },
+    {
+     "id": "CBRotating_ReverseRotator",
+     "title": "Reverse Rotator",
+     "titleKo": "역회전기",
+     "unlocks": [
+      "RotatorOneQuadCCWVariant"
+     ],
+     "cost": 2,
+     "requires": []
+    },
+    {
+     "id": "CBRotating_Rotator180",
+     "title": "180° Rotator",
+     "titleKo": "180° 회전기",
+     "unlocks": [
+      "RotatorHalfVariant"
+     ],
+     "cost": 6,
+     "requires": []
+    },
+    {
+     "id": "CBStacking_BentStacker",
+     "title": "Bent Stacker",
+     "titleKo": "굽은 결합기",
+     "unlocks": [
+      "StackerDefaultVariant"
+     ],
+     "cost": 6,
+     "requires": []
+    },
+    {
+     "id": "CBBelts_OverflowSplitter",
+     "title": "Overflow Splitter",
+     "titleKo": "오버플로 분배기",
+     "unlocks": [
+      "SplitterOverflowVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBSpecial_FactoryFloor3",
+     "title": "3rd Machine Level",
+     "titleKo": "3번째 기계 층",
+     "unlocks": [
+      "Lift2LayerVariant"
+     ],
+     "cost": 50,
+     "requires": []
+    },
+    {
+     "id": "CBFluids_Storage",
+     "title": "Fluid Tank",
+     "titleKo": "유체 탱크",
+     "unlocks": [
+      "FluidStorageDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBDecorations_Labels",
+     "title": "Label",
+     "titleKo": "라벨",
+     "unlocks": [
+      "LabelDefaultVariant"
+     ],
+     "cost": 4,
+     "requires": []
+    },
+    {
+     "id": "CBWires_Core",
+     "title": "Wire Basics",
+     "titleKo": "전선 기초",
+     "unlocks": [
+      "WireDefaultVariant",
+      "WireBridgeVariant",
+      "WireTransmitterSenderVariant",
+      "WireTransmitterReceiverVariant",
+      "BeltFilterDefaultVariant",
+      "BeltReaderDefaultVariant",
+      "PipeGateDefaultVariant",
+      "ConstantSignalDefaultVariant",
+      "DisplayDefaultVariant",
+      "Display2x2Variant",
+      "Display3x3Variant",
+      "ButtonDefaultVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBWires_LogicGates",
+     "title": "Logic Gates",
+     "titleKo": "논리 회로",
+     "unlocks": [
+      "LogicGateAndVariant",
+      "LogicGateOrVariant",
+      "LogicGateIfVariant",
+      "LogicGateXOrVariant",
+      "LogicGateNotVariant",
+      "LogicGateCompareVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_VirtualProcessing",
+     "title": "Simulated Machines",
+     "titleKo": "시뮬레이션 기계",
+     "unlocks": [
+      "VirtualRotatorDefaultVariant",
+      "VirtualRotatorCCWVariant",
+      "VirtualAnalyzerDefaultVariant",
+      "VirtualUnstackerDefaultVariant",
+      "VirtualStackerDefaultVariant",
+      "VirtualHalfCutterDefaultVariant",
+      "VirtualPainterDefaultVariant",
+      "VirtualPinPusherDefaultVariant",
+      "VirtualCrystalGeneratorDefaultVariant",
+      "VirtualHalvesSwapperDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_UniversalTransmission",
+     "title": "Global Wire Transmission",
+     "titleKo": "글로벌 전선 송신",
+     "unlocks": [
+      "ControlledSignalReceiverVariant",
+      "ControlledSignalTransmitterVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_GoalReceiver",
+     "title": "Operator Shape Receiver",
+     "titleKo": "운영자 도형 수신기",
+     "unlocks": [
+      "WireGlobalTransmitterReceiverVariant"
+     ],
+     "cost": 8,
+     "requires": []
+    }
+   ]
+  },
+  "converterHard": {
+   "id": "converter-hard-scenario",
+   "title": "Hard",
+   "titleKo": "어려움",
+   "gameMode": "ConverterGameMode",
+   "gameModeTitle": "Manufacture",
+   "gameModeTitleKo": "제조",
+   "maxShapeLayers": 5,
+   "milestones": [
+    {
+     "index": 1,
+     "id": "ConverterMilestoneTier_Initial",
+     "title": "Waste Processing Kit",
+     "titleKo": "폐기물 가공 키트",
+     "unlocks": [
+      "BeltDefaultVariant",
+      "Merger2To1Variant",
+      "Merger3To1Variant",
+      "MergerTShapeVariant",
+      "Splitter1To2Variant",
+      "Splitter1To3Variant",
+      "SplitterTShapeVariant",
+      "BeltPortSenderVariant",
+      "BeltPortReceiverVariant",
+      "Lift1LayerVariant",
+      "Lift2LayerVariant",
+      "ExtractorDefaultVariant",
+      "CutterHalfVariant",
+      "CutterDefaultVariant",
+      "HalvesSwapperDefaultVariant",
+      "RotatorOneQuadVariant",
+      "RotatorHalfVariant",
+      "RotatorOneQuadCCWVariant",
+      "StackerStraightVariant",
+      "StackerDefaultVariant",
+      "TrashDefaultVariant"
+     ],
+     "goals": []
+    },
+    {
+     "index": 2,
+     "id": "ConverterMilestoneTier1",
+     "title": "Ruby & Painting",
+     "titleKo": "루비 및 색칠",
+     "unlocks": [
+      "PumpDefaultVariant",
+      "PipeDefaultVariant",
+      "Pipe1LayerVariant",
+      "Pipe2LayerVariant",
+      "FluidPortSenderVariant",
+      "FluidPortReceiverVariant",
+      "PainterDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "Xk------",
+       "amount": 2500
+      },
+      {
+       "shape": "--Wu----",
+       "amount": 2500
+      }
+     ]
+    },
+    {
+     "index": 3,
+     "id": "ConverterMilestoneTier2",
+     "title": "Sapphire & Trains",
+     "titleKo": "사파이어 및 기차",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "XuWuXuWu",
+       "amount": 4000
+      },
+      {
+       "shape": "RrCrRrCr",
+       "amount": 2500
+      }
+     ]
+    },
+    {
+     "index": 4,
+     "id": "ConverterMilestoneTier3",
+     "title": "Emerald",
+     "titleKo": "에메랄드",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "SuXrSuXr",
+       "amount": 4000
+      },
+      {
+       "shape": "XkSuXkSu",
+       "amount": 2500
+      },
+      {
+       "shape": "RbCbRbCb:XrWbXrWb",
+       "amount": 7500
+      }
+     ]
+    },
+    {
+     "index": 5,
+     "id": "ConverterMilestoneTier4",
+     "title": "Gold & Mixing",
+     "titleKo": "금 및 혼합",
+     "unlocks": [
+      "MixerDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "RgCgRgCg:XbWgXbWg:WgXbWgXb",
+       "amount": 12500
+      },
+      {
+       "shape": "XkSuXkSu:SuXrSuXr",
+       "amount": 5000
+      },
+      {
+       "shape": "WgCgWrCr",
+       "amount": 3000
+      }
+     ]
+    },
+    {
+     "index": 6,
+     "id": "ConverterMilestoneTier5",
+     "title": "Aquamarine & Support Pins",
+     "titleKo": "아쿠아마린 및 지지 핀",
+     "unlocks": [
+      "PinPusherDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "XgSu----:SuXg----:WrCr----",
+       "amount": 15000
+      },
+      {
+       "shape": "----XrSu:----SuXr:----WgCg",
+       "amount": 7500
+      },
+      {
+       "shape": "RyCyRyCy:----Xk--:RuCuWuCu",
+       "amount": 4000
+      }
+     ]
+    },
+    {
+     "index": 7,
+     "id": "ConverterMilestoneTier6",
+     "title": "Amethyst & Crystals",
+     "titleKo": "자수정 및 결정체",
+     "unlocks": [
+      "CrystalGeneratorDefaultVariant"
+     ],
+     "goals": [
+      {
+       "shape": "XyXy--Xy:--CuRyCu",
+       "amount": 20000
+      },
+      {
+       "shape": "XbSwXgSw:SwXbSwXg:WgCgWbCb",
+       "amount": 10000
+      },
+      {
+       "shape": "RcCcRcCc:P-P-XkP-:----P---:RwCwWwCw",
+       "amount": 5000
+      }
+     ]
+    },
+    {
+     "index": 8,
+     "id": "ConverterMilestoneTier7",
+     "title": "Diamonds & 3rd Space Level",
+     "titleKo": "다이아몬드 및 3번째 우주 층",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "XcXc--Xc:P-CuRcCu:Rw--Cw--",
+       "amount": 20000
+      },
+      {
+       "shape": "cbcbcrcr:XrSwXbSw:SwXrSwXb:WbCbWrCr",
+       "amount": 50000
+      },
+      {
+       "shape": "RmCmRmCm:cgcgXkcg:P-P-P-P-:RwCwWwCw",
+       "amount": 35000
+      }
+     ]
+    },
+    {
+     "index": 9,
+     "id": "ConverterMilestoneTier8",
+     "title": "Painite",
+     "titleKo": "페이나이트",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "RwCwRwCw:XmXmXkXm:P-CuRmCu:Rw--Cw--",
+       "amount": 40000
+      },
+      {
+       "shape": "cgcb--cr:XgXb--Xr:SwSw--Sw:WgWb--Wr",
+       "amount": 80000
+      },
+      {
+       "shape": "XuWuXuWu:XkP-XkP-:P---P---:RwCwWwCw",
+       "amount": 20000
+      }
+     ]
+    },
+    {
+     "index": 10,
+     "id": "ConverterMilestoneTier9",
+     "title": "Vortex Grand-Assembler",
+     "titleKo": "소용돌이 거대 조립기",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "XrSwXrSw:XuWuXuWu:XkP-XkP-:P---P---:RwCwWwCw",
+       "amount": 35000
+      },
+      {
+       "shape": "XgSwXgSw:XuWuXuWu:XkP-XkP-:P---P---:RwCwWwCw",
+       "amount": 20000
+      },
+      {
+       "shape": "XbSwXbSw:XuWuXuWu:XkP-XkP-:P---P---:RwCwWwCw",
+       "amount": 20000
+      },
+      {
+       "shape": "--cccycm:--XcXyXm:--SkSkSk:--WcWyWm:WwWwWwWw",
+       "amount": 100000
+      },
+      {
+       "shape": "RwCwRwCw:ckckckck:XwXwXkXw:ckCuRwCu:RwckCwck",
+       "amount": 50000
+      }
+     ]
+    },
+    {
+     "index": 11,
+     "id": "ConverterMilestoneTier_Final",
+     "title": "Vortex Launch",
+     "titleKo": "소용돌이 발사",
+     "unlocks": [],
+     "goals": [
+      {
+       "shape": "XcSwXcSw:XuWuXuWu:XkYkXkYk:cccccccc:RwCwWwCw",
+       "amount": 75000
+      },
+      {
+       "shape": "XmSwXmSw:XuWuXuWu:XkYkXkYk:cmcmcmcm:RwCwWwCw",
+       "amount": 60000
+      },
+      {
+       "shape": "XySwXySw:XuWuXuWu:XkYkXkYk:cycycycy:RwCwWwCw",
+       "amount": 45000
+      },
+      {
+       "shape": "cwcwcwcu:XwXwXwXu:SkSkSkSw:WwWwWwWu:WkWkWkRw",
+       "amount": 100000
+      },
+      {
+       "shape": "ckckcuck:XkXkXuXk:SwSwSkSw:WkWkWuWk:WwWwRkWw",
+       "amount": 30000
+      }
+     ]
+    }
+   ],
+   "sideUpgrades": [
+    {
+     "id": "CBSandbox",
+     "title": "Sandbox Tools",
+     "titleKo": "샌드박스 도구",
+     "unlocks": [
+      "SandboxFluidProducerDefaultVariant",
+      "SandboxItemProducerDefaultVariant"
+     ],
+     "cost": 50000,
+     "requires": []
+    },
+    {
+     "id": "CBBelts_OverflowSplitter",
+     "title": "Overflow Splitter",
+     "titleKo": "오버플로 분배기",
+     "unlocks": [
+      "SplitterOverflowVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBFluids_Storage",
+     "title": "Fluid Tank",
+     "titleKo": "유체 탱크",
+     "unlocks": [
+      "FluidStorageDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBDecorations_Labels",
+     "title": "Label",
+     "titleKo": "라벨",
+     "unlocks": [
+      "LabelDefaultVariant"
+     ],
+     "cost": 4,
+     "requires": []
+    },
+    {
+     "id": "CBWires_Core",
+     "title": "Wire Basics",
+     "titleKo": "전선 기초",
+     "unlocks": [
+      "WireDefaultVariant",
+      "WireBridgeVariant",
+      "WireTransmitterSenderVariant",
+      "WireTransmitterReceiverVariant",
+      "BeltFilterDefaultVariant",
+      "BeltReaderDefaultVariant",
+      "PipeGateDefaultVariant",
+      "ConstantSignalDefaultVariant",
+      "DisplayDefaultVariant",
+      "Display2x2Variant",
+      "Display3x3Variant",
+      "ButtonDefaultVariant"
+     ],
+     "cost": 20,
+     "requires": []
+    },
+    {
+     "id": "CBWires_LogicGates",
+     "title": "Logic Gates",
+     "titleKo": "논리 회로",
+     "unlocks": [
+      "LogicGateAndVariant",
+      "LogicGateOrVariant",
+      "LogicGateIfVariant",
+      "LogicGateXOrVariant",
+      "LogicGateNotVariant",
+      "LogicGateCompareVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_VirtualProcessing",
+     "title": "Simulated Machines",
+     "titleKo": "시뮬레이션 기계",
+     "unlocks": [
+      "VirtualRotatorDefaultVariant",
+      "VirtualRotatorCCWVariant",
+      "VirtualAnalyzerDefaultVariant",
+      "VirtualUnstackerDefaultVariant",
+      "VirtualStackerDefaultVariant",
+      "VirtualHalfCutterDefaultVariant",
+      "VirtualPainterDefaultVariant",
+      "VirtualPinPusherDefaultVariant",
+      "VirtualCrystalGeneratorDefaultVariant",
+      "VirtualHalvesSwapperDefaultVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_UniversalTransmission",
+     "title": "Global Wire Transmission",
+     "titleKo": "글로벌 전선 송신",
+     "unlocks": [
+      "ControlledSignalReceiverVariant",
+      "ControlledSignalTransmitterVariant"
+     ],
+     "cost": 10,
+     "requires": []
+    },
+    {
+     "id": "CBWires_GoalReceiver",
+     "title": "Operator Shape Receiver",
+     "titleKo": "운영자 도형 수신기",
+     "unlocks": [
+      "WireGlobalTransmitterReceiverVariant"
+     ],
+     "cost": 8,
+     "requires": []
+    }
+   ]
+  }
+ }
+}

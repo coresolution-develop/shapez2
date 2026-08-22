@@ -70,10 +70,11 @@ export function PlanSteps({ root, skin, loads }: PlanStepsProps) {
                     {OPERATIONS[node.op].labelKo}
                     {node.color ? ` · ${colorNameKo(node.color)}` : ''}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {OPERATIONS[node.op].building}
-                    {node.outputIndex === 1 ? ' (두 번째 출력)' : ''}
-                  </span>
+                  {node.outputIndex === 1 ? (
+                    // the badge already names the building in Korean; only the
+                    // fact that this is a two-output machine's other side is new
+                    <span className="text-xs text-muted-foreground">두 번째 출력</span>
+                  ) : null}
                 </>
               )}
             </div>
