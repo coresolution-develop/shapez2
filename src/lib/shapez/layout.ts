@@ -166,7 +166,7 @@ export function generateLineLayout(root: BuildNode, options: LayoutOptions = {})
     notes.push('추출기는 포함하지 않았습니다. 자원 패치 위에 따로 놓고 맨 앞 벨트에 연결하세요.')
   }
   if (machines.some((node) => node.op === 'paint' || node.op === 'crystal')) {
-    notes.push('페인터·크리스탈 생성기는 파이프로 물감을 따로 연결해야 합니다. 배관은 포함되지 않습니다.')
+    notes.push('색칠기·결정체 생성기는 파이프로 물감을 따로 연결해야 합니다. 배관은 포함되지 않습니다.')
   }
 
   return {

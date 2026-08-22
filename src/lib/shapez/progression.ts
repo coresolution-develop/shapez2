@@ -5,6 +5,7 @@
  * path, and side upgrades are bought separately with research points. A plan is
  * only useful if it sticks to what you already have.
  */
+import { buildingNameKo } from './namesKo'
 import type { OperationId } from './operations'
 import progressionData from './progression.json'
 import type { ColorCode } from './types'
@@ -36,20 +37,30 @@ export type ScenarioKey = keyof typeof PROGRESSION & string
 
 /** Which building each operation needs, and what to call it in Korean. */
 export const OPERATION_BUILDINGS: Record<OperationId, { variant: string; nameKo: string }> = {
-  hcut: { variant: 'CutterHalfVariant', nameKo: '반파괴기' },
-  cut: { variant: 'CutterDefaultVariant', nameKo: '커터' },
-  r90cw: { variant: 'RotatorOneQuadVariant', nameKo: '시계 90° 회전기' },
-  r90ccw: { variant: 'RotatorOneQuadCCWVariant', nameKo: '반시계 90° 회전기' },
-  r180: { variant: 'RotatorHalfVariant', nameKo: '180° 회전기' },
-  stack: { variant: 'StackerStraightVariant', nameKo: '스태커' },
-  swap: { variant: 'HalvesSwapperDefaultVariant', nameKo: '스와퍼' },
-  paint: { variant: 'PainterDefaultVariant', nameKo: '페인터' },
-  pin: { variant: 'PinPusherDefaultVariant', nameKo: '핀 푸셔' },
-  crystal: { variant: 'CrystalGeneratorDefaultVariant', nameKo: '크리스탈 생성기' },
+  hcut: { variant: 'CutterHalfVariant', nameKo: buildingNameKo('CutterHalfVariant') },
+  cut: { variant: 'CutterDefaultVariant', nameKo: buildingNameKo('CutterDefaultVariant') },
+  r90cw: { variant: 'RotatorOneQuadVariant', nameKo: `${buildingNameKo('RotatorOneQuadVariant')} (시계)` },
+  r90ccw: {
+    variant: 'RotatorOneQuadCCWVariant',
+    nameKo: `${buildingNameKo('RotatorOneQuadVariant')} (반시계)`,
+  },
+  r180: { variant: 'RotatorHalfVariant', nameKo: `${buildingNameKo('RotatorOneQuadVariant')} (180°)` },
+  stack: { variant: 'StackerStraightVariant', nameKo: buildingNameKo('StackerStraightVariant') },
+  swap: {
+    variant: 'HalvesSwapperDefaultVariant',
+    nameKo: buildingNameKo('HalvesSwapperDefaultVariant'),
+  },
+  paint: { variant: 'PainterDefaultVariant', nameKo: buildingNameKo('PainterDefaultVariant') },
+  pin: { variant: 'PinPusherDefaultVariant', nameKo: buildingNameKo('PinPusherDefaultVariant') },
+  crystal: {
+    variant: 'CrystalGeneratorDefaultVariant',
+    nameKo: buildingNameKo('CrystalGeneratorDefaultVariant'),
+  },
 }
 
 export const BENT_STACKER_VARIANT = 'StackerDefaultVariant'
 export const MIXER_VARIANT = 'MixerDefaultVariant'
+export const MIXER_NAME_KO = buildingNameKo(MIXER_VARIANT)
 
 /** Colors a pump provides directly; everything else needs the mixer. */
 const PRIMARY_COLORS: ColorCode[] = ['r', 'g', 'b']

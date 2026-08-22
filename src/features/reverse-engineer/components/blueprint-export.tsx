@@ -54,7 +54,7 @@ export function BlueprintExport({ root, shapeCode }: BlueprintExportProps) {
         <h3 className="text-sm font-medium">청사진 생성</h3>
         <p className="text-sm text-muted-foreground">{result.reason}</p>
         <p className="text-xs text-muted-foreground">
-          지금은 한 도형이 기계를 일렬로 통과하는 계획만 만들 수 있습니다. 회전·도색·크리스탈, 그리고
+          지금은 한 도형이 기계를 일렬로 통과하는 계획만 만들 수 있습니다. 회전기·색칠기·결정체 생성기, 그리고
           마지막 단계의 절단까지 지원합니다.
         </p>
       </section>

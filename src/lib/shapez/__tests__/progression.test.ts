@@ -73,7 +73,7 @@ describe('progression', () => {
     expect(early.ok).toBe(false)
     if (!early.ok) {
       expect(early.error).toContain('해금')
-      expect(early.hint).toContain('페인터')
+      expect(early.hint).toContain('색칠기')
       expect(early.hint).toContain('마일스톤 5')
     }
 
@@ -93,7 +93,7 @@ describe('progression', () => {
       scenario: 'default',
     })
     expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.hint).toContain('믹서')
+    if (!result.ok) expect(result.hint).toContain('색상 혼합기')
   })
 
   it('solves fewer shapes early on than with everything unlocked', () => {

@@ -9,7 +9,9 @@ import { applyOperation, type OperationId } from './operations'
 import { cleanUpEmptyUpperLayers, makeLayersFall } from './physics'
 import { walk, type BuildNode } from './plan'
 import { configFor, fullShape, toShapeCode } from './shapeCode'
+import { colorNameKo } from './namesKo'
 import {
+  MIXER_NAME_KO,
   MIXER_VARIANT,
   OPERATION_BUILDINGS,
   allUnlocks,
@@ -19,7 +21,6 @@ import {
 } from './progression'
 import { planCost } from './throughput'
 import {
-  COLOR_NAMES_KO,
   copyShape,
   emptyLayer,
   numParts as getNumParts,
@@ -669,7 +670,7 @@ function missingBuildings(root: BuildNode, unlocks: Unlocks, scenario: ScenarioK
       const needsMixer = !['r', 'g', 'b'].includes(node.color)
       missing.add(
         needsMixer
-          ? unlockHint(scenario, MIXER_VARIANT, `믹서 (${COLOR_NAMES_KO[node.color]} 제조)`)
+          ? unlockHint(scenario, MIXER_VARIANT, `${MIXER_NAME_KO} (${colorNameKo(node.color)} 제조)`)
           : unlockHint(scenario, paint.variant, paint.nameKo),
       )
     }
@@ -754,7 +755,7 @@ export function solveShape(
     if (hasMidPin || bottomPinMismatch) {
       hint = '핀이 맨 아래 레이어 전체 패턴으로 놓인 경우만 자동 역설계를 지원합니다.'
     } else if (crystalColors(target).length > 1) {
-      hint = '서로 다른 색 크리스탈이 섞인 도형은 단계별 크리스탈 생성이 필요해 자동 해법을 못 찾을 수 있습니다.'
+      hint = '서로 다른 색 결정체가 섞인 도형은 단계별 결정체 생성이 필요해 자동 해법을 못 찾을 수 있습니다.'
     }
 
     return { ok: false, error: '이 도형의 가공 순서를 자동으로 찾지 못했습니다', hint }

@@ -203,17 +203,21 @@ export interface OperationMeta {
   needsColor: boolean
 }
 
+/**
+ * `labelKo` is the building's own in-game Korean name, so the plan reads the
+ * way the game does. Rotators share one name, hence the direction suffix.
+ */
 export const OPERATIONS: Record<OperationId, OperationMeta> = {
-  cut: { id: 'cut', building: 'Cutter', labelKo: '절단', inputs: 1, outputs: 2, needsColor: false },
-  hcut: { id: 'hcut', building: 'Half Destroyer', labelKo: '반파괴', inputs: 1, outputs: 1, needsColor: false },
-  r90cw: { id: 'r90cw', building: 'Rotator (CW)', labelKo: '시계 90°', inputs: 1, outputs: 1, needsColor: false },
-  r90ccw: { id: 'r90ccw', building: 'Rotator (CCW)', labelKo: '반시계 90°', inputs: 1, outputs: 1, needsColor: false },
-  r180: { id: 'r180', building: 'Rotator (180°)', labelKo: '180° 회전', inputs: 1, outputs: 1, needsColor: false },
-  swap: { id: 'swap', building: 'Swapper', labelKo: '반쪽 교환', inputs: 2, outputs: 2, needsColor: false },
-  stack: { id: 'stack', building: 'Stacker', labelKo: '적층', inputs: 2, outputs: 1, needsColor: false },
-  paint: { id: 'paint', building: 'Painter', labelKo: '도색', inputs: 1, outputs: 1, needsColor: true },
-  pin: { id: 'pin', building: 'Pin Pusher', labelKo: '핀 삽입', inputs: 1, outputs: 1, needsColor: false },
-  crystal: { id: 'crystal', building: 'Crystal Generator', labelKo: '크리스탈 생성', inputs: 1, outputs: 1, needsColor: true },
+  cut: { id: 'cut', building: 'Cutter', labelKo: '절단기', inputs: 1, outputs: 2, needsColor: false },
+  hcut: { id: 'hcut', building: 'Half Destroyer', labelKo: '절반 파괴기', inputs: 1, outputs: 1, needsColor: false },
+  r90cw: { id: 'r90cw', building: 'Rotator (CW)', labelKo: '회전기 (시계)', inputs: 1, outputs: 1, needsColor: false },
+  r90ccw: { id: 'r90ccw', building: 'Rotator (CCW)', labelKo: '회전기 (반시계)', inputs: 1, outputs: 1, needsColor: false },
+  r180: { id: 'r180', building: 'Rotator (180°)', labelKo: '회전기 (180°)', inputs: 1, outputs: 1, needsColor: false },
+  swap: { id: 'swap', building: 'Swapper', labelKo: '교환기', inputs: 2, outputs: 2, needsColor: false },
+  stack: { id: 'stack', building: 'Stacker', labelKo: '결합기', inputs: 2, outputs: 1, needsColor: false },
+  paint: { id: 'paint', building: 'Painter', labelKo: '색칠기', inputs: 1, outputs: 1, needsColor: true },
+  pin: { id: 'pin', building: 'Pin Pusher', labelKo: '핀 누름기', inputs: 1, outputs: 1, needsColor: false },
+  crystal: { id: 'crystal', building: 'Crystal Generator', labelKo: '결정체 생성기', inputs: 1, outputs: 1, needsColor: true },
 }
 
 /** Runs an operation and returns all of its outputs. */
@@ -244,7 +248,7 @@ export function applyOperation(
     case 'pin':
       return [pushPin(inputs[0], config)]
     case 'crystal':
-      if (!color) throw new InvalidOperationInputs('크리스탈 생성에는 색상이 필요합니다')
+      if (!color) throw new InvalidOperationInputs('결정체 생성에는 색상이 필요합니다')
       return [genCrystal(inputs[0], color, config)]
   }
 }

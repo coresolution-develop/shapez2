@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { PART_NAMES_KO, COLOR_NAMES_KO } from '@/lib/shapez/types'
+import { PART_NAMES_KO, colorNameKo } from '@/lib/shapez/namesKo'
 import { SPEED_TIERS, beltThroughput } from '@/lib/shapez/throughput'
 import type { SpeedTier, StackerVariant, ThroughputPlan } from '@/lib/shapez/throughput'
 
@@ -23,8 +23,8 @@ const TIER_LABELS: Record<number, string> = {
 }
 
 const STACKER_LABELS: Record<StackerVariant, string> = {
-  straight: '직선형 (20/분)',
-  bent: '굽은형 (30/분)',
+  straight: '결합기 (20/분)',
+  bent: '굽은 결합기 (30/분)',
 }
 
 interface ThroughputPanelProps {
@@ -82,7 +82,7 @@ export function ThroughputPanel({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="stacker-variant">스태커 종류</Label>
+          <Label htmlFor="stacker-variant">결합기 종류</Label>
           <Select
             value={stackerVariant}
             onValueChange={(value) => onStackerVariantChange((value ?? 'straight') as StackerVariant)}
@@ -145,7 +145,7 @@ export function ThroughputPanel({
             {plan.fluids.map((fluid) => (
               <li key={fluid.color}>
                 <Badge variant="outline" className="gap-1.5 py-1">
-                  <span>{COLOR_NAMES_KO[fluid.color]}</span>
+                  <span>{colorNameKo(fluid.color)}</span>
                   <span className="font-semibold tabular-nums">
                     {round(fluid.litresPerMinute)}L/분
                   </span>
@@ -157,7 +157,7 @@ export function ThroughputPanel({
       ) : null}
 
       <p className="text-xs text-muted-foreground">
-        건물 속도는 100% 기준값에 업그레이드 배율을 곱해 계산합니다. 페인터·크리스탈 생성기는
+        건물 속도는 100% 기준값에 업그레이드 배율을 곱해 계산합니다. 색칠기·결정체 생성기는
         100% 미만 단계가 없어서 하위 두 단계에서도 기본 속도로 계산됩니다. 벨트 분배 손실이나
         레인 배치는 반영하지 않은 이론값입니다.
       </p>

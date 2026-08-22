@@ -5,6 +5,7 @@
  * Ported from the official `shapez2` python package's `blueprints.py`.
  */
 import buildingData from './buildings.json'
+import { buildingNameKo, islandNameKo } from './namesKo'
 import { parseShapeCode } from './shapeCode'
 import type { Shape } from './types'
 
@@ -148,7 +149,7 @@ function decodeBuildings(raw: RawBuilding[]): BuildingEntry[] {
     entries.push({
       type,
       variant: meta?.variant ?? type,
-      title: meta?.title ?? type,
+      title: buildingNameKo(meta?.variant ?? type, meta?.title ?? type),
       pos,
       rotation,
       tiles,
@@ -286,7 +287,7 @@ export async function decodeBlueprint(rawBlueprint: string): Promise<Blueprint> 
 
     islands.push({
       type,
-      title: ISLANDS[type]?.title ?? type,
+      title: islandNameKo(type, ISLANDS[type]?.title ?? type),
       pos,
       rotation,
       buildings: nested,

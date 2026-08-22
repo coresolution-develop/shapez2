@@ -196,27 +196,16 @@ export const COLOR_SKINS: Record<string, Record<ColorCode, string>> = {
 
 export type ColorSkinId = keyof typeof COLOR_SKINS
 
+/** @deprecated use `colorNameKo` — these are the game's own names. */
 export const COLOR_NAMES_KO: Record<ColorCode, string> = {
   u: '무색',
-  r: '빨강',
-  g: '초록',
-  b: '파랑',
+  r: '빨간색',
+  g: '초록색',
+  b: '파란색',
   c: '시안',
   m: '마젠타',
-  y: '노랑',
+  y: '노란색',
   w: '흰색',
-}
-
-export const PART_NAMES_KO: Record<string, string> = {
-  C: '원형',
-  R: '사각',
-  S: '별',
-  W: '다이아몬드',
-  H: '육각',
-  G: '기어',
-  F: '꽃',
-  P: '핀',
-  c: '크리스탈',
 }
 
 /** Paint mixing recipes, derived the same way the game builds them. */

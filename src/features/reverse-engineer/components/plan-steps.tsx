@@ -4,7 +4,7 @@ import { OPERATIONS } from '@/lib/shapez/operations'
 import { orderedSteps, planStats } from '@/lib/shapez/plan'
 import type { BuildNode } from '@/lib/shapez/plan'
 import type { NodeLoad } from '@/lib/shapez/throughput'
-import { COLOR_NAMES_KO, PART_NAMES_KO } from '@/lib/shapez/types'
+import { PART_NAMES_KO, colorNameKo } from '@/lib/shapez/namesKo'
 import type { ColorSkinId } from '@/lib/shapez/types'
 
 interface PlanStepsProps {
@@ -68,7 +68,7 @@ export function PlanSteps({ root, skin, loads }: PlanStepsProps) {
                   </div>
                   <Badge>
                     {OPERATIONS[node.op].labelKo}
-                    {node.color ? ` · ${COLOR_NAMES_KO[node.color]}` : ''}
+                    {node.color ? ` · ${colorNameKo(node.color)}` : ''}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     {OPERATIONS[node.op].building}

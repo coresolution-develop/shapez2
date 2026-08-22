@@ -32,7 +32,7 @@ export interface BuildingSpec {
 }
 
 export const EXTRACTOR_SPEC: BuildingSpec = {
-  nameKo: '추출기',
+  nameKo: '미니 채굴기',
   building: 'Extractor (Mini-Miner)',
   baseRate: 30,
 }
@@ -40,22 +40,22 @@ export const EXTRACTOR_SPEC: BuildingSpec = {
 export type StackerVariant = 'straight' | 'bent'
 
 export const STACKER_SPECS: Record<StackerVariant, BuildingSpec> = {
-  straight: { nameKo: '스태커 (직선)', building: 'Stacker', baseRate: 20 },
-  bent: { nameKo: '스태커 (굽은형)', building: 'Bent Stacker', baseRate: 30 },
+  straight: { nameKo: '결합기', building: 'Stacker', baseRate: 20 },
+  bent: { nameKo: '굽은 결합기', building: 'Bent Stacker', baseRate: 30 },
 }
 
 export const OPERATION_SPECS: Record<OperationId, BuildingSpec> = {
-  cut: { nameKo: '커터', building: 'Cutter', baseRate: 30 },
-  hcut: { nameKo: '반파괴기', building: 'Half Destroyer', baseRate: 40 },
+  cut: { nameKo: '절단기', building: 'Cutter', baseRate: 30 },
+  hcut: { nameKo: '절반 파괴기', building: 'Half Destroyer', baseRate: 40 },
   r90cw: { nameKo: '회전기', building: 'Rotator', baseRate: 60 },
   r90ccw: { nameKo: '회전기', building: 'Rotator', baseRate: 60 },
   r180: { nameKo: '회전기', building: 'Rotator', baseRate: 60 },
-  swap: { nameKo: '스와퍼', building: 'Halves Swapper', baseRate: 30 },
+  swap: { nameKo: '교환기', building: 'Halves Swapper', baseRate: 30 },
   stack: STACKER_SPECS.straight,
-  paint: { nameKo: '페인터', building: 'Painter', baseRate: 30, fluidPerOp: 10, paintingFamily: true },
-  pin: { nameKo: '핀 푸셔', building: 'Pin Pusher', baseRate: 40 },
+  paint: { nameKo: '색칠기', building: 'Painter', baseRate: 30, fluidPerOp: 10, paintingFamily: true },
+  pin: { nameKo: '핀 누름기', building: 'Pin Pusher', baseRate: 40 },
   crystal: {
-    nameKo: '크리스탈 생성기',
+    nameKo: '결정체 생성기',
     building: 'Crystal Generator',
     baseRate: 20,
     fluidPerOp: 20,
