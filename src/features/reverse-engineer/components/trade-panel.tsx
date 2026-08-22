@@ -2,7 +2,7 @@
 
 import { ShapeView } from '@/components/shape-view'
 import { Badge } from '@/components/ui/badge'
-import { parseShapeCode } from '@/lib/shapez/shapeCode'
+import { parseShapeCode, parseShapeCodeForDisplay } from '@/lib/shapez/shapeCode'
 import { stationsProducing, type TradeStation } from '@/lib/shapez/trade'
 import type { ScenarioKey } from '@/lib/shapez/progression'
 import type { ColorSkinId } from '@/lib/shapez/types'
@@ -124,7 +124,9 @@ function ShapeChip({
   skin: ColorSkinId
   onSelectShape: (code: string) => void
 }) {
-  const parsed = parseShapeCode(code)
+  // planning needs the strict parse; the thumbnail only needs to be drawable
+  const buildable = parseShapeCode(code).ok
+  const parsed = parseShapeCodeForDisplay(code)
 
   // A gem input can't be planned either — but it is itself another station's
   // output, so following it walks back down the trade chain.
@@ -132,14 +134,14 @@ function ShapeChip({
     <button
       type="button"
       onClick={() => onSelectShape(code)}
-      title={parsed.ok ? `${code} · 가공 순서 보기` : `${code} · 이것도 무역소에서 받습니다`}
+      title={buildable ? `${code} · 가공 순서 보기` : `${code} · 이것도 무역소에서 받습니다`}
       className={`flex items-center gap-1.5 rounded-md border p-1 pr-1.5 transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none ${
-        parsed.ok ? 'bg-background' : 'bg-muted/60'
+        buildable ? 'bg-background' : 'bg-muted/60'
       }`}
     >
       {parsed.ok ? <ShapeView shape={parsed.shape} size={28} skin={skin} title={code} /> : null}
       <code className="font-mono text-[11px] text-muted-foreground">{code}</code>
-      {parsed.ok ? null : (
+      {buildable ? null : (
         <Badge variant="outline" className="px-1 py-0 text-[10px]">
           무역
         </Badge>

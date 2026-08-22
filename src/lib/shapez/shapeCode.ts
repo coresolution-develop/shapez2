@@ -1,4 +1,5 @@
 import {
+  DISPLAY_SHAPES_CONFIGS,
   EMPTY_CHAR,
   HEX_CONFIG,
   LAYER_SEPARATOR,
@@ -48,7 +49,22 @@ export const UNSUPPORTED_COLORS = ['k']
  * Parses a shape code such as `CuRuCuRu:P-cg----`.
  * Layers are bottom-to-top, parts run clockwise from the top-right.
  */
-export function parseShapeCode(code: string, forceConfig?: ShapesConfig): ParseResult {
+/**
+ * Parses anything the game can put on a belt, including what we can't plan.
+ *
+ * `parseShapeCode` stays strict on purpose — the solver must never be handed a
+ * part or colour it has no rules for. This one is for the viewer, so a gem or a
+ * black-painted shape can still be drawn and recognised.
+ */
+export function parseShapeCodeForDisplay(code: string): ParseResult {
+  return parseShapeCode(code, undefined, { display: true })
+}
+
+export function parseShapeCode(
+  code: string,
+  forceConfig?: ShapesConfig,
+  options: { display?: boolean } = {},
+): ParseResult {
   const trimmed = code.trim()
   if (trimmed === '') return { ok: false, error: '도형 코드가 비어 있습니다' }
 
@@ -70,7 +86,8 @@ export function parseShapeCode(code: string, forceConfig?: ShapesConfig): ParseR
     }
   }
 
-  const candidates = forceConfig ? [forceConfig] : SHAPES_CONFIGS
+  const configs = options.display ? DISPLAY_SHAPES_CONFIGS : SHAPES_CONFIGS
+  const candidates = forceConfig ? [forceConfig] : configs
   let error: string | null = null
 
   for (const config of candidates) {
@@ -78,7 +95,7 @@ export function parseShapeCode(code: string, forceConfig?: ShapesConfig): ParseR
     // report that if no config fits, so a genuine "unknown part" error from the
     // config that *did* fit isn't buried under a misleading length complaint.
     if (expectedLength !== config.numPartsPerLayer * 2) continue
-    const attempt = parseWithConfig(layerCodes, config)
+    const attempt = parseWithConfig(layerCodes, config, options.display ?? false)
     if (attempt.ok) return attempt
     error ??= attempt.error
   }
@@ -90,7 +107,11 @@ export function parseShapeCode(code: string, forceConfig?: ShapesConfig): ParseR
   }
 }
 
-function parseWithConfig(layerCodes: string[], config: ShapesConfig): ParseResult {
+function parseWithConfig(
+  layerCodes: string[],
+  config: ShapesConfig,
+  display: boolean,
+): ParseResult {
   const layers: Layer[] = []
 
   for (const [layerIndex, layerCode] of layerCodes.entries()) {
@@ -123,8 +144,10 @@ function parseWithConfig(layerCodes: string[], config: ShapesConfig): ParseResul
       }
 
       if (type.hasColor) {
-        if (!isColorCode(colorChar)) {
-          if (UNSUPPORTED_COLORS.includes(colorChar)) {
+        // black is drawable but not plannable, so it passes only in display mode
+        const unsupported = UNSUPPORTED_COLORS.includes(colorChar)
+        if (!isColorCode(colorChar) && !(display && unsupported)) {
+          if (unsupported) {
             return {
               ok: false,
               error: `검은색(${colorChar})은 아직 지원하지 않습니다 — 만드는 방법을 확인하지 못했습니다`,
@@ -132,7 +155,7 @@ function parseWithConfig(layerCodes: string[], config: ShapesConfig): ParseResul
           }
           return { ok: false, error: `유효하지 않은 색상 문자: ${colorChar}` }
         }
-        layer.push({ type, color: colorChar })
+        layer.push({ type, color: colorChar as ColorCode })
       } else {
         if (colorChar !== EMPTY_CHAR) {
           return {

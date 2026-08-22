@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select'
 import { GAME_VERSION, PROGRESSION, milestoneNameKo, unlocksFor } from '@/lib/shapez/progression'
 import type { ScenarioKey } from '@/lib/shapez/progression'
-import { parseShapeCode } from '@/lib/shapez/shapeCode'
+import { parseShapeCode, parseShapeCodeForDisplay } from '@/lib/shapez/shapeCode'
 import type { ColorSkinId } from '@/lib/shapez/types'
 
 interface ProgressPanelProps {
@@ -130,25 +130,26 @@ export function ProgressPanel({
               </p>
               {goals.some((goal) => !parseShapeCode(goal.shape).ok) ? (
                 <p className="text-xs text-muted-foreground">
-                  회색으로 뜨는 것은 무역소에서 교환해 받는 도형이라 기계로 만들 수 없습니다. 나머지
-                  도형을 눌러 가공 순서를 보세요.
+                  바탕이 어두운 것은 무역소에서 교환해 받는 도형이라 기계로 만들 수 없습니다. 눌러
+                  보면 어느 무역소에서 나오는지 알려줍니다.
                 </p>
               ) : null}
               <ul className="flex flex-wrap gap-2">
                 {goals.map((goal) => {
-                  const parsed = parseShapeCode(goal.shape)
+                  const buildable = parseShapeCode(goal.shape).ok
+                  const parsed = parseShapeCodeForDisplay(goal.shape)
                   return (
                     <li key={goal.shape}>
                       <button
                         type="button"
                         onClick={() => onSelectShape(goal.shape)}
                         className={`flex items-center gap-1.5 rounded-md border p-1.5 transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none ${
-                          parsed.ok ? 'bg-background' : 'bg-muted/50'
+                          buildable ? 'bg-background' : 'bg-muted/50'
                         }`}
                         title={
-                          parsed.ok
+                          buildable
                             ? `${goal.shape} · ${goal.amount.toLocaleString('ko-KR')}개`
-                            : parsed.error
+                            : `${goal.shape} · 무역소에서 받는 도형입니다`
                         }
                       >
                         {parsed.ok ? (

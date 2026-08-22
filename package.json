@@ -14,7 +14,8 @@
     "gen:buildings": "python3 scripts/extractBuildings.py > src/lib/shapez/buildings.json",
     "gen:blueprints": "python3 scripts/genBlueprintVectors.py > src/lib/shapez/__tests__/blueprintVectors.json",
     "gen:progression": "python3 scripts/extractScenarios.py > src/lib/shapez/progression.json",
-    "gen:names": "python3 scripts/extractKoreanNames.py > src/lib/shapez/namesKo.json"
+    "gen:names": "python3 scripts/extractKoreanNames.py > src/lib/shapez/namesKo.json",
+    "gen:tradeparts": "python3 scripts/extractTradeParts.py > src/components/tradePartShapes.json"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

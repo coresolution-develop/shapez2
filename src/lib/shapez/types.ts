@@ -9,8 +9,16 @@
 export const LAYER_SEPARATOR = ':'
 export const EMPTY_CHAR = '-'
 
-export type ColorCode = 'u' | 'r' | 'g' | 'b' | 'c' | 'm' | 'y' | 'w'
+export type ColorCode = 'u' | 'r' | 'g' | 'b' | 'c' | 'm' | 'y' | 'w' | 'k'
 
+/**
+ * The colours the simulator works with.
+ *
+ * Black is deliberately absent: it shows up on shapes the game asks for, but
+ * how you make it is unconfirmed (see `UNSUPPORTED_COLORS` in `shapeCode.ts`),
+ * so no plan may use it. It stays in `ColorCode` only so those shapes can be
+ * drawn.
+ */
 export const COLORS: readonly ColorCode[] = ['u', 'r', 'g', 'b', 'c', 'm', 'y', 'w']
 
 /** Colors a painter can actually apply (uncolored is the absence of paint). */
@@ -105,6 +113,26 @@ export const HEX_CONFIG: ShapesConfig = {
 
 export const SHAPES_CONFIGS: readonly ShapesConfig[] = [QUAD_CONFIG, HEX_CONFIG]
 
+/**
+ * The gem (`X`) and vortex (`Y`) parts, for drawing only.
+ *
+ * They come out of trade stations, so no operation produces them and there are
+ * no rules to port. They are kept out of `QUAD_CONFIG` on purpose — the solver
+ * reaches for `partsByCode` and must never see a part it cannot reason about —
+ * and live in `DISPLAY_QUAD_CONFIG` instead, which only the viewer uses.
+ */
+export const TRADE_PART_TYPES: Record<string, PartType> = {
+  X: partType('X', { canChangeColor: false }),
+  Y: partType('Y', { canChangeColor: false }),
+}
+
+export const DISPLAY_QUAD_CONFIG: ShapesConfig = {
+  ...QUAD_CONFIG,
+  partsByCode: { ...QUAD_CONFIG.partsByCode, ...TRADE_PART_TYPES },
+}
+
+export const DISPLAY_SHAPES_CONFIGS: readonly ShapesConfig[] = [DISPLAY_QUAD_CONFIG, HEX_CONFIG]
+
 /** Max layers per scenario. "Insane" allows a 5th layer. */
 export const MAX_LAYERS = { normal: 4, insane: 5 } as const
 export type ScenarioId = keyof typeof MAX_LAYERS
@@ -171,6 +199,9 @@ export const COLOR_SKINS: Record<string, Record<ColorCode, string>> = {
     m: '#ff00ff',
     y: '#ffff00',
     w: '#ffffff',
+    // near-black rather than black: the outline is dark too, and a true black
+    // quarter disappears against the dark theme
+    k: '#3d3d48',
   },
   RYB: {
     u: '#a49ea5',
@@ -181,6 +212,7 @@ export const COLOR_SKINS: Record<string, Record<ColorCode, string>> = {
     m: '#a729cf',
     y: '#d5850d',
     w: '#564d4e',
+    k: '#3d3d48',
   },
   CMYK: {
     u: '#a49ea5',
@@ -191,6 +223,7 @@ export const COLOR_SKINS: Record<string, Record<ColorCode, string>> = {
     m: '#00ff00',
     y: '#0000ff',
     w: '#564d4e',
+    k: '#3d3d48',
   },
 }
 
@@ -206,6 +239,7 @@ export const COLOR_NAMES_KO: Record<ColorCode, string> = {
   m: '마젠타',
   y: '노란색',
   w: '흰색',
+  k: '검은색',
 }
 
 /** Paint mixing recipes, derived the same way the game builds them. */

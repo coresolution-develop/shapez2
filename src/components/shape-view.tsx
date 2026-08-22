@@ -2,6 +2,7 @@
  * Renders a shape as SVG using the same geometry as the in-game shape viewer
  * (ported from `shapez2.shapeViewer`).
  */
+import tradePartShapes from '@/components/tradePartShapes.json'
 import { COLOR_SKINS } from '@/lib/shapez/types'
 import type { ColorSkinId, Part, Shape } from '@/lib/shapez/types'
 
@@ -25,8 +26,27 @@ function darken(hex: string): string {
   return `#${channels.map((c) => c.toString(16).padStart(2, '0')).join('')}`
 }
 
+/**
+ * The gem and vortex quarters, traced off the game's own meshes.
+ *
+ * Unlike the parts below they aren't described by a formula — they are polygons
+ * read out of `XShape`/`StarShape` by `scripts/extractTradeParts.py`. Points run
+ * from one axis round to the other, as fractions of the part's reach.
+ */
+const TRADE_PART_POLYGONS: Record<string, number[][]> = tradePartShapes.parts
+
+function tradePartPath(typeCode: string, size: number): string | null {
+  const polygon = TRADE_PART_POLYGONS[typeCode]
+  if (!polygon) return null
+  const corners = polygon.map(([along, across]) => `${along * size} ${size - across * size}`)
+  return `M 0 ${size} L ${corners.join(' L ')} Z`
+}
+
 /** Outline of a part, in local coordinates where (0, size) is the shape centre. */
 function partPath(typeCode: string, size: number): string | null {
+  const traded = tradePartPath(typeCode, size)
+  if (traded) return traded
+
   switch (typeCode) {
     case 'C':
       return `M 0 ${size} L 0 0 A ${size} ${size} 0 0 1 ${size} ${size} Z`

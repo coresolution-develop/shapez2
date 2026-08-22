@@ -33,7 +33,7 @@ import {
   unlocksFor,
 } from '@/lib/shapez/progression'
 import type { ScenarioKey } from '@/lib/shapez/progression'
-import { parseShapeCode } from '@/lib/shapez/shapeCode'
+import { parseShapeCode, parseShapeCodeForDisplay } from '@/lib/shapez/shapeCode'
 import { solveShape } from '@/lib/shapez/solver'
 import { isTradeShape } from '@/lib/shapez/trade'
 import { computeThroughput } from '@/lib/shapez/throughput'
@@ -49,6 +49,8 @@ export function ReverseEngineerView() {
   const { code, scenario, skin, target, tier, stackerVariant, milestone, sideUpgrades } = state
 
   const parsed = useMemo(() => parseShapeCode(code), [code])
+  // gems and black-painted shapes have no plan, but they can still be drawn
+  const display = useMemo(() => parseShapeCodeForDisplay(code), [code])
   const scenarioKey = scenario
   const maxShapeLayers = PROGRESSION[scenarioKey]?.maxShapeLayers ?? 4
 
@@ -143,12 +145,17 @@ export function ReverseEngineerView() {
                   <p className="text-muted-foreground">{parsed.shape.layers.length}개 레이어</p>
                 </div>
               </div>
-            ) : isTradeShape(code) ? (
-              // the stations themselves are laid out on the right, where the
-              // plan would otherwise be
-              <p className="text-sm text-muted-foreground">
-                무역소에서 받는 도형이라 기계로는 만들 수 없습니다.
-              </p>
+            ) : display.ok ? (
+              // drawable but not plannable; the stations that trade it are laid
+              // out on the right, where the plan would otherwise be
+              <div className="flex items-center gap-4">
+                <ShapeView shape={display.shape} size={128} skin={skin} title={code} />
+                <div className="text-sm">
+                  <p className="font-medium">{display.config.label}</p>
+                  <p className="text-muted-foreground">{display.shape.layers.length}개 레이어</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{parsed.error}</p>
+                </div>
+              </div>
             ) : (
               <p role="alert" className="text-sm text-destructive">
                 {parsed.error}
