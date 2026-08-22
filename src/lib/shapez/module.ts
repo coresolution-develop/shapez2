@@ -535,14 +535,28 @@ type Side = -1 | 1
  * the flow. Anything that leans out of its own row or spans two floors cannot
  * be packed into a machine row at all, and says so rather than being squeezed.
  */
-function machineSpan(type: string): { pitch: number; anchorOffset: number } | null {
-  const world = footprint(type).map((tile) => toWorld(tile as [number, number, number], DOWNSTREAM))
-  if (world.some(([, dy, dz]) => dy !== 0 || dz !== 0)) return null
+function machineBox(
+  type: string,
+  rotation: number,
+): { minX: number; maxX: number; minY: number; maxY: number } | null {
+  const world = footprint(type).map((tile) => toWorld(tile as [number, number, number], rotation))
+  if (world.some(([, , dz]) => dz !== 0)) return null
 
   const dxs = world.map(([dx]) => dx)
-  const min = Math.min(...dxs)
-  const max = Math.max(...dxs)
-  return { pitch: max - min + 1, anchorOffset: -min }
+  const dys = world.map(([, dy]) => dy)
+  return {
+    minX: Math.min(...dxs),
+    maxX: Math.max(...dxs),
+    minY: Math.min(...dys),
+    maxY: Math.max(...dys),
+  }
+}
+
+/** The same, for a machine standing in a comb: one row deep, `pitch` wide. */
+function machineSpan(type: string): { pitch: number; anchorOffset: number } | null {
+  const box = machineBox(type, DOWNSTREAM)
+  if (!box || box.minY !== 0 || box.maxY !== 0) return null
+  return { pitch: box.maxX - box.minX + 1, anchorOffset: -box.minX }
 }
 
 /**
@@ -671,61 +685,57 @@ export interface LaneModule {
   /** Machines per lane — enough of them to keep a lane saturated. */
   perLane: number
   machines: number
-  /** Columns the machine row occupies, leftmost and rightmost. */
+  /** Columns the machines occupy, leftmost and rightmost. */
   span: { from: number; to: number }
+  /** How the machines are arranged. */
+  shape: LaneShape
   notes: string[]
+  /** What this particular module needs the player to know before pasting it. */
+  warnings: string[]
 }
 
 export type LaneModuleResult = LaneModule | ModuleFailure
 
+/** How a lane's machines are arranged. See each builder for what that means. */
+export type LaneShape = 'comb' | 'ladder'
+
+interface Built {
+  placements: BuildingPlacement[]
+  span: { from: number; to: number }
+  shape: LaneShape
+}
+
+const CATCHER = { type: 'BeltPortReceiverInternalVariant', rotation: DOWNSTREAM }
+const LAUNCHER = { type: 'BeltPortSenderInternalVariant', rotation: DOWNSTREAM }
+
+/** Lays every floor of a module out the same way, as both reference modules do. */
+function onEveryFloor(perFloor: (put: (piece: Piece, x: number, y: number) => void) => void) {
+  const placements: BuildingPlacement[] = []
+  for (let floor = 0; floor < MODULE_FLOORS; floor++) {
+    perFloor((piece, x, y) =>
+      placements.push({ type: piece.type, x, y, layer: floor, rotation: piece.rotation }),
+    )
+  }
+  return placements
+}
+
 /**
- * One operation, twelve lanes, in at the top edge and out at the bottom.
+ * Machines side by side in one row, fed by a comb of splitters.
  *
- * Each lane fans out across `perLane` columns of machines and is gathered back
- * into one belt, so the lane leaves as full as it arrived. Laid out in rows,
- * from the intake edge down:
- *
- *   catchers · steering · splitter comb · machines · merger comb · gathering
- *   · straight run · launchers
- *
- * Machine columns are centred on the lane columns, which is what puts the
- * reference module's rotators at x 6..13, and the whole module stays inside one
- * platform chunk — anything that would not fit is refused rather than trimmed.
+ * This is the module a player built, reproduced: catchers, a row of steering,
+ * the splitter comb, the machines, the merger comb, a row of gathering, then a
+ * straight run to the launchers. It only works while a floor's machines fit
+ * across one chunk, which is what `machineRows` measures.
  */
-export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleResult {
+function buildComb(
+  op: OperationId,
+  perLane: number,
+  geometry: { pitch: number; anchorOffset: number },
+): Built | ModuleFailure {
   const type = OPERATION_BUILDING[op]
-  const ports = portsFor(type)
   const label = OPERATIONS[op].labelKo
-
-  if (!ports || ports.partialBelts) {
-    return { ok: false, reason: `${label}의 입출력 위치를 아직 측정하지 못했습니다`, blockedBy: op }
-  }
-  if (ports.inputs.length !== 1 || ports.outputs.length !== 1) {
-    return {
-      ok: false,
-      reason: `${label}는 벨트가 ${ports.inputs.length}줄 들어가고 ${ports.outputs.length}줄 나와서 한 줄짜리 레인에 넣을 수 없습니다`,
-      blockedBy: op,
-    }
-  }
-
-  const geometry = machineSpan(type)
-  if (!geometry) {
-    return {
-      ok: false,
-      reason: `${label}는 기계 층 2개를 차지해서 3층짜리 모듈에 층마다 넣을 수 없습니다`,
-      blockedBy: op,
-    }
-  }
-
   const columns = MODULE_LANES_PER_FLOOR * perLane * geometry.pitch
   const blockStart = MODULE_FIRST_LANE + (MODULE_LANES_PER_FLOOR - columns) / 2
-  if (columns > USABLE_COLUMNS) {
-    return {
-      ok: false,
-      reason: `${label} ${perLane}대짜리 레인은 기계 줄 하나에 ${columns}칸이 필요한데 쓸 수 있는 건 ${USABLE_COLUMNS}칸입니다 — 기계를 ${Math.ceil(columns / USABLE_COLUMNS)}줄로 나눠 흐름 방향으로 늘어놓아야 하고, 그 배치는 아직 없습니다`,
-      blockedBy: op,
-    }
-  }
 
   // each lane owns a contiguous block of machines and enters it from the side
   // nearest its own column, so the sideways runs never have to cross the module
@@ -733,8 +743,7 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
     const side: Side = lane < MODULE_LANES_PER_FLOOR / 2 ? -1 : 1
     const anchors = Array.from(
       { length: perLane },
-      (_, index) =>
-        blockStart + (lane * perLane + index) * geometry.pitch + geometry.anchorOffset,
+      (_, index) => blockStart + (lane * perLane + index) * geometry.pitch + geometry.anchorOffset,
     )
     return {
       column: MODULE_FIRST_LANE + lane,
@@ -769,45 +778,260 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
     }
   }
 
-  const placements: BuildingPlacement[] = []
-  for (let floor = 0; floor < MODULE_FLOORS; floor++) {
-    const put = (piece: Piece, x: number, y: number) =>
-      placements.push({ type: piece.type, x, y, layer: floor, rotation: piece.rotation })
-    const lay = (tiles: Tile[]) => tiles.forEach((tile) => put(tile.piece, tile.x, tile.y))
-
+  const placements = onEveryFloor((put) => {
     for (const [index, lane] of lanes.entries()) {
-      put({ type: 'BeltPortReceiverInternalVariant', rotation: DOWNSTREAM }, lane.column, MODULE_INTAKE_ROW)
-      lay(steer.tiles[index])
-      lay(comb(lane.anchors, lane.side, splitRow, false))
-
+      put(CATCHER, lane.column, MODULE_INTAKE_ROW)
+      for (const tile of steer.tiles[index]) put(tile.piece, tile.x, tile.y)
+      for (const tile of comb(lane.anchors, lane.side, splitRow, false)) {
+        put(tile.piece, tile.x, tile.y)
+      }
       for (const anchor of lane.anchors) put({ type, rotation: DOWNSTREAM }, anchor, machineRow)
-
-      lay(comb(lane.anchors, lane.side, mergeRow, true))
-      lay(gather.tiles[index])
+      for (const tile of comb(lane.anchors, lane.side, mergeRow, true)) {
+        put(tile.piece, tile.x, tile.y)
+      }
+      for (const tile of gather.tiles[index]) put(tile.piece, tile.x, tile.y)
       for (let y = runRow; y > MODULE_OUTLET_ROW; y--) put(PIECE.down, lane.column, y)
-      put({ type: 'BeltPortSenderInternalVariant', rotation: DOWNSTREAM }, lane.column, MODULE_OUTLET_ROW)
+      put(LAUNCHER, lane.column, MODULE_OUTLET_ROW)
+    }
+  })
+
+  return { placements, span: { from: blockStart, to: blockStart + columns - 1 }, shape: 'comb' }
+}
+
+/** Raw trunk, machine, results trunk — the three columns a ladder lane needs. */
+const LADDER_BAND = 3
+
+/** The mirrored twin of a machine, where the game has one and it is measured. */
+function mirroredOf(type: string): string {
+  const twin = `${type}Mirrored`
+  return FOOTPRINTS[twin] && portsFor(twin) ? twin : type
+}
+
+/** Which building faces which way on each side of the module. */
+function ladderMachine(base: string, side: Side): { type: string; rotation: number } {
+  return side < 0 ? { type: mirroredOf(base), rotation: 2 } : { type: base, rotation: 0 }
+}
+
+/**
+ * A ladder: one machine per rung, standing sideways beside the lane.
+ *
+ * Turning the machines through ninety degrees is what makes a painter module
+ * fit at all. Across the flow a painter is two tiles wide and sixteen of them
+ * cannot share a chunk's sixteen columns; along the flow it is one tile wide,
+ * and the module has rows to spare. So the lane runs down a trunk of its own,
+ * a splitter drops one share into a machine at each rung, and the results come
+ * back down a second trunk on the machine's far side:
+ *
+ *   raw ─┬─ machine ─→ done          three columns per lane, twelve in all
+ *        ↓             ↓
+ *   raw ─┬─ machine ─→ done
+ *        ↓             ↓
+ *
+ * Neither trunk can overflow. The raw one carries at most a full belt, and the
+ * results one ends up carrying `perLane x machineRate`, which is what a belt
+ * holds by the definition of `perLane`.
+ */
+function buildLadder(op: OperationId, perLane: number, needsPipe: boolean): Built | ModuleFailure {
+  const base = OPERATION_BUILDING[op]
+  const label = OPERATIONS[op].labelKo
+
+  // one column wide is the whole point; anything fatter has no room for the
+  // trunks to sit against, and its ports would land inside its own footprint
+  let minY = 0
+  let maxY = 0
+  for (const side of [-1, 1] as Side[]) {
+    const machine = ladderMachine(base, side)
+    const box = machineBox(machine.type, machine.rotation)
+    if (!box) {
+      return {
+        ok: false,
+        reason: `${label}는 기계 층 2개를 차지해서 3층짜리 모듈에 층마다 넣을 수 없습니다`,
+        blockedBy: op,
+      }
+    }
+    if (box.minX !== 0 || box.maxX !== 0) {
+      return {
+        ok: false,
+        reason: `${label}는 흐름을 따라서도 ${box.maxX - box.minX + 1}칸이라 레인 옆에 세울 수 없습니다`,
+        blockedBy: op,
+      }
+    }
+    minY = Math.min(minY, box.minY)
+    maxY = Math.max(maxY, box.maxY)
+  }
+
+  const columns = MODULE_LANES_PER_FLOOR * LADDER_BAND
+  const blockStart = MODULE_FIRST_LANE + (MODULE_LANES_PER_FLOOR - columns) / 2
+  if (columns > USABLE_COLUMNS) {
+    return {
+      ok: false,
+      reason: `${label} 레인 하나에 ${LADDER_BAND}칸씩 ${columns}칸이 필요한데 쓸 수 있는 건 ${USABLE_COLUMNS}칸입니다`,
+      blockedBy: op,
     }
   }
 
+  // machines face outward, so each lane's trunks sit between its own machines
+  // and the module's edge and no branch ever crosses another lane
+  const lanes = Array.from({ length: MODULE_LANES_PER_FLOOR }, (_, lane) => {
+    const side: Side = lane < MODULE_LANES_PER_FLOOR / 2 ? -1 : 1
+    const band = blockStart + lane * LADDER_BAND
+    return {
+      column: MODULE_FIRST_LANE + lane,
+      side,
+      machine: band + 1,
+      raw: side < 0 ? band + 2 : band,
+      done: side < 0 ? band : band + 2,
+    }
+  })
+
+  const steer = crossings(
+    lanes.map((lane) => ({ from: lane.column, to: lane.raw })),
+    MODULE_INTAKE_ROW - 1,
+  )
+  if (!steer) return { ok: false, reason: `${label} 레인들이 서로 교차해서 배선을 찾지 못했습니다` }
+
+  // a rung is as tall as the machine, plus a spare row when paint has to reach
+  // it: pack them tight and there is no face left for the player to pipe into
+  const height = maxY - minY + 1
+  const rungPitch = height + (needsPipe ? 1 : 0)
+  const firstRung = MODULE_INTAKE_ROW - 1 - steer.rows - maxY
+  const rungs = Array.from({ length: perLane }, (_, index) => firstRung - index * rungPitch)
+  const lastRung = rungs[rungs.length - 1]
+
+  const gather = crossings(
+    lanes.map((lane) => ({ from: lane.done, to: lane.column })),
+    lastRung + minY - 1,
+  )
+  if (!gather) return { ok: false, reason: `${label} 레인들이 서로 교차해서 배선을 찾지 못했습니다` }
+
+  const runRow = lastRung + minY - 1 - gather.rows
+  if (runRow < MODULE_OUTLET_ROW) {
+    return {
+      ok: false,
+      reason: `${label} ${perLane}대를 세로로 늘어놓으면 플랫폼 한 칸보다 깊어집니다 — 세로로 ${MODULE_INTAKE_ROW - runRow + 1}칸이 필요합니다`,
+      blockedBy: op,
+    }
+  }
+
+  const rungRows = new Set(rungs)
+  const placements = onEveryFloor((put) => {
+    for (const [index, lane] of lanes.entries()) {
+      const machine = ladderMachine(base, lane.side)
+      put(CATCHER, lane.column, MODULE_INTAKE_ROW)
+      for (const tile of steer.tiles[index]) put(tile.piece, tile.x, tile.y)
+
+      // the raw trunk runs from the steering down to the last rung, shedding
+      // one share on the way; the last rung takes everything that is left
+      for (let y = firstRung + maxY; y >= lastRung; y--) {
+        if (!rungRows.has(y)) {
+          put(PIECE.down, lane.raw, y)
+          continue
+        }
+        const last = y === lastRung
+        put(
+          lane.side < 0
+            ? last
+              ? PIECE.downToLeft
+              : PIECE.splitHeadLeft
+            : last
+              ? PIECE.downToRight
+              : PIECE.splitHeadRight,
+          lane.raw,
+          y,
+        )
+      }
+
+      for (const row of rungs) put(machine, lane.machine, row)
+
+      // and the results trunk collects them on the way back down
+      for (let y = firstRung; y >= lastRung + minY; y--) {
+        if (!rungRows.has(y)) {
+          put(PIECE.down, lane.done, y)
+          continue
+        }
+        const first = y === firstRung
+        put(
+          lane.side < 0
+            ? first
+              ? PIECE.leftToDown
+              : PIECE.mergeEndLeft
+            : first
+              ? PIECE.rightToDown
+              : PIECE.mergeEndRight,
+          lane.done,
+          y,
+        )
+      }
+
+      for (const tile of gather.tiles[index]) put(tile.piece, tile.x, tile.y)
+      for (let y = runRow; y > MODULE_OUTLET_ROW; y--) put(PIECE.down, lane.column, y)
+      put(LAUNCHER, lane.column, MODULE_OUTLET_ROW)
+    }
+  })
+
+  return { placements, span: { from: blockStart, to: blockStart + columns - 1 }, shape: 'ladder' }
+}
+
+/**
+ * One operation, twelve lanes, in at the top edge and out at the bottom.
+ *
+ * Two arrangements, tried in that order. A comb stands the machines side by
+ * side in one row and is what a player's rotator module does, so it is the one
+ * to reproduce where it fits. When a floor's machines are too wide for a chunk
+ * the lane becomes a ladder instead and grows along the flow, which is how both
+ * two-chunk reference modules gain room.
+ */
+export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleResult {
+  const type = OPERATION_BUILDING[op]
+  const ports = portsFor(type)
+  const label = OPERATIONS[op].labelKo
+
+  if (!ports || ports.partialBelts) {
+    return { ok: false, reason: `${label}의 입출력 위치를 아직 측정하지 못했습니다`, blockedBy: op }
+  }
+  if (ports.inputs.length !== 1 || ports.outputs.length !== 1) {
+    return {
+      ok: false,
+      reason: `${label}는 벨트가 ${ports.inputs.length}줄 들어가고 ${ports.outputs.length}줄 나와서 한 줄짜리 레인에 넣을 수 없습니다`,
+      blockedBy: op,
+    }
+  }
+
+  const geometry = machineSpan(type)
+  const fitsOneRow =
+    geometry !== null && MODULE_LANES_PER_FLOOR * perLane * geometry.pitch <= USABLE_COLUMNS
+
+  const built =
+    fitsOneRow && geometry !== null
+      ? buildComb(op, perLane, geometry)
+      : buildLadder(op, perLane, ports.fluidUnknown === true)
+  if ('ok' in built) return built
+
   const machines = perLane * MODULE_LANES
-  const notes = [
-    `벨트 ${MODULE_LANES}줄이 위쪽 가장자리로 들어와 아래쪽으로 나갑니다 (층마다 ${MODULE_LANES_PER_FLOOR}줄).`,
-    `레인마다 ${label} ${perLane}대씩 ${machines}대가 들어갑니다 — 벨트가 가득 찬 채로 나갑니다.`,
-  ]
+  const warnings: string[] = []
+  if (built.shape === 'ladder') {
+    warnings.push(`${label}가 넓어서 레인 옆으로 눕혀 세로로 늘어놓았습니다.`)
+  }
   if (ports.fluidUnknown) {
-    notes.push('색칠기·결정체 생성기는 파이프로 물감을 직접 연결해야 합니다.')
+    warnings.push('물감은 직접 연결하세요 — 기계 사이를 한 칸씩 띄워 뒀습니다.')
   }
 
   return {
     ok: true,
     op,
-    placements,
+    placements: built.placements,
     platform: PLATFORM_1X1,
     lanes: MODULE_LANES,
     perLane,
     machines,
-    span: { from: blockStart, to: blockStart + columns - 1 },
-    notes,
+    span: built.span,
+    shape: built.shape,
+    notes: [
+      `벨트 ${MODULE_LANES}줄이 위쪽 가장자리로 들어와 아래쪽으로 나갑니다 (층마다 ${MODULE_LANES_PER_FLOOR}줄).`,
+      `레인마다 ${label} ${perLane}대씩 ${machines}대가 들어갑니다 — 벨트가 가득 찬 채로 나갑니다.`,
+      ...warnings,
+    ],
+    warnings,
   }
 }
 

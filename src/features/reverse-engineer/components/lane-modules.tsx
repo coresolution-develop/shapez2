@@ -24,6 +24,7 @@ interface Entry {
   machines: number
   code: string | null
   reason: string | null
+  warnings: string[]
 }
 
 /** Every operation the plan performs, once each, deepest first. */
@@ -67,6 +68,7 @@ export function LaneModules({ root, tier }: LaneModulesProps) {
             machines: sizing.machines,
             code,
             reason: layout.ok ? null : layout.reason,
+            warnings: layout.ok ? layout.warnings : [],
           }
         } catch {
           return {
@@ -75,6 +77,7 @@ export function LaneModules({ root, tier }: LaneModulesProps) {
             machines: sizing.machines,
             code: null,
             reason: '청사진을 만들지 못했습니다',
+            warnings: [],
           }
         }
       }),
@@ -147,6 +150,12 @@ export function LaneModules({ root, tier }: LaneModulesProps) {
                 {entry.reason}
               </span>
             )}
+
+            {entry.warnings.map((warning) => (
+              <span key={warning} className="basis-full text-xs text-muted-foreground">
+                · {warning}
+              </span>
+            ))}
           </li>
         ))}
       </ul>

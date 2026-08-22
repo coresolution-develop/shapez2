@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import { decodeBlueprint } from '../blueprint'
+import buildings from '../buildings.json'
 import {
   CHUNK_MARGIN,
   CHUNK_TILES,
   MODULE_FIRST_LANE,
   MODULE_LANES,
+  MODULE_LANES_PER_FLOOR,
   OPERATION_BUILDING,
   generateLaneModule,
   layoutLaneModule,
@@ -20,6 +22,13 @@ import fixtures from './portFixtures.json'
 
 const codeFor = (name: string) =>
   (fixtures as { name: string; code: string }[]).find((entry) => entry.name === name)!.code
+
+const FOOTPRINTS = (buildings as { buildingVariants: Record<string, { tiles: number[][] }> })
+  .buildingVariants
+
+/** Where a building's tiles land once it is turned, in world offsets. */
+const buildingTiles = (type: string, rotation: number) =>
+  (FOOTPRINTS[type]?.tiles ?? [[0, 0, 0]]).map((t) => toWorld(t as [number, number, number], rotation))
 
 /**
  * What a module is, measured from two a player actually built.
@@ -202,8 +211,8 @@ describe('generating a lane module', () => {
   const perLane = (op: keyof typeof OPERATION_SPECS) =>
     Math.ceil(BELT_BASE_RATE / ratedThroughput(OPERATION_SPECS[op], 100))
 
-  /** Operations a one-chunk module can hold: one belt in, one out, one tile. */
-  const SINGLE_FILE = ['r90cw', 'r90ccw', 'r180', 'hcut', 'pin'] as const
+  /** Operations a one-chunk module can hold: one belt in, one belt out. */
+  const SINGLE_FILE = ['r90cw', 'r90ccw', 'r180', 'hcut', 'pin', 'paint'] as const
 
   const ours = (op: keyof typeof OPERATION_SPECS) => {
     const layout = layoutLaneModule(op, perLane(op))
@@ -240,10 +249,11 @@ describe('generating a lane module', () => {
     for (const op of SINGLE_FILE) {
       const layout = ours(op)
       expect(layout.machines, op).toBe(MODULE_LANES * perLane(op))
-      expect(
-        layout.placements.filter((p) => p.type === OPERATION_BUILDING[op]),
-        op,
-      ).toHaveLength(layout.machines)
+      // a ladder uses the mirrored twin on one side, so count the family
+      const family = OPERATION_BUILDING[op].replace(/InternalVariant$/, '')
+      expect(layout.placements.filter((p) => p.type.startsWith(family)), op).toHaveLength(
+        layout.machines,
+      )
       // the machine block is centred on the four lane columns
       expect(layout.span.from + layout.span.to, op).toBe(MODULE_FIRST_LANE * 2 + 3)
     }
@@ -330,12 +340,64 @@ describe('generating a lane module', () => {
     }
   })
 
-  it('refuses a module whose machines will not stand in one row', () => {
-    // sixteen painters to a floor need thirty-two columns, so they have to be
-    // split into rows down the module, which this does not do yet
-    const painter = layoutLaneModule('paint', perLane('paint'))
-    expect(painter.ok).toBe(false)
-    if (!painter.ok) expect(painter.reason).toContain('기계 줄')
+  /**
+   * Machines too wide to stand in a row are turned sideways and stacked down
+   * the module instead. A painter is two tiles across the flow and one along
+   * it, so a whole floor's worth stops needing thirty-two columns and starts
+   * needing twelve.
+   */
+  describe('a machine too wide to stand in a row', () => {
+    it('lays the lanes out as ladders instead of combs', () => {
+      const painter = ours('paint')
+      expect(painter.shape).toBe('ladder')
+      expect(ours('r90cw').shape).toBe('comb')
+
+      // three columns to a lane — raw trunk, machine, results trunk
+      expect(painter.span.to - painter.span.from + 1).toBe(MODULE_LANES_PER_FLOOR * 3)
+      expect(painter.machines).toBe(MODULE_LANES * perLane('paint'))
+    })
+
+    it('stands every machine in a column of its own', () => {
+      // the trunks sit against the machine on both sides, so a machine wider
+      // than one tile along the flow would have nowhere to draw from
+      const painter = ours('paint')
+      const machines = painter.placements.filter((p) => p.type.startsWith('Painter'))
+      const columns = new Set(machines.map((p) => p.x))
+      expect(columns.size).toBe(MODULE_LANES_PER_FLOOR)
+      expect(machines).toHaveLength(painter.machines)
+    })
+
+    it('leaves a row between machines for the paint to reach them', () => {
+      // packed tight, a painter's only free faces are its neighbours' tiles and
+      // the player cannot pipe anything in — the module would never run
+      const painter = ours('paint')
+      const occupied = new Set(
+        painter.placements.flatMap((p) =>
+          buildingTiles(p.type, p.rotation ?? 0).map(([dx, dy]) => tile((p.x ?? 0) + dx, (p.y ?? 0) + dy, p.layer ?? 0)),
+        ),
+      )
+
+      for (const machine of painter.placements.filter((p) => p.type.startsWith('Painter'))) {
+        const tiles = buildingTiles(machine.type, machine.rotation ?? 0)
+        const rows = tiles.map(([, dy]) => (machine.y ?? 0) + dy)
+        const above = Math.max(...rows) + 1
+        const below = Math.min(...rows) - 1
+        const reachable = [above, below].filter(
+          (y) => !occupied.has(tile(machine.x ?? 0, y, machine.layer ?? 0)),
+        )
+        expect(reachable.length, `painter at ${machine.x},${machine.y} has no free face`)
+          .toBeGreaterThan(0)
+      }
+    })
+
+    it('says so, rather than quietly building something different', () => {
+      // both of these change what the player has to do with the blueprint, so
+      // they are warnings the screen shows, not prose buried in a description
+      const painter = ours('paint').warnings.join(' ')
+      expect(painter).toContain('눕혀')
+      expect(painter).toContain('물감')
+      expect(ours('r90cw').warnings).toEqual([])
+    })
   })
 
   it('refuses machines a single-file lane cannot hold', () => {
