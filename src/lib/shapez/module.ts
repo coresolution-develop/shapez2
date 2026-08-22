@@ -420,7 +420,9 @@ export interface ModuleSizing {
   /** Machines needed per lane to keep it saturated. */
   perLane: number
   machines: number
-  /** Columns the machine row needs, one per machine on a floor. */
+  /** Columns one machine takes across the flow. Painters and cutters are two. */
+  pitch: number
+  /** Columns the machine row needs on one floor. */
   columns: number
   /** How many platform chunks wide that is. */
   chunks: number
@@ -431,14 +433,20 @@ export interface ModuleSizing {
  *
  * `beltRate` and `machineRate` are both in shapes per minute, so this scales
  * with the speed tier the same way the throughput panel does.
+ *
+ * A machine's width is read from its footprint rather than assumed to be one
+ * tile: the painter, cutter and crystal generator are 1x2, and their long side
+ * lies *across* the flow, so a row of them needs two columns each.
  */
 export function moduleSizing(op: OperationId, beltRate: number, machineRate: number): ModuleSizing {
   const perLane = Math.ceil(beltRate / machineRate)
-  const columns = MODULE_LANES_PER_FLOOR * perLane
+  const pitch = machineSpan(OPERATION_BUILDING[op])?.pitch ?? 1
+  const columns = MODULE_LANES_PER_FLOOR * perLane * pitch
   return {
     op,
     perLane,
     machines: perLane * MODULE_LANES,
+    pitch,
     columns,
     chunks: Math.ceil(columns / USABLE_COLUMNS),
   }
@@ -453,67 +461,348 @@ export const MODULE_FIRST_LANE = 8
 /** Everything flows one way down the platform, so everything faces -Y. */
 const DOWNSTREAM = 3
 
+/**
+ * Belt and flow-control pieces named by what they do to a lane, not by the id
+ * the game gives them. Every rotation here follows from the measured ports in
+ * `portData.ts` — `toWorld(port, rotation)` is what decides them, and the
+ * reference rotator module uses exactly these twelve.
+ */
+const PIECE = {
+  /** Straight, running -Y with the flow. */
+  down: { type: BUILDING_IDS.belt, rotation: DOWNSTREAM },
+  /** Straight, running -X. */
+  alongLeft: { type: BUILDING_IDS.belt, rotation: 2 },
+  /** Straight, running +X. */
+  alongRight: { type: BUILDING_IDS.belt, rotation: 0 },
+
+  /** Takes from above, leaves to -X. */
+  downToLeft: { type: 'BeltDefaultLeftInternalVariant', rotation: 3 },
+  /** Takes from above, leaves to +X. */
+  downToRight: { type: 'BeltDefaultLeftInternalVariantMirrored', rotation: 3 },
+  /** Takes from +X, leaves downwards. */
+  leftToDown: { type: 'BeltDefaultLeftInternalVariantMirrored', rotation: 2 },
+  /** Takes from -X, leaves downwards. */
+  rightToDown: { type: 'BeltDefaultLeftInternalVariant', rotation: 0 },
+
+  /** Head of a leftward comb: from above, out downwards and to -X. */
+  splitHeadLeft: { type: 'Splitter1To2LInternalVariant', rotation: 3 },
+  /** Head of a rightward comb: from above, out downwards and to +X. */
+  splitHeadRight: { type: 'Splitter1To2LInternalVariantMirrored', rotation: 3 },
+  /** Mid-comb going left: from +X, out downwards and on to -X. */
+  splitOnLeft: { type: 'Splitter1To2LInternalVariantMirrored', rotation: 2 },
+  /** Mid-comb going right: from -X, out downwards and on to +X. */
+  splitOnRight: { type: 'Splitter1To2LInternalVariant', rotation: 0 },
+
+  /** Mid-comb gathering rightwards: from above and -X, out to +X. */
+  mergeOnRight: { type: 'Merger2To1LInternalVariantMirrored', rotation: 0 },
+  /** Mid-comb gathering leftwards: from above and +X, out to -X. */
+  mergeOnLeft: { type: 'Merger2To1LInternalVariant', rotation: 2 },
+  /** End of a rightward gather: from above and -X, out downwards. */
+  mergeEndRight: { type: 'Merger2To1LInternalVariant', rotation: 3 },
+  /** End of a leftward gather: from above and +X, out downwards. */
+  mergeEndLeft: { type: 'Merger2To1LInternalVariantMirrored', rotation: 3 },
+} as const
+
+type Piece = { type: string; rotation: number }
+interface Tile {
+  x: number
+  y: number
+  piece: Piece
+}
+
+/** Which way a lane spreads out from its own column. */
+type Side = -1 | 1
+
+/**
+ * How a machine sits in a lane module: how wide it is across the flow, and
+ * where its fed tile is inside that width.
+ *
+ * Ports face along local X and the module runs machines at rotation 3, so a
+ * building's local +Y — its long side, for the 1x2 machines — ends up across
+ * the flow. Anything that leans out of its own row or spans two floors cannot
+ * be packed into a machine row at all, and says so rather than being squeezed.
+ */
+function machineSpan(type: string): { pitch: number; anchorOffset: number } | null {
+  const world = footprint(type).map((tile) => toWorld(tile as [number, number, number], DOWNSTREAM))
+  if (world.some(([, dy, dz]) => dy !== 0 || dz !== 0)) return null
+
+  const dxs = world.map(([dx]) => dx)
+  const min = Math.min(...dxs)
+  const max = Math.max(...dxs)
+  return { pitch: max - min + 1, anchorOffset: -min }
+}
+
+/**
+ * A single-file run from `fromCol` down to `toCol`, turning once on `row`.
+ *
+ * The flow arrives in `fromCol` at `top` and has to leave `toCol` still heading
+ * down at `bottom`. When the two columns are the same there is no turn at all
+ * and `row` is ignored, which is what the two middle lanes of the reference
+ * module do.
+ */
+function elbow(fromCol: number, toCol: number, row: number, top: number, bottom: number): Tile[] {
+  const tiles: Tile[] = []
+  if (fromCol === toCol) {
+    for (let y = top; y >= bottom; y--) tiles.push({ x: fromCol, y, piece: PIECE.down })
+    return tiles
+  }
+
+  const step: Side = toCol < fromCol ? -1 : 1
+  for (let y = top; y > row; y--) tiles.push({ x: fromCol, y, piece: PIECE.down })
+  tiles.push({ x: fromCol, y: row, piece: step < 0 ? PIECE.downToLeft : PIECE.downToRight })
+  for (let x = fromCol + step; x !== toCol; x += step) {
+    tiles.push({ x, y: row, piece: step < 0 ? PIECE.alongLeft : PIECE.alongRight })
+  }
+  tiles.push({ x: toCol, y: row, piece: step < 0 ? PIECE.leftToDown : PIECE.rightToDown })
+  for (let y = row - 1; y >= bottom; y--) tiles.push({ x: toCol, y, piece: PIECE.down })
+  return tiles
+}
+
+/** Lanes may need a row each to cross without colliding, but rarely do. */
+const MAX_CROSSING_ROWS = MODULE_LANES_PER_FLOOR
+
+/**
+ * Fits every lane's elbow into as few rows as it takes.
+ *
+ * One row is enough whenever the sideways runs happen not to overlap — which is
+ * the ordinary case, and is why the generated rotator module comes out tile for
+ * tile like the one a player built. When two runs do want the same tile, one of
+ * them drops to the row below and crosses underneath. Rather than reason about
+ * which, every assignment is laid out and the first one without a collision
+ * wins; with four lanes that is a few hundred grids at worst.
+ */
+function crossings(
+  jobs: { from: number; to: number }[],
+  top: number,
+): { tiles: Tile[][]; rows: number } | null {
+  for (let rows = 1; rows <= MAX_CROSSING_ROWS; rows++) {
+    const bottom = top - rows + 1
+    for (let choice = 0; choice < rows ** jobs.length; choice++) {
+      const laid = jobs.map((job, lane) =>
+        elbow(job.from, job.to, top - (Math.floor(choice / rows ** lane) % rows), top, bottom),
+      )
+
+      const taken = new Set<string>()
+      const clear = laid.flat().every((tile) => {
+        const cell = `${tile.x},${tile.y}`
+        if (taken.has(cell)) return false
+        taken.add(cell)
+        return true
+      })
+      if (clear) return { tiles: laid, rows }
+    }
+  }
+  return null
+}
+
+/**
+ * One lane's machines, spread across their columns and gathered back up.
+ *
+ * `anchors` are the fed columns, left to right; `side` says which way the comb
+ * runs from the lane's entry column. Splitting with a chain of 1-to-2s rather
+ * than a tree costs nothing: the belt leaving each splitter only carries what
+ * the machines further along still need, and `perLane` is chosen so that is
+ * `(perLane - 1) x machineRate`, always under a belt's own rate.
+ */
+function comb(anchors: number[], side: Side, row: number, gather: boolean): Tile[] {
+  const order = side < 0 ? [...anchors].reverse() : anchors
+  if (order.length === 1) return [{ x: order[0], y: row, piece: PIECE.down }]
+
+  const tiles: Tile[] = []
+  const [head, ...rest] = order
+  const end = rest[rest.length - 1]
+
+  for (const [index, column] of order.entries()) {
+    const piece = gather
+      ? column === head
+        ? side < 0
+          ? PIECE.mergeEndRight
+          : PIECE.mergeEndLeft
+        : column === end
+          ? side < 0
+            ? PIECE.downToRight
+            : PIECE.downToLeft
+          : side < 0
+            ? PIECE.mergeOnRight
+            : PIECE.mergeOnLeft
+      : column === head
+        ? side < 0
+          ? PIECE.splitHeadLeft
+          : PIECE.splitHeadRight
+        : column === end
+          ? side < 0
+            ? PIECE.leftToDown
+            : PIECE.rightToDown
+          : side < 0
+            ? PIECE.splitOnLeft
+            : PIECE.splitOnRight
+    tiles.push({ x: column, y: row, piece })
+
+    // machines wider than one tile leave gaps between fed columns
+    const next = order[index + 1]
+    if (next === undefined) continue
+    const step: Side = next < column ? -1 : 1
+    const filler = gather === (step < 0) ? PIECE.alongRight : PIECE.alongLeft
+    for (let x = column + step; x !== next; x += step) tiles.push({ x, y: row, piece: filler })
+  }
+  return tiles
+}
+
 export interface LaneModule {
+  ok: true
   op: OperationId
   placements: BuildingPlacement[]
   lanes: number
-  /** Machines per lane. One means the module runs at a single machine's rate. */
+  /** Machines per lane — enough of them to keep a lane saturated. */
   perLane: number
+  machines: number
+  /** Columns the machine row occupies, leftmost and rightmost. */
+  span: { from: number; to: number }
   notes: string[]
 }
+
+export type LaneModuleResult = LaneModule | ModuleFailure
 
 /**
  * One operation, twelve lanes, in at the top edge and out at the bottom.
  *
- * Each lane is a straight run down its own column: catcher, belt, machine,
- * belt, launcher. That is the module format the game's platforms are wired
- * for, and it is correct as far as it goes — what it is not yet is *fast*,
- * because a full module runs `perLane` machines side by side and this runs one.
- * Widening a lane means fanning it out across columns and collecting it again,
- * which is the next piece.
+ * Each lane fans out across `perLane` columns of machines and is gathered back
+ * into one belt, so the lane leaves as full as it arrived. Laid out in rows,
+ * from the intake edge down:
+ *
+ *   catchers · steering · splitter comb · machines · merger comb · gathering
+ *   · straight run · launchers
+ *
+ * Machine columns are centred on the lane columns, which is what puts the
+ * reference module's rotators at x 6..13, and the whole module stays inside one
+ * platform chunk — anything that would not fit is refused rather than trimmed.
  */
-export function layoutLaneModule(op: OperationId, perLane: number): LaneModule {
+export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleResult {
   const type = OPERATION_BUILDING[op]
-  const placements: BuildingPlacement[] = []
+  const ports = portsFor(type)
+  const label = OPERATIONS[op].labelKo
 
-  for (let floor = 0; floor < MODULE_FLOORS; floor++) {
-    for (let lane = 0; lane < MODULE_LANES_PER_FLOOR; lane++) {
-      const x = MODULE_FIRST_LANE + lane
-      const put = (kind: string, y: number) =>
-        placements.push({ type: kind, x, y, layer: floor, rotation: DOWNSTREAM })
-
-      put('BeltPortReceiverInternalVariant', MODULE_INTAKE_ROW)
-
-      const machineRow = Math.round((MODULE_INTAKE_ROW + MODULE_OUTLET_ROW) / 2)
-      for (let y = MODULE_INTAKE_ROW - 1; y > machineRow; y--) put(BUILDING_IDS.belt, y)
-      put(type, machineRow)
-      for (let y = machineRow - 1; y > MODULE_OUTLET_ROW; y--) put(BUILDING_IDS.belt, y)
-
-      put('BeltPortSenderInternalVariant', MODULE_OUTLET_ROW)
+  if (!ports || ports.partialBelts) {
+    return { ok: false, reason: `${label}의 입출력 위치를 아직 측정하지 못했습니다`, blockedBy: op }
+  }
+  if (ports.inputs.length !== 1 || ports.outputs.length !== 1) {
+    return {
+      ok: false,
+      reason: `${label}는 벨트가 ${ports.inputs.length}줄 들어가고 ${ports.outputs.length}줄 나와서 한 줄짜리 레인에 넣을 수 없습니다`,
+      blockedBy: op,
     }
   }
 
+  const geometry = machineSpan(type)
+  if (!geometry) {
+    return {
+      ok: false,
+      reason: `${label}는 기계 층 2개를 차지해서 3층짜리 모듈에 층마다 넣을 수 없습니다`,
+      blockedBy: op,
+    }
+  }
+
+  const columns = MODULE_LANES_PER_FLOOR * perLane * geometry.pitch
+  const blockStart = MODULE_FIRST_LANE + (MODULE_LANES_PER_FLOOR - columns) / 2
+  if (columns > USABLE_COLUMNS) {
+    return {
+      ok: false,
+      reason: `${label} ${perLane}대짜리 레인은 ${columns}칸이 필요한데 플랫폼 한 칸에는 ${USABLE_COLUMNS}칸만 쓸 수 있습니다 (${Math.ceil(columns / USABLE_COLUMNS)}칸짜리 플랫폼이 필요합니다)`,
+      blockedBy: op,
+    }
+  }
+
+  // each lane owns a contiguous block of machines and enters it from the side
+  // nearest its own column, so the sideways runs never have to cross the module
+  const lanes = Array.from({ length: MODULE_LANES_PER_FLOOR }, (_, lane) => {
+    const side: Side = lane < MODULE_LANES_PER_FLOOR / 2 ? -1 : 1
+    const anchors = Array.from(
+      { length: perLane },
+      (_, index) =>
+        blockStart + (lane * perLane + index) * geometry.pitch + geometry.anchorOffset,
+    )
+    return {
+      column: MODULE_FIRST_LANE + lane,
+      anchors,
+      side,
+      entry: side < 0 ? anchors[anchors.length - 1] : anchors[0],
+    }
+  })
+
+  const steer = crossings(
+    lanes.map((lane) => ({ from: lane.column, to: lane.entry })),
+    MODULE_INTAKE_ROW - 1,
+  )
+  if (!steer) return { ok: false, reason: `${label} 레인들이 서로 교차해서 배선을 찾지 못했습니다` }
+
+  const splitRow = MODULE_INTAKE_ROW - 1 - steer.rows
+  const machineRow = splitRow - 1
+  const mergeRow = machineRow - 1
+
+  const gather = crossings(
+    lanes.map((lane) => ({ from: lane.entry, to: lane.column })),
+    mergeRow - 1,
+  )
+  if (!gather) return { ok: false, reason: `${label} 레인들이 서로 교차해서 배선을 찾지 못했습니다` }
+
+  const runRow = mergeRow - 1 - gather.rows
+  if (runRow < MODULE_OUTLET_ROW) {
+    return {
+      ok: false,
+      reason: `${label} 모듈이 플랫폼 한 칸보다 깊어집니다 — 세로로 ${MODULE_INTAKE_ROW - runRow + 1}칸이 필요합니다`,
+      blockedBy: op,
+    }
+  }
+
+  const placements: BuildingPlacement[] = []
+  for (let floor = 0; floor < MODULE_FLOORS; floor++) {
+    const put = (piece: Piece, x: number, y: number) =>
+      placements.push({ type: piece.type, x, y, layer: floor, rotation: piece.rotation })
+    const lay = (tiles: Tile[]) => tiles.forEach((tile) => put(tile.piece, tile.x, tile.y))
+
+    for (const [index, lane] of lanes.entries()) {
+      put({ type: 'BeltPortReceiverInternalVariant', rotation: DOWNSTREAM }, lane.column, MODULE_INTAKE_ROW)
+      lay(steer.tiles[index])
+      lay(comb(lane.anchors, lane.side, splitRow, false))
+
+      for (const anchor of lane.anchors) put({ type, rotation: DOWNSTREAM }, anchor, machineRow)
+
+      lay(comb(lane.anchors, lane.side, mergeRow, true))
+      lay(gather.tiles[index])
+      for (let y = runRow; y > MODULE_OUTLET_ROW; y--) put(PIECE.down, lane.column, y)
+      put({ type: 'BeltPortSenderInternalVariant', rotation: DOWNSTREAM }, lane.column, MODULE_OUTLET_ROW)
+    }
+  }
+
+  const machines = perLane * MODULE_LANES
   const notes = [
     `벨트 ${MODULE_LANES}줄이 위쪽 가장자리로 들어와 아래쪽으로 나갑니다 (층마다 ${MODULE_LANES_PER_FLOOR}줄).`,
+    `레인마다 ${label} ${perLane}대씩 ${machines}대가 들어갑니다 — 벨트가 가득 찬 채로 나갑니다.`,
   ]
-  if (perLane > 1) {
-    notes.push(
-      `레인마다 ${OPERATIONS[op].labelKo} ${perLane}대가 있어야 벨트가 가득 찹니다 — 지금은 1대라 처리량이 ${perLane}분의 1입니다.`,
-    )
-  }
-  if (portsFor(type)?.fluidUnknown) {
+  if (ports.fluidUnknown) {
     notes.push('색칠기·결정체 생성기는 파이프로 물감을 직접 연결해야 합니다.')
   }
 
-  return { op, placements, lanes: MODULE_LANES, perLane, notes }
+  return {
+    ok: true,
+    op,
+    placements,
+    lanes: MODULE_LANES,
+    perLane,
+    machines,
+    span: { from: blockStart, to: blockStart + columns - 1 },
+    notes,
+  }
 }
 
 export async function generateLaneModule(
   op: OperationId,
   perLane: number,
   icon?: string,
-): Promise<{ layout: LaneModule; code: string }> {
+): Promise<{ layout: LaneModuleResult; code: string | null }> {
   const layout = layoutLaneModule(op, perLane)
+  if (!layout.ok) return { layout, code: null }
+
   const code = await encodeBuildingBlueprint(
     layout.placements,
     icon ? [`shape:${icon}`, null, null, null] : [null, null, null, null],
