@@ -253,6 +253,30 @@ export const CONFIRMED_PORTS: Record<string, ConfirmedPorts> = {
     note: 'Turns and drops a floor in one tile.',
   },
 
+  // ── measured on the lift rig ────────────────────────────────────────────
+  Lift1UpLeftInternalVariant: {
+    inputs: [[-1, 0, 0]],
+    outputs: [[0, -1, 1]],
+    samples: 2,
+    source: 'fixture',
+    fixture: 'lift rig',
+    note: 'Turns and climbs a floor in one tile.',
+  },
+  Lift1UpLeftInternalVariantMirrored: {
+    inputs: [[-1, 0, 0]],
+    outputs: [[0, 1, 1]],
+    samples: 2,
+    source: 'fixture',
+    fixture: 'lift rig',
+  },
+  Lift1DownLeftInternalVariantMirrored: {
+    inputs: [[-1, 0, 0]],
+    outputs: [[0, 1, -1]],
+    samples: 3,
+    source: 'fixture',
+    fixture: 'lift rig',
+  },
+
   PainterDefaultInternalVariant: {
     inputs: [[-1, 0, 0]],
     outputs: [[1, 0, 0]],

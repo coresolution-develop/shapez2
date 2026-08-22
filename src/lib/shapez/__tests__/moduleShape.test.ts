@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
 import { decodeBlueprint } from '../blueprint'
-import { MODULE_LANES, moduleSizing, USABLE_COLUMNS } from '../module'
+import {
+  MODULE_LANES,
+  generateLaneModule,
+  layoutLaneModule,
+  moduleSizing,
+  USABLE_COLUMNS,
+} from '../module'
+import { portsFor } from '../portData'
+import { toWorld } from '../ports'
 import { BELT_BASE_RATE, OPERATION_SPECS, ratedThroughput } from '../throughput'
 
 import fixtures from './portFixtures.json'
@@ -92,5 +100,80 @@ describe('sizing a module before placing anything', () => {
     expect(sizing('stack').columns).toBe(24)
     expect(sizing('stack').chunks).toBe(2)
     expect(USABLE_COLUMNS).toBe(16)
+  })
+})
+
+/**
+ * Generating a module in the format the platforms expect. Correctness first:
+ * the lanes have to be where a neighbouring module launches into, and every
+ * belt has to actually reach the next thing.
+ */
+describe('generating a lane module', () => {
+  const tile = (x: number, y: number, z: number) => `${x},${y},${z}`
+
+  it('puts its twelve lanes exactly where the reference module puts them', async () => {
+    const reference = await decodeBlueprint(codeFor('rotator module, 1x1 platform'))
+    const mine = layoutLaneModule('r90cw', 2)
+
+    const edges = (buildings: { type: string; pos: { x: number; y: number; z: number } }[]) => ({
+      in: buildings
+        .filter((b) => b.type.startsWith('BeltPortReceiver'))
+        .map((b) => tile(b.pos.x, b.pos.y, b.pos.z))
+        .sort(),
+      out: buildings
+        .filter((b) => b.type.startsWith('BeltPortSender'))
+        .map((b) => tile(b.pos.x, b.pos.y, b.pos.z))
+        .sort(),
+    })
+
+    const theirs = edges(reference.buildings)
+    const ours = edges(
+      mine.placements.map((p) => ({
+        type: p.type,
+        pos: { x: p.x ?? 0, y: p.y ?? 0, z: p.layer ?? 0 },
+      })),
+    )
+    expect(ours.in).toEqual(theirs.in)
+    expect(ours.out).toEqual(theirs.out)
+  })
+
+  it('wires every lane from the catcher through to the launcher', async () => {
+    for (const op of ['r90cw', 'r90ccw', 'r180', 'hcut', 'pin', 'paint'] as const) {
+      const { code } = await generateLaneModule(op, 2)
+      const blueprint = await decodeBlueprint(code)
+
+      const occupants = new Map<string, (typeof blueprint.buildings)[number]>()
+      for (const b of blueprint.buildings) {
+        for (const t of b.tiles) occupants.set(tile(t.x, t.y, t.z), b)
+      }
+
+      let fed = 0
+      for (const b of blueprint.buildings) {
+        for (const input of portsFor(b.type)!.inputs) {
+          const [dx, dy, dz] = toWorld(input, b.rotation)
+          const behind = occupants.get(tile(b.pos.x + dx, b.pos.y + dy, b.pos.z + dz))
+          if (!behind) continue
+          const emits = portsFor(behind.type)!.outputs.some((output) => {
+            const [ox, oy, oz] = toWorld(output, behind.rotation)
+            return (
+              behind.pos.x + ox === b.pos.x &&
+              behind.pos.y + oy === b.pos.y &&
+              behind.pos.z + oz === b.pos.z + dz
+            )
+          })
+          expect(emits, `${op}: ${b.type} draws from ${behind.type} which emits nothing there`).toBe(
+            true,
+          )
+          fed += 1
+        }
+      }
+      // every lane is a solid run, so nearly every building is fed by the one behind
+      expect(fed, op).toBeGreaterThan(blueprint.buildings.length - MODULE_LANES - 1)
+    }
+  })
+
+  it('says plainly that one machine per lane is not a full module', () => {
+    expect(layoutLaneModule('r90cw', 2).notes.join(' ')).toContain('처리량')
+    expect(layoutLaneModule('r90cw', 1).notes.join(' ')).not.toContain('처리량')
   })
 })

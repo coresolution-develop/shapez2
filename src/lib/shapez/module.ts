@@ -443,3 +443,80 @@ export function moduleSizing(op: OperationId, beltRate: number, machineRate: num
     chunks: Math.ceil(columns / USABLE_COLUMNS),
   }
 }
+
+/** Where a module's belts meet the platform edge, in chunk tiles. */
+export const MODULE_INTAKE_ROW = CHUNK_TILES - CHUNK_MARGIN - 1
+export const MODULE_OUTLET_ROW = CHUNK_MARGIN
+/** Lanes sit in the middle four columns, as both reference modules do. */
+export const MODULE_FIRST_LANE = 8
+
+/** Everything flows one way down the platform, so everything faces -Y. */
+const DOWNSTREAM = 3
+
+export interface LaneModule {
+  op: OperationId
+  placements: BuildingPlacement[]
+  lanes: number
+  /** Machines per lane. One means the module runs at a single machine's rate. */
+  perLane: number
+  notes: string[]
+}
+
+/**
+ * One operation, twelve lanes, in at the top edge and out at the bottom.
+ *
+ * Each lane is a straight run down its own column: catcher, belt, machine,
+ * belt, launcher. That is the module format the game's platforms are wired
+ * for, and it is correct as far as it goes — what it is not yet is *fast*,
+ * because a full module runs `perLane` machines side by side and this runs one.
+ * Widening a lane means fanning it out across columns and collecting it again,
+ * which is the next piece.
+ */
+export function layoutLaneModule(op: OperationId, perLane: number): LaneModule {
+  const type = OPERATION_BUILDING[op]
+  const placements: BuildingPlacement[] = []
+
+  for (let floor = 0; floor < MODULE_FLOORS; floor++) {
+    for (let lane = 0; lane < MODULE_LANES_PER_FLOOR; lane++) {
+      const x = MODULE_FIRST_LANE + lane
+      const put = (kind: string, y: number) =>
+        placements.push({ type: kind, x, y, layer: floor, rotation: DOWNSTREAM })
+
+      put('BeltPortReceiverInternalVariant', MODULE_INTAKE_ROW)
+
+      const machineRow = Math.round((MODULE_INTAKE_ROW + MODULE_OUTLET_ROW) / 2)
+      for (let y = MODULE_INTAKE_ROW - 1; y > machineRow; y--) put(BUILDING_IDS.belt, y)
+      put(type, machineRow)
+      for (let y = machineRow - 1; y > MODULE_OUTLET_ROW; y--) put(BUILDING_IDS.belt, y)
+
+      put('BeltPortSenderInternalVariant', MODULE_OUTLET_ROW)
+    }
+  }
+
+  const notes = [
+    `벨트 ${MODULE_LANES}줄이 위쪽 가장자리로 들어와 아래쪽으로 나갑니다 (층마다 ${MODULE_LANES_PER_FLOOR}줄).`,
+  ]
+  if (perLane > 1) {
+    notes.push(
+      `레인마다 ${OPERATIONS[op].labelKo} ${perLane}대가 있어야 벨트가 가득 찹니다 — 지금은 1대라 처리량이 ${perLane}분의 1입니다.`,
+    )
+  }
+  if (portsFor(type)?.fluidUnknown) {
+    notes.push('색칠기·결정체 생성기는 파이프로 물감을 직접 연결해야 합니다.')
+  }
+
+  return { op, placements, lanes: MODULE_LANES, perLane, notes }
+}
+
+export async function generateLaneModule(
+  op: OperationId,
+  perLane: number,
+  icon?: string,
+): Promise<{ layout: LaneModule; code: string }> {
+  const layout = layoutLaneModule(op, perLane)
+  const code = await encodeBuildingBlueprint(
+    layout.placements,
+    icon ? [`shape:${icon}`, null, null, null] : [null, null, null, null],
+  )
+  return { layout, code }
+}
