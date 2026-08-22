@@ -232,6 +232,27 @@ export const CONFIRMED_PORTS: Record<string, ConfirmedPorts> = {
     fixture: 'unmeasured machines rig',
   },
 
+  // ── measured on the carrier rig ─────────────────────────────────────────
+  SplitterOverflowLInternalVariant: {
+    inputs: [[-1, 0, 0]],
+    outputs: [
+      [0, -1, 0],
+      [1, 0, 0],
+    ],
+    samples: 6,
+    source: 'fixture',
+    fixture: 'carrier rig',
+    note: 'Straight through on +X until that backs up, then out the side.',
+  },
+  Lift1DownLeftInternalVariant: {
+    inputs: [[-1, 0, 0]],
+    outputs: [[0, -1, -1]],
+    samples: 2,
+    source: 'fixture',
+    fixture: 'carrier rig',
+    note: 'Turns and drops a floor in one tile.',
+  },
+
   PainterDefaultInternalVariant: {
     inputs: [[-1, 0, 0]],
     outputs: [[1, 0, 0]],
