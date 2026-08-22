@@ -10,7 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { LaneModules } from '@/features/reverse-engineer/components/lane-modules'
 import { PART_NAMES_KO, colorNameKo } from '@/lib/shapez/namesKo'
+import type { BuildNode } from '@/lib/shapez/plan'
 import { SPEED_TIERS, beltThroughput } from '@/lib/shapez/throughput'
 import type { SpeedTier, StackerVariant, ThroughputPlan } from '@/lib/shapez/throughput'
 
@@ -29,6 +31,8 @@ const STACKER_LABELS: Record<StackerVariant, string> = {
 
 interface ThroughputPanelProps {
   plan: ThroughputPlan
+  /** The plan itself, so the operations it uses can be offered as modules. */
+  root: BuildNode
   target: number
   tier: SpeedTier
   stackerVariant: StackerVariant
@@ -39,6 +43,7 @@ interface ThroughputPanelProps {
 
 export function ThroughputPanel({
   plan,
+  root,
   target,
   tier,
   stackerVariant,
@@ -137,6 +142,8 @@ export function ThroughputPanel({
           ))}
         </ul>
       </div>
+
+      <LaneModules root={root} tier={tier} />
 
       {plan.fluids.length > 0 ? (
         <div className="space-y-2">

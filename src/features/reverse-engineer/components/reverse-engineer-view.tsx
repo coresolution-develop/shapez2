@@ -266,6 +266,7 @@ export function ReverseEngineerView() {
               {throughput ? (
                 <ThroughputPanel
                   plan={throughput}
+                  root={solution.root}
                   target={target}
                   tier={tier}
                   stackerVariant={stackerVariant}
