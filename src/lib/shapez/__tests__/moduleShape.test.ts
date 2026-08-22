@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { decodeBlueprint } from '../blueprint'
+import { MODULE_LANES, moduleSizing, USABLE_COLUMNS } from '../module'
 import { BELT_BASE_RATE, OPERATION_SPECS, ratedThroughput } from '../throughput'
 
 import fixtures from './portFixtures.json'
@@ -67,5 +68,29 @@ describe('the shape of a real module', () => {
     expect(Math.max(...ys)).toBeLessThanOrEqual(17)
     expect(Math.min(...xs)).toBeGreaterThanOrEqual(2)
     expect(Math.max(...xs)).toBeLessThanOrEqual(17)
+  })
+})
+
+describe('sizing a module before placing anything', () => {
+  const sizing = (op: keyof typeof OPERATION_SPECS) =>
+    moduleSizing(op, BELT_BASE_RATE, ratedThroughput(OPERATION_SPECS[op], 100))
+
+  it('matches the two modules a player actually built', () => {
+    expect(sizing('r90cw').machines).toBe(24)
+    expect(sizing('stack').machines).toBe(72)
+    expect(MODULE_LANES).toBe(12)
+  })
+
+  it('says which operations fit on a single platform chunk', () => {
+    // the rotator row is 8 columns wide and the painter's 16, both inside the
+    // 16 usable columns; the stacker needs 24 and spills onto a second chunk,
+    // which is exactly the platform the reference stacker module sits on
+    expect(sizing('r90cw').columns).toBe(8)
+    expect(sizing('r90cw').chunks).toBe(1)
+    expect(sizing('paint').columns).toBe(16)
+    expect(sizing('paint').chunks).toBe(1)
+    expect(sizing('stack').columns).toBe(24)
+    expect(sizing('stack').chunks).toBe(2)
+    expect(USABLE_COLUMNS).toBe(16)
   })
 })

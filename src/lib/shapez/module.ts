@@ -397,3 +397,49 @@ export async function generateModule(root: BuildNode, icon?: string): Promise<Mo
   )
   return { ...layout, code }
 }
+
+/**
+ * Sizing for a single-operation module: twelve lanes in, twelve out.
+ *
+ * This is the arithmetic the two reference modules follow (see
+ * `moduleShape.test.ts`): enough machines to keep every lane full, and each
+ * machine wants its own column, so whether a module fits on one platform chunk
+ * is decided before a single belt is placed.
+ */
+export const MODULE_LANES_PER_FLOOR = 4
+export const MODULE_FLOORS = 3
+export const MODULE_LANES = MODULE_LANES_PER_FLOOR * MODULE_FLOORS
+
+/** A platform chunk is 20 tiles across, and the outer two are unusable. */
+export const CHUNK_TILES = 20
+export const CHUNK_MARGIN = 2
+export const USABLE_COLUMNS = CHUNK_TILES - CHUNK_MARGIN * 2
+
+export interface ModuleSizing {
+  op: OperationId
+  /** Machines needed per lane to keep it saturated. */
+  perLane: number
+  machines: number
+  /** Columns the machine row needs, one per machine on a floor. */
+  columns: number
+  /** How many platform chunks wide that is. */
+  chunks: number
+}
+
+/**
+ * How big a module for `op` has to be, at the default speed upgrade.
+ *
+ * `beltRate` and `machineRate` are both in shapes per minute, so this scales
+ * with the speed tier the same way the throughput panel does.
+ */
+export function moduleSizing(op: OperationId, beltRate: number, machineRate: number): ModuleSizing {
+  const perLane = Math.ceil(beltRate / machineRate)
+  const columns = MODULE_LANES_PER_FLOOR * perLane
+  return {
+    op,
+    perLane,
+    machines: perLane * MODULE_LANES,
+    columns,
+    chunks: Math.ceil(columns / USABLE_COLUMNS),
+  }
+}
