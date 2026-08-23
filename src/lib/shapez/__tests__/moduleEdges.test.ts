@@ -71,10 +71,13 @@ describe('what each module edge carries', () => {
         : null
 
       const seen = (prefix: string) => {
-        const edges = new Map<ModuleEdge, number>()
+        const edges = new Map<ModuleEdge, number[]>()
         for (const placement of built.placements.filter((p) => p.type.startsWith(prefix))) {
           const edge = edgeOf(placement)
-          if (edge) edges.set(edge, (edges.get(edge) ?? 0) + 1)
+          if (!edge) continue
+          const byFloor = edges.get(edge) ?? [0, 0, 0]
+          byFloor[placement.layer ?? 0] += 1
+          edges.set(edge, byFloor)
         }
         return edges
       }
@@ -88,10 +91,29 @@ describe('what each module edge carries', () => {
       expect([...launchers.keys()].sort(), `${op} 출구 가장자리`).toEqual(
         MODULE_WIRING[op].outputs.map((port) => port.edge).sort(),
       )
-      // and a dozen lanes on each of them, which is what makes modules chain
-      for (const count of [...catchers.values(), ...launchers.values()]) {
-        expect(count, `${op}`).toBe(MODULE_LANES)
+      // and a dozen lanes on each of them, four to a floor — the one thing
+      // every module agrees on, and what lets any of them feed any other
+      for (const byFloor of [...catchers.values(), ...launchers.values()]) {
+        expect(byFloor, `${op}: 가장자리마다 층별 ${MODULE_LANES / 3}줄`).toEqual([
+          MODULE_LANES / 3,
+          MODULE_LANES / 3,
+          MODULE_LANES / 3,
+        ])
       }
+    }
+  })
+
+  it('never has a module take or give anything but twelve or twenty-four', () => {
+    // every edge carries a dozen, and no module uses more than two edges each
+    // way, so the totals are only ever these
+    for (const op of OPERATION_IDS) {
+      const wiring = MODULE_WIRING[op]
+      expect([MODULE_LANES, MODULE_LANES * 2], `${op} 입력`).toContain(
+        wiring.inputs.length * MODULE_LANES,
+      )
+      expect([MODULE_LANES, MODULE_LANES * 2], `${op} 출력`).toContain(
+        wiring.outputs.length * MODULE_LANES,
+      )
     }
   })
 
