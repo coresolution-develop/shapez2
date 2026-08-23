@@ -588,7 +588,14 @@ export function routeAll(
   return { stuck: [`${rounds}번 다시 깔았지만 ${contested}칸이 겹친 채 남았습니다`] }
 }
 
-/** Whether every belt port in a set of placements meets a real one opposite. */
+/**
+ * Whether every belt port meets a real one opposite.
+ *
+ * Both directions, and by tile rather than by anchor. A building two tiles wide
+ * can perfectly well be fed into one tile and drawn from the other — a cutter's
+ * second half leaves its second tile — and comparing the anchors instead calls
+ * that broken when the game is happy with it.
+ */
 export function wiringProblems(placements: BuildingPlacement[]): string[] {
   const at = new Map<string, BuildingPlacement>()
   for (const placement of placements) {
@@ -600,51 +607,51 @@ export function wiringProblems(placements: BuildingPlacement[]): string[] {
     }
   }
 
-  const problems: string[] = []
   const where = (p: BuildingPlacement) => `${p.type}@(${p.x},${p.y},${p.layer ?? 0})`
+  const lands = (from: BuildingPlacement, onto: BuildingPlacement) =>
+    (portsFor(from.type)?.outputs ?? []).some((output) => {
+      const [dx, dy, dz] = toWorld(output, from.rotation ?? 0)
+      const cell = Occupancy.key((from.x ?? 0) + dx, (from.y ?? 0) + dy, (from.layer ?? 0) + dz)
+      return at.get(cell) === onto
+    })
+  const draws = (into: BuildingPlacement, from: BuildingPlacement) =>
+    (portsFor(into.type)?.inputs ?? []).some((input) => {
+      const [dx, dy, dz] = toWorld(input, into.rotation ?? 0)
+      const cell = Occupancy.key((into.x ?? 0) + dx, (into.y ?? 0) + dy, (into.layer ?? 0) + dz)
+      return at.get(cell) === from
+    })
 
+  const problems: string[] = []
   for (const placement of placements) {
     const ports = portsFor(placement.type)
     if (!ports) {
       problems.push(`${where(placement)} 의 포트를 모릅니다`)
       continue
     }
+
     for (const port of ports.inputs) {
       const [dx, dy, dz] = toWorld(port, placement.rotation ?? 0)
-      const x = (placement.x ?? 0) + dx
-      const y = (placement.y ?? 0) + dy
-      const z = (placement.layer ?? 0) + dz
-      const behind = at.get(Occupancy.key(x, y, z))
+      const behind = at.get(
+        Occupancy.key((placement.x ?? 0) + dx, (placement.y ?? 0) + dy, (placement.layer ?? 0) + dz),
+      )
+      // open to the outside is fine: that is where the player feeds it
       if (!behind || behind === placement) continue
-      const emits = (portsFor(behind.type)?.outputs ?? []).some((output) => {
-        const [ox, oy, oz] = toWorld(output, behind.rotation ?? 0)
-        return (
-          (behind.x ?? 0) + ox === (placement.x ?? 0) &&
-          (behind.y ?? 0) + oy === (placement.y ?? 0) &&
-          (behind.layer ?? 0) + oz === z
-        )
-      })
-      if (!emits) problems.push(`${where(placement)} 뒤의 ${behind.type}가 아무것도 내보내지 않습니다`)
+      if (!lands(behind, placement)) {
+        problems.push(`${where(placement)} 뒤의 ${behind.type}가 아무것도 내보내지 않습니다`)
+      }
     }
 
     // and the other way round: a belt pushing into a face that takes nothing
     // loses everything on it, which looks identical on the grid
     for (const port of ports.outputs) {
       const [dx, dy, dz] = toWorld(port, placement.rotation ?? 0)
-      const x = (placement.x ?? 0) + dx
-      const y = (placement.y ?? 0) + dy
-      const z = (placement.layer ?? 0) + dz
-      const ahead = at.get(Occupancy.key(x, y, z))
+      const ahead = at.get(
+        Occupancy.key((placement.x ?? 0) + dx, (placement.y ?? 0) + dy, (placement.layer ?? 0) + dz),
+      )
       if (!ahead || ahead === placement) continue
-      const accepts = (portsFor(ahead.type)?.inputs ?? []).some((input) => {
-        const [ix, iy, iz] = toWorld(input, ahead.rotation ?? 0)
-        return (
-          (ahead.x ?? 0) + ix === (placement.x ?? 0) &&
-          (ahead.y ?? 0) + iy === (placement.y ?? 0) &&
-          (ahead.layer ?? 0) + iz === z
-        )
-      })
-      if (!accepts) problems.push(`${where(placement)} 앞의 ${ahead.type}가 받지 않습니다`)
+      if (!draws(ahead, placement)) {
+        problems.push(`${where(placement)} 앞의 ${ahead.type}가 받지 않습니다`)
+      }
     }
   }
   return problems

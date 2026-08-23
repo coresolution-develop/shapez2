@@ -62,7 +62,7 @@ export const MODULE_CATALOGUE: CatalogueEntry[] = [
   {
     op: 'cut',
     title: '반으로 갈라 양쪽 쓰기',
-    does: '반으로 자른 두 조각을 모두 내보냅니다. 나가는 벨트가 두 줄이라 아직 모듈로 못 만듭니다.',
+    does: '반으로 자른 두 조각을 모두 내보냅니다. 나가는 벨트가 두 줄이라 모듈도 출구가 둘입니다.',
     inputs: ['CuRuSuWu'],
   },
   {
