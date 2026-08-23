@@ -7,6 +7,7 @@ import { ShapeView } from '@/components/shape-view'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { generateLaneModule, moduleSizing, MODULE_LANES } from '@/lib/shapez/module'
+import { generateCutterModule } from '@/lib/shapez/cutterModule'
 import { generateStackerModule } from '@/lib/shapez/stackerModule'
 import { MODULE_CATALOGUE, catalogueDemo } from '@/lib/shapez/moduleCatalogue'
 import { OPERATIONS, type OperationId } from '@/lib/shapez/operations'
@@ -31,26 +32,43 @@ interface Made {
 export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
   const [made, setMade] = useState<Map<OperationId, Made> | null>(null)
   const [copied, setCopied] = useState<OperationId | null>(null)
-  const [building, setBuilding] = useState(false)
-  const [stacker, setStacker] = useState<Made | null>(null)
+  const [building, setBuilding] = useState<OperationId | null>(null)
+  const [searched, setSearched] = useState<Map<OperationId, Made>>(new Map())
 
-  const buildStacker = () => {
-    setBuilding(true)
+  /** The two whose belts are searched for rather than written down. */
+  const build = (op: OperationId) => {
+    setBuilding(op)
     // let the button repaint before the search takes the thread
     window.setTimeout(() => {
-      void generateStackerModule()
+      const making = op === 'stack' ? generateStackerModule() : generateCutterModule()
+      const perLane = op === 'stack' ? 6 : 4
+      const machines = op === 'stack' ? 72 : 48
+      void making
         .then(({ layout, code }) =>
-          setStacker({
-            perLane: 6,
-            machines: 72,
-            code,
-            reason: layout.ok ? null : layout.reason,
-            warnings: layout.ok ? layout.warnings : [],
-            shape: null,
-          }),
+          setSearched((was) =>
+            new Map(was).set(op, {
+              perLane,
+              machines,
+              code,
+              reason: layout.ok ? null : layout.reason,
+              warnings: layout.ok ? layout.warnings : [],
+              shape: null,
+            }),
+          ),
         )
-        .catch(() => setStacker({ perLane: 6, machines: 72, code: null, reason: '청사진을 만들지 못했습니다', warnings: [], shape: null }))
-        .finally(() => setBuilding(false))
+        .catch(() =>
+          setSearched((was) =>
+            new Map(was).set(op, {
+              perLane,
+              machines,
+              code: null,
+              reason: '청사진을 만들지 못했습니다',
+              warnings: [],
+              shape: null,
+            }),
+          ),
+        )
+        .finally(() => setBuilding(null))
     }, 50)
   }
 
@@ -64,9 +82,11 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
 
     Promise.all(
       MODULE_CATALOGUE.map(async (entry): Promise<[OperationId, Made]> => {
-        if (entry.op === 'stack') {
-          // finding this one's belts takes seconds, so it waits to be asked
-          return [entry.op, { perLane: 6, machines: 72, code: null, reason: null, warnings: [], shape: null }]
+        if (entry.op === 'stack' || entry.op === 'cut') {
+          // these two have their belts searched for, so they wait to be asked
+          const machines = entry.op === 'stack' ? 72 : 48
+          const perLane = entry.op === 'stack' ? 6 : 4
+          return [entry.op, { perLane, machines, code: null, reason: null, warnings: [], shape: null }]
         }
         const sizing = moduleSizing(
           entry.op,
@@ -129,7 +149,7 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
 
       <ul className="grid gap-3 sm:grid-cols-2">
         {ordered.map((entry) => {
-          const state = entry.op === 'stack' ? (stacker ?? made?.get(entry.op)) : made?.get(entry.op)
+          const state = searched.get(entry.op) ?? made?.get(entry.op)
           const demo = demos.get(entry.op)
           const ready = Boolean(state?.code)
 
@@ -204,13 +224,22 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
                       {copied === entry.op ? '복사됨' : '모듈 복사'}
                     </Button>
                   </>
-                ) : entry.op === 'stack' && !state?.reason ? (
+                ) : (entry.op === 'stack' || entry.op === 'cut') && !state?.reason ? (
                   <>
                     <p className="text-xs text-muted-foreground">
-                      결합기 72대짜리 모듈입니다. 배선을 찾아내야 해서 잠깐 걸립니다.
+                      {OPERATIONS[entry.op].labelKo} {state?.machines}대짜리 모듈입니다. 배선을
+                      찾아내야 해서 잠깐 걸립니다.
                     </p>
-                    <Button size="sm" variant="outline" className="w-full" disabled={building} onClick={buildStacker}>
-                      {building ? '만드는 중…' : '결합기 모듈 만들기'}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      disabled={building !== null}
+                      onClick={() => build(entry.op)}
+                    >
+                      {building === entry.op
+                        ? '만드는 중…'
+                        : `${OPERATIONS[entry.op].labelKo} 모듈 만들기`}
                     </Button>
                   </>
                 ) : (

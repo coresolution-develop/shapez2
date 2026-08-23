@@ -2,31 +2,29 @@ import { describe, expect, it } from 'vitest'
 
 import {
   CHUNK_MARGIN,
-  CHUNK_TILES,
   MODULE_FIRST_LANE,
   MODULE_INTAKE_ROW,
   MODULE_LANES,
   MODULE_LANES_PER_FLOOR,
   OPERATION_BUILDING,
+  platformFor,
 } from '../module'
-import { LONGEST_PLATFORM_CHUNKS, layoutCutterModule } from '../cutterModule'
+import { layoutCutterModule } from '../cutterModule'
 import { wiringProblems } from '../route'
 import { BELT_BASE_RATE, OPERATION_SPECS, ratedThroughput } from '../throughput'
 
 /**
- * The cutter module is right and does not fit, which are two different things.
+ * A cutter module, on a platform wide enough to hold one.
  *
- * Given a platform one chunk longer than the game has, every belt joins up and
- * every port meets a real one — so the arrangement is sound. On the longest
- * straight foundation there actually is, the streams cannot be untangled. The
- * tests say both, because "it does not work" and "it does not fit" would send
- * whoever picks this up next in quite different directions.
+ * It spent a while not fitting, and the reason was an assumption rather than a
+ * shortage: both modules a player had built were one chunk wide, and this
+ * repository read that as what modules are. The game has wider foundations, and
+ * on one of those the same arrangement goes in with room to spare.
  */
 describe('the cutter module', () => {
-  // one chunk past what the game offers, to show the layout itself is sound
-  const roomy = layoutCutterModule(LONGEST_PLATFORM_CHUNKS + 1, 2)
+  const roomy = layoutCutterModule()
 
-  it('wires up completely when there is room for it', () => {
+  it('wires up completely, both ways round', () => {
     expect(roomy.ok, roomy.ok ? '' : roomy.reason).toBe(true)
     if (!roomy.ok) return
     expect(wiringProblems(roomy.placements)).toEqual([])
@@ -67,21 +65,22 @@ describe('the cutter module', () => {
     expect(lifts.length).toBeGreaterThanOrEqual(roomy.machines)
   })
 
-  it('stays inside one chunk across, however long it gets', () => {
+  it('stays on its platform, margins and all', () => {
     if (!roomy.ok) return
+    const platform = platformFor(2, 3)!
     for (const placement of roomy.placements) {
-      expect(placement.x).toBeGreaterThanOrEqual(CHUNK_MARGIN)
-      expect(placement.x).toBeLessThanOrEqual(CHUNK_TILES - CHUNK_MARGIN - 1)
-      expect(placement.y).toBeLessThanOrEqual(MODULE_INTAKE_ROW)
+      expect(placement.x).toBeGreaterThanOrEqual(platform.area.minX)
+      expect(placement.x).toBeLessThanOrEqual(platform.area.maxX)
+      expect(placement.y).toBeGreaterThanOrEqual(platform.area.minY)
+      expect(placement.y).toBeLessThanOrEqual(platform.area.maxY)
     }
+    // the lanes are where a one-chunk module puts them, so the two still chain
+    expect(platform.area.maxY).toBe(MODULE_INTAKE_ROW)
   })
 
-  it('does not fit on the longest platform the game has, and says so', () => {
-    // `Foundation_1x4` is as long as a straight foundation goes. Change this
-    // test when the module gets small enough — do not change it to hide that
-    // it does not.
-    const cramped = layoutCutterModule()
+  it('will not go on a platform too small for it, and says which', () => {
+    const cramped = layoutCutterModule(2, 2)
     expect(cramped.ok).toBe(false)
-    if (!cramped.ok) expect(cramped.reason).toMatch(/들어가지 않습니다|잇지 못했습니다/)
+    if (!cramped.ok) expect(cramped.reason).toMatch(/들어가지 않습니다/)
   })
 })

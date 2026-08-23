@@ -26,17 +26,16 @@
 import { encodeIslandBlueprint, type BuildingPlacement } from './blueprint'
 import {
   CATCHER,
-  CHUNK_MARGIN,
-  CHUNK_TILES,
   LAUNCHER,
   MODULE_FIRST_LANE,
   MODULE_FLOORS,
   MODULE_INTAKE_ROW,
   MODULE_LANES,
   MODULE_LANES_PER_FLOOR,
-  MODULE_OUTLET_ROW,
   OPERATION_BUILDING,
   comb,
+  platformFor,
+  type Platform,
   type Side,
 } from './module'
 import { Occupancy, routeAll, type Bounds, type Endpoint, type Facing, type Net } from './route'
@@ -57,26 +56,21 @@ const SECOND_HALF_FLOOR = MACHINE_FLOOR - 1
 
 /** Rows a block needs: feed, machines, the drop, then gathering. */
 const BLOCK_ROWS = 4
-const BLOCK_GAP = 2
+const BLOCK_GAP = 3
 /** Rows kept clear of machines where the side outputs leave. */
 const SIDE_CLEARANCE = 4
 /**
- * Chunks the module is long.
+ * How big a platform this wants: two chunks across the flow and three down it.
  *
- * Four is what the game's longest straight foundation gives, and four is not
- * quite enough — see the tests. The layout itself is sound at five; it is the
- * platform that runs out, not the reasoning.
+ * A straight foundation was tried first and never fitted — twelve rows of four
+ * do not go into one, however they are shuffled. The game has wider ones, and
+ * on those there is room to spare. The lanes stay exactly where a one-chunk
+ * module puts them, so a wider module still chains onto narrow ones.
  */
-const PLATFORM_CHUNKS = 4
-
-const PLATFORM_FOR: Record<number, string> = {
-  2: 'Foundation_1x2',
-  3: 'Foundation_1x3',
-  4: 'Foundation_1x4',
-}
-
-/** The longest straight foundation the game has. */
-export const LONGEST_PLATFORM_CHUNKS = 4
+const PLATFORM_WIDE = 2
+const PLATFORM_LONG = 3
+/** Banks of cutters standing side by side on one row. */
+const BANKS_PER_ROW = 3
 
 export interface CutterModule {
   ok: true
@@ -97,16 +91,6 @@ export interface CutterFailure {
 
 export type CutterModuleResult = CutterModule | CutterFailure
 
-function platformBounds(chunks: number): Bounds {
-  return {
-    minX: CHUNK_MARGIN,
-    maxX: CHUNK_TILES - CHUNK_MARGIN - 1,
-    minY: MODULE_OUTLET_ROW - CHUNK_TILES * (chunks - 1),
-    maxY: MODULE_INTAKE_ROW,
-    floors: MODULE_FLOORS,
-  }
-}
-
 interface Block {
   feedRow: number
   machineRow: number
@@ -119,32 +103,35 @@ interface Block {
 }
 
 /**
- * One input lane to a block, alternating sides.
+ * Where every cutter stands, before a belt is placed.
  *
- * A bank is eight columns of the sixteen there are, so putting two lanes on a
- * row would fill the platform and leave nothing to cross it with. One lane
- * leaves the other eight columns open on every floor, which is the room the
- * router needs — the stacker module learnt this the hard way.
+ * A bank is eight columns. On a one-chunk platform there are sixteen, so only
+ * one bank fits on a row with anything left to cross it with — which is why
+ * twelve rows of them never went in. Widen the platform and several banks sit
+ * side by side on the same row, with a corridor between each pair, and the
+ * whole thing gets short enough to fit.
  */
-function planBlocks(bounds: Bounds, gap: number): Block[] | null {
+function planBlocks(bounds: Bounds, gap: number, perRow: number): Block[] | null {
   const sideBottom = MODULE_FIRST_LANE - SIDE_CLEARANCE
   const sideTop = MODULE_FIRST_LANE + MODULE_LANES_PER_FLOOR - 1 + SIDE_CLEARANCE
+
+  // a column is left free down the left edge — every side output has to reach
+  // it, and a bank sitting on it walls them off
+  const first = bounds.minX + 1
+  const room = bounds.maxX - first + 1
+  const stride = Math.floor(room / perRow)
+  if (stride < BANK_COLUMNS + 1) return null
 
   const blocks: Block[] = []
   let feedRow = MODULE_INTAKE_ROW - 1 - gap
   while (blocks.length < MODULE_LANES) {
-    // the last row a block needs has to still be on the platform
     if (feedRow - BLOCK_ROWS < bounds.minY) return null
     if (feedRow >= sideBottom && feedRow - (BLOCK_ROWS - 1) <= sideTop) {
       feedRow = sideBottom - 1
       continue
     }
-    // a column is left free down each edge when only one bank is used: the side
-    // outputs all have to reach the left one, and a bank sitting on it walls
-    // them off
-    const sides: Side[] = [blocks.length % 2 === 0 ? -1 : 1]
-    for (const side of sides) {
-      const start = side < 0 ? bounds.minX + 1 : bounds.maxX - BANK_COLUMNS
+    for (let bank = 0; bank < perRow && blocks.length < MODULE_LANES; bank++) {
+      const start = first + bank * stride
       // a cutter covers its own tile and the one to its left, so the anchors sit
       // on the odd columns of the bank and the halves come out on both parities
       const anchors = Array.from({ length: PER_LANE }, (_, i) => start + i * MACHINE_WIDTH + 1)
@@ -154,7 +141,7 @@ function planBlocks(bounds: Bounds, gap: number): Block[] | null {
         dropRow: feedRow - 2,
         gatherRow: feedRow - 3,
         anchors,
-        side,
+        side: -1,
       })
     }
     feedRow -= BLOCK_ROWS + gap
@@ -179,11 +166,15 @@ function edgeLanes(): { lane: number; floor: number }[] {
  * Lays out a cutter module, or says which stream defeated it.
  */
 export function layoutCutterModule(
-  chunks = PLATFORM_CHUNKS,
+  wide = PLATFORM_WIDE,
+  long = PLATFORM_LONG,
   gap = BLOCK_GAP,
+  perRow = BANKS_PER_ROW,
   tune: { memory?: number; crowd?: number; rounds?: number } = {},
 ): CutterModuleResult {
-  const bounds = platformBounds(chunks)
+  const platform: Platform | null = platformFor(wide, long)
+  if (!platform) return { ok: false, reason: `${wide}x${long} 플랫폼은 게임에 없습니다` }
+  const bounds: Bounds = { ...platform.area, floors: MODULE_FLOORS }
   const occupancy = new Occupancy(bounds)
   const placements: BuildingPlacement[] = []
 
@@ -220,11 +211,11 @@ export function layoutCutterModule(
     sideOut.push({ x: bounds.minX, y: lane, z: floor, facing: OUTWARD })
   }
 
-  const blocks = planBlocks(bounds, gap)
+  const blocks = planBlocks(bounds, gap, perRow)
   if (!blocks) {
     return {
       ok: false,
-      reason: `절단기 줄 ${MODULE_LANES}개가 플랫폼 ${chunks}칸에 들어가지 않습니다 — 줄마다 ${BLOCK_ROWS}칸씩 필요합니다`,
+      reason: `절단기 줄 ${MODULE_LANES}개가 ${wide}x${long} 플랫폼에 들어가지 않습니다 — 줄마다 ${BLOCK_ROWS}칸씩 필요합니다`,
     }
   }
   const cutter = OPERATION_BUILDING.cut
@@ -325,7 +316,7 @@ export function layoutCutterModule(
   return {
     ok: true,
     placements,
-    platform: PLATFORM_FOR[chunks] ?? PLATFORM_FOR[2],
+    platform: platform.type,
     lanes: MODULE_LANES,
     perLane: PER_LANE,
     machines,
@@ -337,7 +328,7 @@ export function layoutCutterModule(
     warnings: [
       `잘린 두 절반이 서로 다른 쪽으로 나갑니다 — ${MODULE_LANES}줄은 아래 가장자리로, ${MODULE_LANES}줄은 왼쪽 가장자리로.`,
       '어느 쪽이 어느 절반인지는 게임에서 한 번 확인해 보세요 — 절단기의 두 출구 중 어느 것이 어느 조각인지는 아직 재지 못했습니다.',
-      `플랫폼 ${chunks}칸짜리입니다 — 흐름 방향으로 깁니다.`,
+      `${wide}x${long} 플랫폼입니다.`,
     ],
   }
 }
@@ -348,8 +339,17 @@ export async function generateCutterModule(
   const layout = layoutCutterModule()
   if (!layout.ok) return { layout, code: null }
 
+  const platform = platformFor(PLATFORM_WIDE, PLATFORM_LONG)!
   const code = await encodeIslandBlueprint(
-    [{ type: layout.platform, rotation: 3, buildings: layout.placements }],
+    [
+      {
+        type: platform.type,
+        x: platform.anchor.x,
+        y: platform.anchor.y,
+        rotation: platform.rotation,
+        buildings: layout.placements,
+      },
+    ],
     icon ? [`shape:${icon}`, null, null, null] : [null, null, null, null],
   )
   return { layout, code }

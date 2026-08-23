@@ -418,6 +418,58 @@ export const MODULE_LANES = MODULE_LANES_PER_FLOOR * MODULE_FLOORS
 export const PLATFORM_1X1 = 'Foundation_1x1'
 export const PLATFORM_1X2 = 'Foundation_1x2'
 
+const ISLANDS = (buildings as { islands: Record<string, { tiles: number[][] }> }).islands
+
+export interface Platform {
+  /** Island id to lay down. */
+  type: string
+  /** Chunk the island is anchored at, and the quarter turn it is laid at. */
+  anchor: { x: number; y: number }
+  rotation: number
+  /** Tiles a module may build on, margins already taken off. */
+  area: { minX: number; maxX: number; minY: number; maxY: number }
+}
+
+/**
+ * A platform `wide` chunks across the flow and `long` chunks down it.
+ *
+ * Both reference modules are one chunk wide, and for a while this repository
+ * read that as a rule — it is not. The game has 2x2, 2x3, 2x4 and 3x3
+ * foundations as well, and a module on one of those has the same twelve lanes
+ * in the same place; it simply has more room behind them. Reading "the modules
+ * a player happened to build are one chunk wide" as "modules are one chunk
+ * wide" cost a working cutter layout, which fitted everywhere except the
+ * platform it was being squeezed onto.
+ *
+ * The anchor is worked out rather than written down: the island is placed so
+ * that its top-left chunk is chunk (0, 0), which is what keeps the intake edge
+ * at `MODULE_INTAKE_ROW` whatever size the platform is.
+ */
+export function platformFor(wide: number, long: number, rotation = 3): Platform | null {
+  const type = wide === 1 && long === 1 ? PLATFORM_1X1 : `Foundation_${wide}x${long}`
+  const island = ISLANDS[type]
+  if (!island) return null
+
+  const chunks = island.tiles.map((tile) => toWorld(tile as [number, number, number], rotation))
+  const xs = chunks.map(([x]) => x)
+  const ys = chunks.map(([, y]) => y)
+  const anchor = { x: -Math.min(...xs), y: -Math.max(...ys) }
+
+  const across = Math.max(...xs) - Math.min(...xs) + 1
+  const along = Math.max(...ys) - Math.min(...ys) + 1
+  return {
+    type,
+    anchor,
+    rotation,
+    area: {
+      minX: CHUNK_MARGIN,
+      maxX: across * CHUNK_TILES - CHUNK_MARGIN - 1,
+      minY: MODULE_OUTLET_ROW - CHUNK_TILES * (along - 1),
+      maxY: MODULE_INTAKE_ROW,
+    },
+  }
+}
+
 /** A platform chunk is 20 tiles across, and the outer two are unusable. */
 export const CHUNK_TILES = 20
 export const CHUNK_MARGIN = 2
@@ -1034,7 +1086,7 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
       ok: false,
       reason:
         op === 'cut'
-          ? `${label} 모듈은 벨트가 ${MODULE_LANES}줄 들어와 ${MODULE_LANES * 2}줄로 나갑니다 — 배선은 맞는데 게임에서 가장 긴 플랫폼(4칸)보다 길어져서 아직 못 냅니다`
+          ? `${label} 모듈은 벨트가 ${MODULE_LANES}줄 들어와 ${MODULE_LANES * 2}줄로 나갑니다 — 「작업 모듈」 탭에서 만들 수 있습니다`
           : `${label}는 벨트가 ${ports.inputs.length}줄 들어가고 ${ports.outputs.length}줄 나와서 한 줄짜리 레인에 넣을 수 없습니다`,
       blockedBy: op,
     }
