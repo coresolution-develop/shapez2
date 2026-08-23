@@ -68,7 +68,7 @@ export const MODULE_CATALOGUE: CatalogueEntry[] = [
   {
     op: 'stack',
     title: '위아래로 겹치기',
-    does: '도형 두 개를 받아 위쪽을 아래쪽에 얹습니다. 들어오는 벨트가 두 줄이라 아직 모듈로 못 만듭니다.',
+    does: '도형 두 개를 받아 위쪽을 아래쪽에 얹습니다. 벨트가 두 줄 들어와서 모듈도 입구가 둘입니다.',
     inputs: ['RuRuRuRu', 'CuCuCuCu'],
   },
   {

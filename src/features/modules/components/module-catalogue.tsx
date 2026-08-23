@@ -7,6 +7,7 @@ import { ShapeView } from '@/components/shape-view'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { generateLaneModule, moduleSizing, MODULE_LANES } from '@/lib/shapez/module'
+import { generateStackerModule } from '@/lib/shapez/stackerModule'
 import { MODULE_CATALOGUE, catalogueDemo } from '@/lib/shapez/moduleCatalogue'
 import { OPERATIONS, type OperationId } from '@/lib/shapez/operations'
 import { OPERATION_SPECS, beltThroughput, ratedThroughput } from '@/lib/shapez/throughput'
@@ -30,6 +31,28 @@ interface Made {
 export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
   const [made, setMade] = useState<Map<OperationId, Made> | null>(null)
   const [copied, setCopied] = useState<OperationId | null>(null)
+  const [building, setBuilding] = useState(false)
+  const [stacker, setStacker] = useState<Made | null>(null)
+
+  const buildStacker = () => {
+    setBuilding(true)
+    // let the button repaint before the search takes the thread
+    window.setTimeout(() => {
+      void generateStackerModule()
+        .then(({ layout, code }) =>
+          setStacker({
+            perLane: 6,
+            machines: 72,
+            code,
+            reason: layout.ok ? null : layout.reason,
+            warnings: layout.ok ? layout.warnings : [],
+            shape: null,
+          }),
+        )
+        .catch(() => setStacker({ perLane: 6, machines: 72, code: null, reason: '청사진을 만들지 못했습니다', warnings: [], shape: null }))
+        .finally(() => setBuilding(false))
+    }, 50)
+  }
 
   const demos = useMemo(
     () => new Map(MODULE_CATALOGUE.map((entry) => [entry.op, catalogueDemo(entry)] as const)),
@@ -41,6 +64,10 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
 
     Promise.all(
       MODULE_CATALOGUE.map(async (entry): Promise<[OperationId, Made]> => {
+        if (entry.op === 'stack') {
+          // finding this one's belts takes seconds, so it waits to be asked
+          return [entry.op, { perLane: 6, machines: 72, code: null, reason: null, warnings: [], shape: null }]
+        }
         const sizing = moduleSizing(
           entry.op,
           beltThroughput(tier),
@@ -102,7 +129,7 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
 
       <ul className="grid gap-3 sm:grid-cols-2">
         {ordered.map((entry) => {
-          const state = made?.get(entry.op)
+          const state = entry.op === 'stack' ? (stacker ?? made?.get(entry.op)) : made?.get(entry.op)
           const demo = demos.get(entry.op)
           const ready = Boolean(state?.code)
 
@@ -145,9 +172,11 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
                       <span className="text-xs text-muted-foreground tabular-nums">
                         레인당 {state.perLane}대
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        · {state.shape === 'ladder' ? '눕혀서 세로 배치' : '가로 한 줄 배치'}
-                      </span>
+                      {state.shape ? (
+                        <span className="text-xs text-muted-foreground">
+                          · {state.shape === 'ladder' ? '눕혀서 세로 배치' : '가로 한 줄 배치'}
+                        </span>
+                      ) : null}
                     </div>
 
                     {state.warnings.map((warning) => (
@@ -173,6 +202,15 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
                         <CopyIcon className="size-3.5" />
                       )}
                       {copied === entry.op ? '복사됨' : '모듈 복사'}
+                    </Button>
+                  </>
+                ) : entry.op === 'stack' && !state?.reason ? (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      결합기 72대짜리 모듈입니다. 배선을 찾아야 해서 만드는 데 몇 초 걸립니다.
+                    </p>
+                    <Button size="sm" variant="outline" className="w-full" disabled={building} onClick={buildStacker}>
+                      {building ? '만드는 중… (몇 초)' : '결합기 모듈 만들기'}
                     </Button>
                   </>
                 ) : (

@@ -34,7 +34,7 @@
  * rip up paths that box others in and lay them again, which is a piece of work
  * in its own right and is not started.
  */
-import type { BuildingPlacement } from './blueprint'
+import { encodeIslandBlueprint, type BuildingPlacement } from './blueprint'
 import {
   CATCHER,
   CHUNK_MARGIN,
@@ -52,11 +52,11 @@ import {
   comb,
   type Side,
 } from './module'
-import { Occupancy, routeBelt, type Bounds, type Endpoint, type Facing } from './route'
+import { Occupancy, routeAll, type Bounds, type Endpoint, type Facing, type Net } from './route'
 
 /** Machines per lane, and lanes per block, both fixed by the reference module. */
 const PER_LANE = 6
-const LANES_PER_BLOCK = 2
+const LANES_PER_BLOCK = 1
 const BLOCKS = MODULE_LANES / LANES_PER_BLOCK
 
 /** Everything flows one way down the platform. */
@@ -80,6 +80,17 @@ const TOP_SHAPE_FLOOR = MACHINE_FLOOR + 1
 const BLOCK_ROWS = 3
 /** Rows left between blocks for streams to cross the module. */
 const BLOCK_GAP = 2
+/** Chunks the module is long. Fewer and the streams cannot be untangled. */
+const PLATFORM_CHUNKS = 4
+/** Rows kept free above and below the side intake for it to fan out in. */
+const SIDE_CLEARANCE = 4
+
+/** Platform ids by how many chunks long they are. */
+const PLATFORM_FOR: Record<number, string> = {
+  2: PLATFORM_1X2,
+  3: 'Foundation_1x3',
+  4: 'Foundation_1x4',
+}
 
 export interface StackerModule {
   ok: true
@@ -138,8 +149,11 @@ function planLanes(bounds: Bounds, gap: number): Lane[] {
   // the two banks fill the platform exactly, so the right one reaches the very
   // column the side intake arrives down — the blocks step around those rows
   // rather than the bank giving up a machine
-  const sideBottom = MODULE_FIRST_LANE
-  const sideTop = MODULE_FIRST_LANE + MODULE_LANES_PER_FLOOR - 1
+  // twelve streams arrive along the side into four rows, all of them pointing
+  // across the flow and all needing to turn. Machines packed against that give
+  // them nowhere to fan out, so the blocks keep well clear of it
+  const sideBottom = MODULE_FIRST_LANE - SIDE_CLEARANCE
+  const sideTop = MODULE_FIRST_LANE + MODULE_LANES_PER_FLOOR - 1 + SIDE_CLEARANCE
 
   const blocks: Block[] = []
   let feedRow = MODULE_INTAKE_ROW - 1 - gap
@@ -155,11 +169,14 @@ function planLanes(bounds: Bounds, gap: number): Lane[] {
   const leftAnchors = Array.from({ length: PER_LANE }, (_, i) => bounds.minX + i)
   const rightAnchors = Array.from({ length: PER_LANE }, (_, i) => bounds.maxX - PER_LANE + 1 + i)
 
-  return blocks.flatMap((block) => [
-    // the left bank is fed from its right-hand end, nearest the lane band
-    { block, anchors: leftAnchors, side: -1 as Side, entry: leftAnchors[leftAnchors.length - 1] },
-    { block, anchors: rightAnchors, side: 1 as Side, entry: rightAnchors[0] },
-  ])
+  // one lane to a block, alternating sides, so a machine row only ever fills
+  // one bank — the other six columns stay open on every floor for streams on
+  // their way further down, which is the slack the router needs to weave
+  return blocks.map((block, index) =>
+    index % 2 === 0
+      ? { block, anchors: leftAnchors, side: -1 as Side, entry: leftAnchors[leftAnchors.length - 1] }
+      : { block, anchors: rightAnchors, side: 1 as Side, entry: rightAnchors[0] },
+  )
 }
 
 /** The twelve lanes down the intake edge, carrying the shape that goes under. */
@@ -217,7 +234,7 @@ function outletGoals(bounds: Bounds): Endpoint[] {
  * to full, and a layout that cannot be wired is worth far less than being told
  * so. Nothing partial is returned.
  */
-export function layoutStackerModule(chunks = 2, gap = BLOCK_GAP): StackerModuleResult {
+export function layoutStackerModule(chunks = PLATFORM_CHUNKS, gap = BLOCK_GAP, tune: { memory?: number; crowd?: number; rounds?: number } = {}): StackerModuleResult {
   const bounds = platformBounds(chunks)
   const occupancy = new Occupancy(bounds)
   const placements: BuildingPlacement[] = []
@@ -283,80 +300,77 @@ export function layoutStackerModule(chunks = 2, gap = BLOCK_GAP): StackerModuleR
   const tops = sideStarts()
   const outlets = outletGoals(bounds)
 
-  const routed: BuildingPlacement[] = []
-
-  /**
-   * Joins each end to whichever free end it can actually reach.
-   *
-   * Pairing them off in order looks tidy and routes badly: a stream is only
-   * ever interchangeable with the others on its edge, so the sensible thing is
-   * to let each destination take the nearest one that a belt can be got to it
-   * from, and leave the rest for the destinations further down.
-   */
-  const joinUp = (
-    pool: Endpoint[],
-    goals: Endpoint[],
-    describe: (index: number) => string,
-    reversed = false,
-  ): string | null => {
-    const free = [...pool]
-    for (const [index, goal] of goals.entries()) {
-      const nearest = free
-        .map((end, at) => ({
-          at,
-          span: Math.abs(end.x - goal.x) + Math.abs(end.y - goal.y) + Math.abs(end.z - goal.z) * 3,
-        }))
-        .sort((a, b) => a.span - b.span)
-
-      let joined = false
-      for (const { at } of nearest) {
-        const path = reversed
-          ? routeBelt(occupancy, goal, free[at])
-          : routeBelt(occupancy, free[at], goal)
-        if (!path) continue
-        routed.push(...path.placements)
-        free.splice(at, 1)
-        joined = true
-        break
-      }
-      if (!joined) return describe(index)
-    }
-    return null
-  }
-
-  const underFeeds = lanes.map((lane) => ({
+  const feedOf = (lane: Lane, floor: number): Endpoint => ({
     x: lane.entry,
     y: lane.block.feedRow,
-    z: BOTTOM_SHAPE_FLOOR,
+    z: floor,
     facing: DOWNSTREAM,
-  }))
-  const stuckUnder = joinUp(bottoms, [...underFeeds].reverse(), (i) => `${lanes.length - i}번 줄의 아래 도형`)
-  if (stuckUnder) return { ok: false, reason: `${stuckUnder}을 기계까지 잇지 못했습니다` }
-
-  const overFeeds = lanes.map((lane) => ({
-    x: lane.entry,
-    y: lane.block.feedRow,
-    z: TOP_SHAPE_FLOOR,
-    facing: DOWNSTREAM,
-  }))
-  const stuckOver = joinUp(tops, [...overFeeds].reverse(), (i) => `${lanes.length - i}번 줄의 위 도형`)
-  if (stuckOver) return { ok: false, reason: `${stuckOver}을 기계까지 잇지 못했습니다` }
-
-  const results = lanes.map((lane) => ({
+  })
+  const resultOf = (lane: Lane): Endpoint => ({
     x: lane.entry,
     y: lane.block.mergeRow - 1,
     z: MACHINE_FLOOR,
     facing: DOWNSTREAM,
-  }))
-  const stuckOut = joinUp(outlets, results, (i) => `${i + 1}번 줄의 결과`, true)
-  if (stuckOut) return { ok: false, reason: `${stuckOut}를 출구까지 잇지 못했습니다` }
+  })
+
+  /**
+   * Which stream serves which lane.
+   *
+   * Streams from the same edge are interchangeable, so this is a choice and a
+   * bad one costs dearly — every crossing it creates is one the router then has
+   * to weave around. Each pairing is priced by what it would cost to route on
+   * an empty platform, and then taken cheapest first, which keeps streams from
+   * being sent past one another for no reason.
+   */
+  const pairUp = (pool: Endpoint[], goals: Endpoint[]): [Endpoint, Endpoint][] => {
+    const priced: { from: number; to: number; span: number }[] = []
+    for (const [from, end] of pool.entries()) {
+      for (const [to, goal] of goals.entries()) {
+        priced.push({
+          from,
+          to,
+          span: Math.abs(end.x - goal.x) + Math.abs(end.y - goal.y) + Math.abs(end.z - goal.z) * 3,
+        })
+      }
+    }
+    priced.sort((a, b) => a.span - b.span)
+
+    const takenFrom = new Set<number>()
+    const takenTo = new Set<number>()
+    const pairs: [Endpoint, Endpoint][] = []
+    for (const { from, to } of priced) {
+      if (takenFrom.has(from) || takenTo.has(to)) continue
+      takenFrom.add(from)
+      takenTo.add(to)
+      pairs.push([pool[from], goals[to]])
+    }
+    return pairs
+  }
+
+  const nets: Net[] = [
+    ...pairUp(bottoms, lanes.map((lane) => feedOf(lane, BOTTOM_SHAPE_FLOOR))).map(
+      ([from, to], index): Net => ({ from, to, label: `${index + 1}번 줄의 아래 도형` }),
+    ),
+    ...pairUp(tops, lanes.map((lane) => feedOf(lane, TOP_SHAPE_FLOOR))).map(
+      ([from, to], index): Net => ({ from, to, label: `${index + 1}번 줄의 위 도형` }),
+    ),
+    ...pairUp(lanes.map(resultOf), outlets).map(
+      ([from, to], index): Net => ({ from, to, label: `${index + 1}번 줄의 결과` }),
+    ),
+  ]
+
+  const wiring = routeAll(occupancy, nets, { rounds: 120, memory: 4, crowd: 10, ...tune })
+  if ('stuck' in wiring) {
+    return { ok: false, reason: `${wiring.stuck.join(', ')}를 잇지 못했습니다` }
+  }
+  const routed = wiring.paths.flat()
 
   placements.push(...routed)
 
   return {
     ok: true,
     placements,
-    platform: PLATFORM_1X2,
+    platform: PLATFORM_FOR[chunks] ?? PLATFORM_1X2,
     lanes: MODULE_LANES,
     perLane: PER_LANE,
     machines: MODULE_LANES * PER_LANE,
@@ -366,7 +380,26 @@ export function layoutStackerModule(chunks = 2, gap = BLOCK_GAP): StackerModuleR
     ],
     warnings: [
       `위쪽 가장자리 ${MODULE_LANES}줄에 아래로 깔릴 도형을, 옆 가장자리 ${MODULE_LANES}줄에 위에 얹을 도형을 넣으세요.`,
-      '플랫폼 2칸짜리입니다 — 흐름 방향으로 깁니다.',
+      `플랫폼 ${chunks}칸짜리입니다 — 흐름 방향으로 깁니다.`,
     ],
   }
+}
+
+/**
+ * The module as a pasteable platform blueprint.
+ *
+ * Searching the belts out takes a few seconds, which is worth knowing before
+ * calling this on anything a person is waiting for.
+ */
+export async function generateStackerModule(
+  icon?: string,
+): Promise<{ layout: StackerModuleResult; code: string | null }> {
+  const layout = layoutStackerModule()
+  if (!layout.ok) return { layout, code: null }
+
+  const code = await encodeIslandBlueprint(
+    [{ type: layout.platform, rotation: 3, buildings: layout.placements }],
+    icon ? [`shape:${icon}`, null, null, null] : [null, null, null, null],
+  )
+  return { layout, code }
 }

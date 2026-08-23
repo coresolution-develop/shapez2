@@ -1025,7 +1025,7 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
     // is a different job from a single-file lane and is not written yet
     return {
       ok: false,
-      reason: `${label} 모듈은 벨트가 ${MODULE_LANES * 2}줄 들어갑니다 — 위쪽 가장자리 ${MODULE_LANES}줄이 아래 도형, 옆 가장자리 ${MODULE_LANES}줄이 위 도형입니다. 규격은 확정했지만 배치는 아직 만들지 않았습니다`,
+      reason: `${label} 모듈은 벨트가 ${MODULE_LANES * 2}줄 들어가서 한 줄짜리 레인과 구조가 다릅니다 — 「작업 모듈」 탭에서 만들 수 있습니다`,
       blockedBy: op,
     }
   }
