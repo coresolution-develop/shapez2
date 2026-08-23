@@ -81,7 +81,7 @@ export const MODULE_CATALOGUE: CatalogueEntry[] = [
   {
     op: 'swap',
     title: '절반씩 맞바꾸기',
-    does: '도형 두 개의 반쪽을 서로 바꿉니다. 결정체는 겹치면 깨지므로 이쪽으로 붙입니다.',
+    does: '도형 두 개의 반쪽을 서로 바꿉니다. 결정체는 겹치면 깨지므로 이쪽으로 붙입니다. 24줄 들어와 24줄로 나갑니다.',
     inputs: ['CuCuCuCu', 'RuRuRuRu'],
   },
 ]

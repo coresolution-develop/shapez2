@@ -1085,8 +1085,8 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
     return {
       ok: false,
       reason:
-        op === 'cut'
-          ? `${label} 모듈은 벨트가 ${MODULE_LANES}줄 들어와 ${MODULE_LANES * 2}줄로 나갑니다 — 「작업 모듈」 탭에서 만들 수 있습니다`
+        op === 'cut' || op === 'swap'
+          ? `${label} 모듈은 벨트 줄 수가 달라서 한 줄짜리 레인과 구조가 다릅니다 — 「작업 모듈」 탭에서 만들 수 있습니다`
           : `${label}는 벨트가 ${ports.inputs.length}줄 들어가고 ${ports.outputs.length}줄 나와서 한 줄짜리 레인에 넣을 수 없습니다`,
       blockedBy: op,
     }
