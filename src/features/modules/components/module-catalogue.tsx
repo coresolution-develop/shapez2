@@ -207,10 +207,10 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
                 ) : entry.op === 'stack' && !state?.reason ? (
                   <>
                     <p className="text-xs text-muted-foreground">
-                      결합기 72대짜리 모듈입니다. 배선을 찾아야 해서 만드는 데 몇 초 걸립니다.
+                      결합기 72대짜리 모듈입니다. 배선을 찾아내야 해서 잠깐 걸립니다.
                     </p>
                     <Button size="sm" variant="outline" className="w-full" disabled={building} onClick={buildStacker}>
-                      {building ? '만드는 중… (몇 초)' : '결합기 모듈 만들기'}
+                      {building ? '만드는 중…' : '결합기 모듈 만들기'}
                     </Button>
                   </>
                 ) : (

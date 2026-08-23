@@ -103,12 +103,22 @@ function movesFrom(facing: Facing): Move[] {
   ]
 }
 
+const FOOTPRINT_CACHE = new Map<string, [number, number, number][]>()
+
 /** Tiles a piece covers when placed, in world offsets from its own tile. */
 export function tilesOf(type: string, rotation: number): [number, number, number][] {
-  return (FOOTPRINTS[type]?.tiles ?? [[0, 0, 0]]).map(
+  const key = `${type}@${rotation}`
+  const known = FOOTPRINT_CACHE.get(key)
+  if (known) return known
+  const tiles = (FOOTPRINTS[type]?.tiles ?? [[0, 0, 0]]).map(
     (tile) => toWorld(tile as [number, number, number], rotation) as [number, number, number],
   )
+  FOOTPRINT_CACHE.set(key, tiles)
+  return tiles
 }
+
+/** The nine moves, worked out once per facing rather than on every step. */
+const MOVES: Move[][] = [0, 1, 2, 3].map((facing) => movesFrom(facing as Facing))
 
 export interface Cell {
   x: number
@@ -137,25 +147,49 @@ export interface Bounds {
  * paths — goes through it.
  */
 export class Occupancy {
-  private readonly taken = new Map<string, string>()
+  /** One byte a tile. Asked about several times per step of every search, so a
+   * flat grid rather than a map of "x,y,z" strings — that lookup was most of
+   * the time the router spent. */
+  private readonly grid: Uint8Array
+  private readonly names = new Map<number, string>()
+  readonly width: number
+  readonly height: number
 
-  constructor(readonly bounds: Bounds) {}
+  constructor(readonly bounds: Bounds) {
+    this.width = bounds.maxX - bounds.minX + 1
+    this.height = bounds.maxY - bounds.minY + 1
+    this.grid = new Uint8Array(this.width * this.height * bounds.floors)
+  }
 
   static key(x: number, y: number, z: number): string {
     return `${x},${y},${z}`
   }
 
+  /** Where a tile sits in the flat grid, or -1 if it is off the platform. */
+  cell(x: number, y: number, z: number): number {
+    const { minX, minY, floors } = this.bounds
+    const cx = x - minX
+    const cy = y - minY
+    if (cx < 0 || cx >= this.width || cy < 0 || cy >= this.height || z < 0 || z >= floors) return -1
+    return (z * this.height + cy) * this.width + cx
+  }
+
   inside(x: number, y: number, z: number): boolean {
-    const { minX, maxX, minY, maxY, floors } = this.bounds
-    return x >= minX && x <= maxX && y >= minY && y <= maxY && z >= 0 && z < floors
+    return this.cell(x, y, z) >= 0
   }
 
   free(x: number, y: number, z: number): boolean {
-    return this.inside(x, y, z) && !this.taken.has(Occupancy.key(x, y, z))
+    const cell = this.cell(x, y, z)
+    return cell >= 0 && this.grid[cell] === 0
+  }
+
+  freeCell(cell: number): boolean {
+    return cell >= 0 && this.grid[cell] === 0
   }
 
   at(x: number, y: number, z: number): string | undefined {
-    return this.taken.get(Occupancy.key(x, y, z))
+    const cell = this.cell(x, y, z)
+    return cell >= 0 ? this.names.get(cell) : undefined
   }
 
   /** Claims every tile a piece covers, or reports which one was already gone. */
@@ -170,82 +204,85 @@ export class Occupancy {
         return `${placement.type}@(${cell.x},${cell.y},${cell.z})`
       }
     }
-    for (const cell of cells) this.taken.set(Occupancy.key(cell.x, cell.y, cell.z), placement.type)
+    for (const cell of cells) {
+      const at = this.cell(cell.x, cell.y, cell.z)
+      this.grid[at] = 1
+      this.names.set(at, placement.type)
+    }
     return null
   }
 }
 
-interface Node {
-  x: number
-  y: number
-  z: number
-  facing: Facing
-}
-
-const nodeKey = (node: Node) => `${node.x},${node.y},${node.z},${node.facing}`
 
 /** A frontier that stays in order without re-sorting the whole thing. */
 class Frontier {
-  private readonly items: { node: Node; score: number }[] = []
+  private nodes = new Int32Array(1024)
+  private scores = new Float64Array(1024)
+  private count = 0
 
   get size(): number {
-    return this.items.length
+    return this.count
   }
 
-  push(node: Node, score: number): void {
-    this.items.push({ node, score })
-    let child = this.items.length - 1
+  clear(): void {
+    this.count = 0
+  }
+
+  push(node: number, score: number): void {
+    if (this.count === this.nodes.length) {
+      const nodes = new Int32Array(this.count * 2)
+      const scores = new Float64Array(this.count * 2)
+      nodes.set(this.nodes)
+      scores.set(this.scores)
+      this.nodes = nodes
+      this.scores = scores
+    }
+    let child = this.count++
+    this.nodes[child] = node
+    this.scores[child] = score
     while (child > 0) {
       const parent = (child - 1) >> 1
-      if (this.items[parent].score <= this.items[child].score) break
-      ;[this.items[parent], this.items[child]] = [this.items[child], this.items[parent]]
+      if (this.scores[parent] <= this.scores[child]) break
+      this.swap(parent, child)
       child = parent
     }
   }
 
-  pop(): Node | undefined {
-    const top = this.items[0]
-    const last = this.items.pop()
-    if (last !== undefined && this.items.length > 0) {
-      this.items[0] = last
+  pop(): number {
+    const top = this.nodes[0]
+    this.count -= 1
+    if (this.count > 0) {
+      this.nodes[0] = this.nodes[this.count]
+      this.scores[0] = this.scores[this.count]
       let parent = 0
       for (;;) {
         const left = parent * 2 + 1
         const right = left + 1
         let smallest = parent
-        if (left < this.items.length && this.items[left].score < this.items[smallest].score) {
-          smallest = left
-        }
-        if (right < this.items.length && this.items[right].score < this.items[smallest].score) {
-          smallest = right
-        }
+        if (left < this.count && this.scores[left] < this.scores[smallest]) smallest = left
+        if (right < this.count && this.scores[right] < this.scores[smallest]) smallest = right
         if (smallest === parent) break
-        ;[this.items[parent], this.items[smallest]] = [this.items[smallest], this.items[parent]]
+        this.swap(parent, smallest)
         parent = smallest
       }
     }
-    return top?.node
+    return top
+  }
+
+  private swap(a: number, b: number): void {
+    const node = this.nodes[a]
+    this.nodes[a] = this.nodes[b]
+    this.nodes[b] = node
+    const score = this.scores[a]
+    this.scores[a] = this.scores[b]
+    this.scores[b] = score
   }
 }
 
-/** What a tile costs to pass through beyond the one tile of distance. */
-export type Penalty = (x: number, y: number, z: number) => number
+/** What a tile costs to pass through, beyond the one tile of distance. */
+export type Penalty = (cell: number) => number
 
 const FREE: Penalty = () => 0
-
-/**
- * Whether a piece placed here would fit, counting the floors a lift eats.
- *
- * A lift is two floors tall even though it moves a shape one, which is exactly
- * the sort of thing that looks fine on a plan and overlaps in the game.
- */
-function fits(occupancy: Occupancy, move: Move, node: Node, spoken: Set<string>): boolean {
-  return tilesOf(move.type, move.rotation).every(
-    ([dx, dy, dz]) =>
-      occupancy.free(node.x + dx, node.y + dy, node.z + dz) &&
-      !spoken.has(Occupancy.key(node.x + dx, node.y + dy, node.z + dz)),
-  )
-}
 
 export interface RoutedPath {
   placements: BuildingPlacement[]
@@ -264,6 +301,14 @@ export interface RoutedPath {
  * The path claims its tiles as it is built, so routing one stream after another
  * naturally routes around the ones already laid.
  */
+/**
+ * A* over the grid, with nodes numbered rather than named.
+ *
+ * The search is run a couple of thousand times to lay one module, so the inner
+ * loop is written for that: a node is `cell * 4 + facing`, every table is a flat
+ * typed array, and nothing builds a string. The same search written against
+ * maps of "x,y,z,facing" spent most of its time hashing.
+ */
 function search(
   occupancy: Occupancy,
   from: Endpoint,
@@ -271,85 +316,135 @@ function search(
   penalty: Penalty,
   limit: number,
   /** Tiles another stream has first claim on — its own ends, which it needs. */
-  spoken: Set<string> = new Set(),
-): { placements: BuildingPlacement[]; price: number } | null {
-  const start: Node = { x: from.x, y: from.y, z: from.z, facing: from.facing }
-  const goalKey = nodeKey({ x: to.x, y: to.y, z: to.z, facing: to.facing })
+  spoken: Uint8Array | null,
+  scratch: Scratch,
+): BuildingPlacement[] | null {
+  const { bounds, width, height } = occupancy
+  const startCell = occupancy.cell(from.x, from.y, from.z)
+  const goalCell = occupancy.cell(to.x, to.y, to.z)
+  if (startCell < 0 || goalCell < 0) return null
 
-  const heuristic = (node: Node) =>
-    Math.abs(node.x - to.x) + Math.abs(node.y - to.y) + Math.abs(node.z - to.z) * 2
+  const startNode = startCell * 4 + from.facing
+  const goalNode = goalCell * 4 + to.facing
 
-  const cameFrom = new Map<string, { node: Node; move: Move }>()
-  const cost = new Map<string, number>([[nodeKey(start), 0]])
-  // the length cap counts tiles, not price: once contested ground is dear the
-  // two are nothing like each other, and capping on price cuts off the search
-  // exactly when it most needs to go the long way round
-  const steps = new Map<string, number>([[nodeKey(start), 0]])
-  const open = new Frontier()
-  open.push(start, heuristic(start))
-  const settled = new Set<string>()
+  const { cost, steps, cameNode, cameMove, stamp } = scratch
+  const era = ++scratch.era
 
+  const heuristic = (cell: number) => {
+    const cx = (cell % width) + bounds.minX
+    const cy = (Math.floor(cell / width) % height) + bounds.minY
+    const cz = Math.floor(cell / (width * height))
+    return Math.abs(cx - to.x) + Math.abs(cy - to.y) + Math.abs(cz - to.z) * 2
+  }
+
+  const open = scratch.open
+  open.clear()
+  cost[startNode] = 0
+  steps[startNode] = 0
+  cameNode[startNode] = -1
+  stamp[startNode] = era
+  open.push(startNode, heuristic(startCell))
+
+  const settled = scratch.settled
   while (open.size > 0) {
-    const node = open.pop()!
-    const here = nodeKey(node)
-    if (settled.has(here)) continue
-    settled.add(here)
+    const node = open.pop()
+    if (settled[node] === era) continue
+    settled[node] = era
 
-    if (here === goalKey) {
+    if (node === goalNode) {
       const placements: BuildingPlacement[] = []
       let cursor = node
-      let step = cameFrom.get(here)
-      while (step) {
+      while (cameNode[cursor] >= 0) {
+        const previous = cameNode[cursor]
+        const move = MOVES[previous & 3][cameMove[cursor]]
+        const cell = previous >> 2
         placements.push({
-          type: step.move.type,
-          x: step.node.x,
-          y: step.node.y,
-          layer: step.node.z,
-          rotation: step.move.rotation,
+          type: move.type,
+          x: (cell % width) + bounds.minX,
+          y: (Math.floor(cell / width) % height) + bounds.minY,
+          layer: Math.floor(cell / (width * height)),
+          rotation: move.rotation,
         })
-        cursor = step.node
-        step = cameFrom.get(nodeKey(cursor))
+        cursor = previous
       }
       placements.reverse()
-      return { placements, price: cost.get(here)! }
+      return placements
     }
 
-    const spent = cost.get(here)!
-    if ((steps.get(here) ?? 0) > limit) continue
+    if (steps[node] > limit) continue
+    const spent = cost[node]
+    const cell = node >> 2
+    const facing = node & 3
+    const x = (cell % width) + bounds.minX
+    const y = (Math.floor(cell / width) % height) + bounds.minY
+    const z = Math.floor(cell / (width * height))
 
-    for (const move of movesFrom(node.facing)) {
-      if (!fits(occupancy, move, node, spoken)) continue
-      const [dx, dy] = STEP[move.leaves]
-      const next: Node = {
-        x: node.x + dx,
-        y: node.y + dy,
-        z: node.z + move.climb,
-        facing: move.leaves,
+    const moves = MOVES[facing]
+    for (let m = 0; m < moves.length; m++) {
+      const move = moves[m]
+
+      // the piece has to fit where it stands, lifts being two floors tall
+      let toll = 1
+      let blocked = false
+      for (const [ox, oy, oz] of tilesOf(move.type, move.rotation)) {
+        const covered = occupancy.cell(x + ox, y + oy, z + oz)
+        if (!occupancy.freeCell(covered) || (spoken !== null && spoken[covered] === 1)) {
+          blocked = true
+          break
+        }
+        toll += penalty(covered)
       }
-      if (!occupancy.inside(next.x, next.y, next.z)) continue
+      if (blocked) continue
+
+      const [dx, dy] = STEP[move.leaves]
+      const nextCell = occupancy.cell(x + dx, y + dy, z + move.climb)
+      if (nextCell < 0) continue
+      const next = nextCell * 4 + move.leaves
       // the goal tile is claimed by whatever is waiting there, so it is the one
       // tile the path is allowed to end on without being free
-      const arriving = nodeKey(next) === goalKey
-      if (!arriving && !occupancy.free(next.x, next.y, next.z)) continue
-      if (!arriving && spoken.has(Occupancy.key(next.x, next.y, next.z))) continue
-
-      // a lift is two tiles, and both of them cost whatever they cost
-      let toll = 1
-      for (const [ox, oy, oz] of tilesOf(move.type, move.rotation)) {
-        toll += penalty(node.x + ox, node.y + oy, node.z + oz)
+      if (next !== goalNode) {
+        if (!occupancy.freeCell(nextCell)) continue
+        if (spoken !== null && spoken[nextCell] === 1) continue
       }
 
-      const key = nodeKey(next)
       const price = spent + toll
-      if (price >= (cost.get(key) ?? Infinity)) continue
-      cost.set(key, price)
-      steps.set(key, (steps.get(here) ?? 0) + 1)
-      cameFrom.set(key, { node, move })
-      open.push(next, price + heuristic(next))
+      if (stamp[next] === era && price >= cost[next]) continue
+      stamp[next] = era
+      cost[next] = price
+      steps[next] = steps[node] + 1
+      cameNode[next] = node
+      cameMove[next] = m
+      open.push(next, price + heuristic(nextCell))
     }
   }
 
   return null
+}
+
+/** Working tables, kept between searches so they are allocated once. */
+interface Scratch {
+  cost: Float64Array
+  steps: Int32Array
+  cameNode: Int32Array
+  cameMove: Uint8Array
+  stamp: Int32Array
+  settled: Int32Array
+  open: Frontier
+  era: number
+}
+
+function scratchFor(occupancy: Occupancy): Scratch {
+  const nodes = occupancy.width * occupancy.height * occupancy.bounds.floors * 4
+  return {
+    cost: new Float64Array(nodes),
+    steps: new Int32Array(nodes),
+    cameNode: new Int32Array(nodes),
+    cameMove: new Uint8Array(nodes),
+    stamp: new Int32Array(nodes),
+    settled: new Int32Array(nodes),
+    open: new Frontier(),
+    era: 0,
+  }
 }
 
 export function routeBelt(
@@ -358,13 +453,13 @@ export function routeBelt(
   to: Endpoint,
   options: { maxTiles?: number } = {},
 ): RoutedPath | null {
-  const found = search(occupancy, from, to, FREE, options.maxTiles ?? 400)
+  const found = search(occupancy, from, to, FREE, options.maxTiles ?? 400, null, scratchFor(occupancy))
   if (!found) return null
-  for (const placement of found.placements) {
+  for (const placement of found) {
     const clash = occupancy.claim(placement)
     if (clash) return null
   }
-  return { placements: found.placements, length: found.placements.length }
+  return { placements: found, length: found.length }
 }
 
 export interface Net {
@@ -400,64 +495,81 @@ export function routeAll(
   nets: Net[],
   options: { rounds?: number; maxTiles?: number; memory?: number; crowd?: number } = {},
 ): RoutedAll | { stuck: string[] } {
-  const rounds = options.rounds ?? 60
+  const rounds = options.rounds ?? 400
   const limit = options.maxTiles ?? 600
-  const memory = options.memory ?? 8
-  const crowd = options.crowd ?? 3
+  // how dearly a tile that keeps being fought over is remembered, against how
+  // dearly sharing one right now is charged. Leaning on the second turns the
+  // whole scheme back into routing one stream at a time; leaning on the first
+  // is what makes streams give ground. Fitted on the stacker module, which is
+  // the only thing here big enough to need any of this.
+  const memory = options.memory ?? 4
+  const crowd = options.crowd ?? 5
 
   // a stream's first tile carries its first belt, so no other stream may use
   // it. With the intakes packed four to a floor these tiles are exactly the
   // ones everyone else wants, and leaving them negotiable is what kept a
   // dozen of them contested however long the rounds ran.
   const ends = nets.map((net) => [
-    Occupancy.key(net.from.x, net.from.y, net.from.z),
-    Occupancy.key(net.to.x, net.to.y, net.to.z),
+    occupancy.cell(net.from.x, net.from.y, net.from.z),
+    occupancy.cell(net.to.x, net.to.y, net.to.z),
   ])
-  const everyEnd = new Set(ends.flat())
+  const spokenFor = new Uint8Array(occupancy.width * occupancy.height * occupancy.bounds.floors)
+  for (const cell of ends.flat()) if (cell >= 0) spokenFor[cell] = 1
 
-  const usage = new Map<string, number>()
-  const history = new Map<string, number>()
+  const tiles = occupancy.width * occupancy.height * occupancy.bounds.floors
+  const usage = new Int32Array(tiles)
+  const history = new Int32Array(tiles)
+  const scratch = scratchFor(occupancy)
   const paths: (BuildingPlacement[] | null)[] = nets.map(() => null)
 
-  const tilesUsed = (placements: BuildingPlacement[]) =>
-    placements.flatMap((placement) =>
-      tilesOf(placement.type, placement.rotation ?? 0).map(([dx, dy, dz]) =>
-        Occupancy.key((placement.x ?? 0) + dx, (placement.y ?? 0) + dy, (placement.layer ?? 0) + dz),
-      ),
-    )
+  const tilesUsed = (placements: BuildingPlacement[]) => {
+    const cells: number[] = []
+    for (const placement of placements) {
+      for (const [dx, dy, dz] of tilesOf(placement.type, placement.rotation ?? 0)) {
+        cells.push(
+          occupancy.cell(
+            (placement.x ?? 0) + dx,
+            (placement.y ?? 0) + dy,
+            (placement.layer ?? 0) + dz,
+          ),
+        )
+      }
+    }
+    return cells
+  }
 
   const shift = (placements: BuildingPlacement[], by: number) => {
-    for (const cell of tilesUsed(placements)) {
-      usage.set(cell, (usage.get(cell) ?? 0) + by)
-    }
+    for (const cell of tilesUsed(placements)) if (cell >= 0) usage[cell] += by
   }
 
   for (let round = 1; round <= rounds; round++) {
     // contested ground starts out barely dearer than empty ground and ends up
     // far dearer, so early rounds look for the short way and later ones give in
-    const penalty: Penalty = (x, y, z) => {
-      const cell = Occupancy.key(x, y, z)
-      return (history.get(cell) ?? 0) * memory + (usage.get(cell) ?? 0) * crowd
-    }
+    const penalty: Penalty = (cell) => history[cell] * memory + usage[cell] * crowd
 
     const stuck: string[] = []
     for (const [index, net] of nets.entries()) {
       const laid = paths[index]
+      // a path nobody is fighting over is left where it is: tearing up all of
+      // them every round is most of the work and none of the progress
+      if (laid && !tilesUsed(laid).some((cell) => cell >= 0 && usage[cell] > 1)) continue
       if (laid) shift(laid, -1)
-      const mine = new Set(ends[index])
-      const spoken = new Set([...everyEnd].filter((cell) => !mine.has(cell)))
-      const found = search(occupancy, net.from, net.to, penalty, limit, spoken)
+      // its own ends are its to use; every other net's are not
+      for (const cell of ends[index]) if (cell >= 0) spokenFor[cell] = 0
+      const found = search(occupancy, net.from, net.to, penalty, limit, spokenFor, scratch)
+      for (const cell of ends[index]) if (cell >= 0) spokenFor[cell] = 1
       if (!found) {
         paths[index] = null
         stuck.push(net.label)
         continue
       }
-      paths[index] = found.placements
-      shift(found.placements, 1)
+      paths[index] = found
+      shift(found, 1)
     }
     if (stuck.length > 0) return { stuck }
 
-    const contested = [...usage.entries()].filter(([, count]) => count > 1)
+    const contested: number[] = []
+    for (let cell = 0; cell < usage.length; cell++) if (usage[cell] > 1) contested.push(cell)
     if (contested.length === 0) {
       const settled = paths as BuildingPlacement[][]
       for (const path of settled) {
@@ -468,10 +580,11 @@ export function routeAll(
       }
       return { paths: settled, rounds: round }
     }
-    for (const [cell, count] of contested) history.set(cell, (history.get(cell) ?? 0) + count - 1)
+    for (const cell of contested) history[cell] += usage[cell] - 1
   }
 
-  const contested = [...usage.entries()].filter(([, count]) => count > 1).length
+  let contested = 0
+  for (let cell = 0; cell < usage.length; cell++) if (usage[cell] > 1) contested += 1
   return { stuck: [`${rounds}번 다시 깔았지만 ${contested}칸이 겹친 채 남았습니다`] }
 }
 

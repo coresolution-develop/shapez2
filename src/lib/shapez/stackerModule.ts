@@ -99,6 +99,8 @@ export interface StackerModule {
   lanes: number
   perLane: number
   machines: number
+  /** How many times the belts had to be torn up and laid again. */
+  rounds: number
   notes: string[]
   warnings: string[]
 }
@@ -359,11 +361,12 @@ export function layoutStackerModule(chunks = PLATFORM_CHUNKS, gap = BLOCK_GAP, t
     ),
   ]
 
-  const wiring = routeAll(occupancy, nets, { rounds: 120, memory: 4, crowd: 10, ...tune })
+  const wiring = routeAll(occupancy, nets, { rounds: 400, ...tune })
   if ('stuck' in wiring) {
     return { ok: false, reason: `${wiring.stuck.join(', ')}를 잇지 못했습니다` }
   }
   const routed = wiring.paths.flat()
+  const roundsUsed = wiring.rounds
 
   placements.push(...routed)
 
@@ -374,6 +377,7 @@ export function layoutStackerModule(chunks = PLATFORM_CHUNKS, gap = BLOCK_GAP, t
     lanes: MODULE_LANES,
     perLane: PER_LANE,
     machines: MODULE_LANES * PER_LANE,
+    rounds: roundsUsed,
     notes: [
       `벨트가 ${MODULE_LANES * 2}줄 들어와 ${MODULE_LANES}줄로 나옵니다.`,
       `결합기 ${MODULE_LANES * PER_LANE}대가 들어갑니다 — 벨트가 가득 찬 채로 나갑니다.`,

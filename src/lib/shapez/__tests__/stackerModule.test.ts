@@ -113,3 +113,24 @@ describe('the stacker module', () => {
     expect(new Set(tiles).size, '두 건물이 같은 칸을 차지합니다').toBe(tiles.length)
   })
 })
+
+/**
+ * Not a benchmark — a guard.
+ *
+ * Laying this module out started at seventeen seconds, which is long enough
+ * that the page had to ask before doing it. Most of that turned out to be the
+ * search hashing strings and every path being torn up whether or not anyone
+ * wanted its tiles. The bound here is loose enough not to mind a slow machine
+ * and tight enough to notice if either comes back.
+ */
+describe('how long it takes', () => {
+  it('lays the module out in a couple of seconds, not tens of them', () => {
+    const started = Date.now()
+    const result = layoutStackerModule()
+    const spent = Date.now() - started
+
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.rounds).toBeLessThan(200)
+    expect(spent, `${spent}ms`).toBeLessThan(8000)
+  })
+})
