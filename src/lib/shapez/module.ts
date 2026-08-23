@@ -471,6 +471,37 @@ export const MODULE_OUTLET_ROW = CHUNK_MARGIN
 /** Lanes sit in the middle four columns, as both reference modules do. */
 export const MODULE_FIRST_LANE = 8
 
+/**
+ * How far a belt launcher throws to reach a catcher, in tiles.
+ *
+ * Not a number anyone had to tell us: it follows from the margins. A launcher
+ * stands `CHUNK_MARGIN` inside one chunk's edge and the catcher it feeds stands
+ * `CHUNK_MARGIN` inside the next chunk's, with the boundary between them — so
+ * modules laid end to end are exactly this far apart. The reference modules
+ * then use the same distance for the hops *inside* themselves, which is what
+ * makes it safe to use for routing rather than only at the edges.
+ */
+export const BELT_PORT_THROW = CHUNK_TILES - MODULE_INTAKE_ROW + MODULE_OUTLET_ROW
+
+/**
+ * A stacker module takes twenty-four lanes in, not twelve.
+ *
+ * The machine needs two shapes at once, so a module for it has a second intake:
+ * twelve lanes down the usual edge and twelve more along the side, with the
+ * twelve results leaving the far edge as always. Which is which is not a
+ * coin toss — tracing every stacker in the reference module back to the edge it
+ * draws from puts the two apart cleanly, and the test re-derives it.
+ */
+export const STACKER_INTAKE = {
+  /** The shape that ends up underneath arrives at the usual intake edge. */
+  bottomShape: 'intake',
+  /** The shape laid on top arrives along the side. */
+  topShape: 'side',
+} as const
+
+/** The column a stacker module's second intake runs down. */
+export const MODULE_SIDE_INTAKE_COLUMN = CHUNK_TILES - CHUNK_MARGIN - 1
+
 /** Everything flows one way down the platform, so everything faces -Y. */
 const DOWNSTREAM = 3
 
@@ -988,6 +1019,15 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
 
   if (!ports || ports.partialBelts) {
     return { ok: false, reason: `${label}의 입출력 위치를 아직 측정하지 못했습니다`, blockedBy: op }
+  }
+  if (op === 'stack') {
+    // the shape of this one is settled — see STACKER_INTAKE — but laying it out
+    // is a different job from a single-file lane and is not written yet
+    return {
+      ok: false,
+      reason: `${label} 모듈은 벨트가 ${MODULE_LANES * 2}줄 들어갑니다 — 위쪽 가장자리 ${MODULE_LANES}줄이 아래 도형, 옆 가장자리 ${MODULE_LANES}줄이 위 도형입니다. 규격은 확정했지만 배치는 아직 만들지 않았습니다`,
+      blockedBy: op,
+    }
   }
   if (ports.inputs.length !== 1 || ports.outputs.length !== 1) {
     return {

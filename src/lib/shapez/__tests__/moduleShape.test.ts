@@ -3,8 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { decodeBlueprint } from '../blueprint'
 import buildings from '../buildings.json'
 import {
+  BELT_PORT_THROW,
   CHUNK_MARGIN,
   CHUNK_TILES,
+  MODULE_INTAKE_ROW,
+  MODULE_SIDE_INTAKE_COLUMN,
+  STACKER_INTAKE,
   MODULE_FIRST_LANE,
   MODULE_LANES,
   MODULE_LANES_PER_FLOOR,
@@ -15,7 +19,7 @@ import {
   USABLE_COLUMNS,
 } from '../module'
 import { portsFor } from '../portData'
-import { toWorld } from '../ports'
+import { forwardDirection, toWorld } from '../ports'
 import { BELT_BASE_RATE, OPERATION_SPECS, ratedThroughput } from '../throughput'
 
 import fixtures from './portFixtures.json'
@@ -406,5 +410,108 @@ describe('generating a lane module', () => {
     for (const op of ['stack', 'cut', 'crystal'] as const) {
       expect(layoutLaneModule(op, 2).ok, op).toBe(false)
     }
+  })
+})
+
+/**
+ * Two things a stacker module needs settled before it can be laid out, both
+ * read back off the module a player built rather than assumed.
+ */
+describe('what a two-shape module needs', () => {
+  const key = (x: number, y: number, z: number) => `${x},${y},${z}`
+
+  it('throws a shape exactly as far as the next module is away', async () => {
+    // the distance follows from the margins — a launcher two tiles inside one
+    // chunk reaches a catcher two tiles inside the next — and the reference
+    // modules then use that same distance for the hops inside themselves
+    expect(BELT_PORT_THROW).toBe(5)
+
+    for (const name of ['stacker module, 1x2 platform', 'crystal generator module, 1x2 platform']) {
+      const blueprint = await decodeBlueprint(codeFor(name))
+      const senders = blueprint.buildings.filter((b) => b.type.startsWith('BeltPortSender'))
+      const catchers = new Map(
+        blueprint.buildings
+          .filter((b) => b.type.startsWith('BeltPortReceiver'))
+          .map((b) => [key(b.pos.x, b.pos.y, b.pos.z), b]),
+      )
+
+      const gaps = new Map<number, number>()
+      for (const sender of senders) {
+        const [dx, dy] = forwardDirection(sender.rotation)
+        for (let step = 1; step <= 25; step++) {
+          const hit = catchers.get(
+            key(sender.pos.x + dx * step, sender.pos.y + dy * step, sender.pos.z),
+          )
+          if (hit && hit.rotation === sender.rotation) {
+            gaps.set(step, (gaps.get(step) ?? 0) + 1)
+            break
+          }
+        }
+      }
+
+      const paired = [...gaps.values()].reduce((sum, count) => sum + count, 0)
+      const throws = gaps.get(BELT_PORT_THROW) ?? 0
+      expect(throws / paired, `${name}: hops at ${BELT_PORT_THROW} tiles`).toBeGreaterThan(0.75)
+
+      // the twelve that find nothing ahead are the module's own outputs, which
+      // throw to the next module and so land outside this blueprint
+      expect(senders.length - paired, `${name}: outward launchers`).toBe(MODULE_LANES)
+    }
+  })
+
+  it('takes the under-shape down the intake edge and the over-shape down the side', async () => {
+    const blueprint = await decodeBlueprint(codeFor('stacker module, 1x2 platform'))
+    const at = new Map<string, (typeof blueprint.buildings)[number]>()
+    for (const b of blueprint.buildings) for (const t of b.tiles) at.set(key(t.x, t.y, t.z), b)
+
+    // everything that delivers into a given tile, launchers included
+    const feeders = new Map<string, (typeof blueprint.buildings)[number][]>()
+    const add = (cell: string, from: (typeof blueprint.buildings)[number]) =>
+      feeders.set(cell, [...(feeders.get(cell) ?? []), from])
+
+    for (const b of blueprint.buildings) {
+      if (b.type.startsWith('BeltPortSender')) {
+        const [dx, dy] = forwardDirection(b.rotation)
+        const cell = key(b.pos.x + dx * BELT_PORT_THROW, b.pos.y + dy * BELT_PORT_THROW, b.pos.z)
+        if (at.get(cell)?.type.startsWith('BeltPortReceiver')) add(cell, b)
+        continue
+      }
+      for (const port of portsFor(b.type)?.outputs ?? []) {
+        const [ox, oy, oz] = toWorld(port, b.rotation)
+        add(key(b.pos.x + ox, b.pos.y + oy, b.pos.z + oz), b)
+      }
+    }
+
+    /** Walks upstream from a stacker's feed tile until it reaches an edge. */
+    const sourceOf = (start: string): 'intake' | 'side' | null => {
+      const seen = new Set<string>()
+      const queue = [start]
+      while (queue.length > 0) {
+        const cell = queue.shift()!
+        if (seen.has(cell)) continue
+        seen.add(cell)
+        const here = at.get(cell)
+        if (here?.type.startsWith('BeltPortReceiver')) {
+          if (here.pos.y === MODULE_INTAKE_ROW) return 'intake'
+          if (here.pos.x === MODULE_SIDE_INTAKE_COLUMN) return 'side'
+        }
+        for (const from of feeders.get(cell) ?? []) {
+          queue.push(key(from.pos.x, from.pos.y, from.pos.z))
+        }
+      }
+      return null
+    }
+
+    const found = { bottomShape: new Set<string>(), topShape: new Set<string>() }
+    for (const stacker of blueprint.buildings.filter((b) => b.type.startsWith('Stacker'))) {
+      // the two shape inputs sit one above the other, one floor apart
+      const under = sourceOf(key(stacker.pos.x, stacker.pos.y + 1, stacker.pos.z))
+      const over = sourceOf(key(stacker.pos.x, stacker.pos.y + 1, stacker.pos.z + 1))
+      if (under) found.bottomShape.add(under)
+      if (over) found.topShape.add(over)
+    }
+
+    expect([...found.bottomShape]).toEqual([STACKER_INTAKE.bottomShape])
+    expect([...found.topShape]).toEqual([STACKER_INTAKE.topShape])
   })
 })
