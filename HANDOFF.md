@@ -34,7 +34,14 @@
 
 **플랫폼까지 같이 나옵니다** (`Foundation_1x1`, `encodeIslandBlueprint`). 건물만 내보냈다가 게임에서 붙일 데가 없어 못 쓴 적이 있습니다 — 되돌리지 마세요.
 
-화면에서는 **처리량 패널 안 「작업 모듈」**에 있습니다 (`components/lane-modules.tsx`).
+화면에서 두 군데입니다.
+
+| 위치 | 파일 | 내용 |
+|---|---|---|
+| **「작업 모듈」 탭** | `features/modules/components/module-catalogue.tsx` | 작업 10가지 카탈로그. 뭘 하는 모듈인지 도형 그림으로 보여 줌 |
+| 처리량 패널 안 | `features/reverse-engineer/components/lane-modules.tsx` | 지금 보는 도형이 쓰는 작업만 |
+
+카탈로그의 예시 그림은 `lib/shapez/moduleCatalogue.ts`의 도형 코드를 **시뮬레이터에 실제로 넣어 본 결과**입니다. 손으로 적은 결과가 아니라서 규칙이 바뀌면 그림도 같이 바뀝니다. 테스트가 예시마다 실행해 보고, **입력과 출력이 같아서 아무것도 안 보여 주는 예시**도 잡습니다.
 
 실제 게임 도형 369개(클래식·일반) 기준 커버리지: **계획 전체 13% · 기계 단계 58%**.
 

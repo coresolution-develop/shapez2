@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BlueprintViewer } from '@/features/blueprint/components/blueprint-viewer'
+import { ModuleCatalogue } from '@/features/modules/components/module-catalogue'
 import { BlueprintExport } from '@/features/reverse-engineer/components/blueprint-export'
 import { PlanSteps } from '@/features/reverse-engineer/components/plan-steps'
 import { PresetPicker } from '@/features/reverse-engineer/components/preset-picker'
@@ -241,6 +242,7 @@ export function ReverseEngineerView() {
         <TabsList>
           <TabsTrigger value="plan">가공 순서</TabsTrigger>
           <TabsTrigger value="presets">게임 내 도형 찾기</TabsTrigger>
+          <TabsTrigger value="modules">작업 모듈</TabsTrigger>
           <TabsTrigger value="blueprint">청사진 뷰어</TabsTrigger>
         </TabsList>
 
@@ -297,6 +299,10 @@ export function ReverseEngineerView() {
 
         <TabsContent value="presets" className="mt-4">
           <PresetPicker skin={skin} onSelect={(value) => update('code', value)} />
+        </TabsContent>
+
+        <TabsContent value="modules" className="mt-4">
+          <ModuleCatalogue tier={tier} skin={skin} />
         </TabsContent>
 
         <TabsContent value="blueprint" className="mt-4">
