@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BlueprintViewer } from '@/features/blueprint/components/blueprint-viewer'
 import { ModuleCatalogue } from '@/features/modules/components/module-catalogue'
+import { ModulePlan } from '@/features/reverse-engineer/components/module-plan'
 import { BlueprintExport } from '@/features/reverse-engineer/components/blueprint-export'
 import { PlanSteps } from '@/features/reverse-engineer/components/plan-steps'
 import { PresetPicker } from '@/features/reverse-engineer/components/preset-picker'
@@ -277,6 +278,14 @@ export function ReverseEngineerView() {
                   onStackerVariantChange={(value) =>
                     update('stackerVariant', value as StackerVariant)
                   }
+                />
+              ) : null}
+              {throughput ? (
+                <ModulePlan
+                  root={solution.root}
+                  skin={skin}
+                  tier={tier}
+                  loads={throughput.loads}
                 />
               ) : null}
               <BlueprintExport root={solution.root} shapeCode={code} />
