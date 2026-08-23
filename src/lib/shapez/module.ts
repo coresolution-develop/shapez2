@@ -511,7 +511,7 @@ const DOWNSTREAM = 3
  * `portData.ts` — `toWorld(port, rotation)` is what decides them, and the
  * reference rotator module uses exactly these twelve.
  */
-const PIECE = {
+export const PIECE = {
   /** Straight, running -Y with the flow. */
   down: { type: BUILDING_IDS.belt, rotation: DOWNSTREAM },
   /** Straight, running -X. */
@@ -547,15 +547,15 @@ const PIECE = {
   mergeEndLeft: { type: 'Merger2To1LInternalVariantMirrored', rotation: 3 },
 } as const
 
-type Piece = { type: string; rotation: number }
-interface Tile {
+export type Piece = { type: string; rotation: number }
+export interface Tile {
   x: number
   y: number
   piece: Piece
 }
 
 /** Which way a lane spreads out from its own column. */
-type Side = -1 | 1
+export type Side = -1 | 1
 
 /**
  * How a machine sits in a lane module: how wide it is across the flow, and
@@ -662,7 +662,7 @@ function crossings(
  * the machines further along still need, and `perLane` is chosen so that is
  * `(perLane - 1) x machineRate`, always under a belt's own rate.
  */
-function comb(anchors: number[], side: Side, row: number, gather: boolean): Tile[] {
+export function comb(anchors: number[], side: Side, row: number, gather: boolean): Tile[] {
   const order = side < 0 ? [...anchors].reverse() : anchors
   if (order.length === 1) return [{ x: order[0], y: row, piece: PIECE.down }]
 
@@ -736,8 +736,8 @@ interface Built {
   shape: LaneShape
 }
 
-const CATCHER = { type: 'BeltPortReceiverInternalVariant', rotation: DOWNSTREAM }
-const LAUNCHER = { type: 'BeltPortSenderInternalVariant', rotation: DOWNSTREAM }
+export const CATCHER = { type: 'BeltPortReceiverInternalVariant', rotation: DOWNSTREAM }
+export const LAUNCHER = { type: 'BeltPortSenderInternalVariant', rotation: DOWNSTREAM }
 
 /** Lays every floor of a module out the same way, as both reference modules do. */
 function onEveryFloor(perFloor: (put: (piece: Piece, x: number, y: number) => void) => void) {
