@@ -7,6 +7,7 @@ import { ShapeView } from '@/components/shape-view'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { generateLaneModule, moduleSizing, MODULE_LANES } from '@/lib/shapez/module'
+import { generateCrystalModule } from '@/lib/shapez/crystalModule'
 import { generateCutterModule } from '@/lib/shapez/cutterModule'
 import { generateStackerModule } from '@/lib/shapez/stackerModule'
 import { generateSwapperModule } from '@/lib/shapez/swapperModule'
@@ -35,6 +36,7 @@ const SEARCHED = new Map<
   ['stack', { perLane: 6, machines: 72, make: generateStackerModule }],
   ['cut', { perLane: 4, machines: 48, make: generateCutterModule }],
   ['swap', { perLane: 4, machines: 48, make: generateSwapperModule }],
+  ['crystal', { perLane: 6, machines: 72, make: generateCrystalModule }],
 ])
 
 interface Made {

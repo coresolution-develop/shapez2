@@ -928,7 +928,7 @@ function buildLadder(op: OperationId, perLane: number, needsPipe: boolean): Buil
     if (!box) {
       return {
         ok: false,
-        reason: `${label}는 기계 층 2개를 차지해서 3층짜리 모듈에 층마다 넣을 수 없습니다`,
+        reason: `${label}는 기계 층 2개를 차지해서 구조가 다릅니다 — 「작업 모듈」 탭에서 만들 수 있습니다`,
         blockedBy: op,
       }
     }

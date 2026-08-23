@@ -74,7 +74,7 @@ export const MODULE_CATALOGUE: CatalogueEntry[] = [
   {
     op: 'crystal',
     title: '빈칸을 결정체로 채우기',
-    does: '물감을 받아 도형의 빈칸을 결정체로 메웁니다. 기계가 두 층을 차지해서 아직 모듈로 못 만듭니다.',
+    does: '물감을 받아 도형의 빈칸을 결정체로 메웁니다. 기계가 두 층을 차지해서 눕혀 세워야 합니다.',
     inputs: ['Cu--Cu--'],
     color: 'b',
   },
