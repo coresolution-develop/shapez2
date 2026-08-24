@@ -437,13 +437,16 @@ export function layoutShapeModule(
   if (blockedExit) return { ok: false, reason: blockedExit }
   nets.push({ from: finishedAt, to: exit, label: '완성된 도형' })
 
-  // Two hundred rather than the four hundred the other modules negotiate over,
-  // because it was measured and more does not help: of the plans that still
-  // fail, not one is rescued by four hundred rounds, by twelve hundred, or by
-  // any weighting of the two costs. That is what says they are not crowded but
-  // genuinely stuck — two streams wanting one tile with nowhere else to go —
-  // and rounds nobody is rescued by are only rounds spent failing slowly.
-  const wiring = routeAll(occupancy, nets, { rounds: 200, ...tune })
+  // Ten, against the four hundred the other modules negotiate over, because
+  // that is what was measured. Every plan that lays out at all does so within
+  // five rounds; raising the cap to two hundred changes the coverage by not one
+  // shape and turns the worst case from 243ms into 12.7 seconds of a page that
+  // cannot repaint. The plans that fail are not crowded but genuinely stuck —
+  // two streams wanting one tile with nowhere else to go — and no weighting of
+  // the two costs rescues them either, so the extra rounds only ever buy a
+  // longer wait for the same answer. Ten leaves twice the room anything has
+  // needed; a caller with a denser layout can ask for more.
+  const wiring = routeAll(occupancy, nets, { rounds: 10, ...tune })
   if ('stuck' in wiring) {
     return { ok: false, reason: `${wiring.stuck.slice(0, 2).join(', ')}를 잇지 못했습니다` }
   }

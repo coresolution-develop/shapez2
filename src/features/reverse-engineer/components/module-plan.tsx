@@ -1,19 +1,12 @@
 'use client'
 
-import { ArrowDownIcon, CheckIcon, CopyIcon, LoaderIcon } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowDownIcon, PackagePlusIcon } from 'lucide-react'
 
+import { ModuleCopyButton } from '@/components/module-copy-button'
 import { ShapeView } from '@/components/shape-view'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  EDGE_NAMES_KO,
-  MODULE_WIRING,
-  SEARCHED_MODULES,
-  makeModule,
-  moduleCapacity,
-  modulesNeeded,
-} from '@/lib/shapez/moduleEdges'
+import { EDGE_NAMES_KO, MODULE_WIRING, moduleCapacity, modulesNeeded } from '@/lib/shapez/moduleEdges'
 import { OPERATIONS, type OperationId } from '@/lib/shapez/operations'
 import { orderedSteps } from '@/lib/shapez/plan'
 import type { BuildNode } from '@/lib/shapez/plan'
@@ -26,6 +19,8 @@ interface ModulePlanProps {
   skin: ColorSkinId
   tier: SpeedTier
   loads: Map<string, NodeLoad>
+  onCollect: (op: OperationId, count: number) => void
+  onCollectAll: (wanted: { op: OperationId; count: number }[]) => void
 }
 
 /**
@@ -42,7 +37,7 @@ interface ModulePlanProps {
  * build order: the alternative was to note the module's name, cross to another
  * tab, find it among ten, and copy it there, once per step.
  */
-export function ModulePlan({ root, skin, tier, loads }: ModulePlanProps) {
+export function ModulePlan({ root, skin, tier, loads, onCollect, onCollectAll }: ModulePlanProps) {
   const steps = orderedSteps(root).filter((node) => node.op !== null)
   if (steps.length === 0) return null
 
@@ -66,6 +61,22 @@ export function ModulePlan({ root, skin, tier, loads }: ModulePlanProps) {
           번호 순서대로 지으면 됩니다. 모듈 한 장이 분당 {capacity.toLocaleString()}개까지 처리하니
           대부분은 한 장으로 충분합니다.
         </p>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 gap-1.5 px-2 text-xs"
+          onClick={() =>
+            onCollectAll(
+              steps.map((node) => ({
+                op: node.op!,
+                count: modulesNeeded(loads.get(node.id)?.opRate ?? 0, tier),
+              })),
+            )
+          }
+        >
+          <PackagePlusIcon className="size-3" />
+          전부 모듈함에 담기
+        </Button>
       </div>
 
       <ol className="space-y-2">
@@ -96,6 +107,16 @@ export function ModulePlan({ root, skin, tier, loads }: ModulePlanProps) {
                 <span className="ml-auto text-xs text-muted-foreground tabular-nums">
                   {Math.round(load?.opRate ?? 0)}/분
                 </span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  onClick={() => onCollect(op, count)}
+                  title={`${OPERATIONS[op].labelKo} 모듈 ${count}장을 모듈함에 담습니다`}
+                  aria-label={`${OPERATIONS[op].labelKo} 모듈을 모듈함에 담기`}
+                >
+                  <PackagePlusIcon className="size-3.5" />
+                </Button>
                 <ModuleCopyButton op={op} tier={tier} />
               </div>
 
@@ -130,63 +151,3 @@ export function ModulePlan({ root, skin, tier, loads }: ModulePlanProps) {
   )
 }
 
-/**
- * One row's blueprint, made when it is asked for.
- *
- * Nothing is built on the way in. Six of the ten come back in a blink, and the
- * other four have their belts searched for and take up to a couple of seconds —
- * building all of them up front would cost several seconds of a frozen page for
- * modules the player may well not copy. The wait is only ever paid for the row
- * that was clicked, and the button says it is waiting.
- */
-function ModuleCopyButton({ op, tier }: { op: OperationId; tier: SpeedTier }) {
-  const [state, setState] = useState<'idle' | 'making' | 'copied' | 'failed'>('idle')
-
-  const copy = () => {
-    setState('making')
-    // let the button repaint before a search takes the thread
-    window.setTimeout(() => {
-      void makeModule(op, tier)
-        .then(async ({ code }) => {
-          if (!code) return setState('failed')
-          await navigator.clipboard.writeText(code)
-          setState('copied')
-          window.setTimeout(() => setState('idle'), 1600)
-        })
-        .catch(() => setState('failed'))
-    }, 50)
-  }
-
-  const label =
-    state === 'making'
-      ? '만드는 중'
-      : state === 'copied'
-        ? '복사됨'
-        : state === 'failed'
-          ? '실패'
-          : '청사진'
-
-  return (
-    <Button
-      size="sm"
-      variant={state === 'copied' ? 'secondary' : 'outline'}
-      className="h-7 gap-1.5 px-2 text-xs"
-      disabled={state === 'making'}
-      onClick={copy}
-      title={
-        SEARCHED_MODULES.has(op)
-          ? '벨트를 찾아 놓는 모듈이라 1~2초 걸립니다'
-          : '모듈 청사진을 클립보드에 복사합니다'
-      }
-    >
-      {state === 'making' ? (
-        <LoaderIcon className="size-3 animate-spin" />
-      ) : state === 'copied' ? (
-        <CheckIcon className="size-3" />
-      ) : (
-        <CopyIcon className="size-3" />
-      )}
-      {label}
-    </Button>
-  )
-}

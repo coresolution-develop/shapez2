@@ -7,6 +7,7 @@ import {
   readSearch,
   subscribeToBrowserState,
 } from '@/lib/external-store'
+import { formatBasket, parseBasket, type BasketEntry } from '@/lib/shapez/moduleBasket'
 import type { SpeedTier, StackerVariant } from '@/lib/shapez/throughput'
 import type { ScenarioKey } from '@/lib/shapez/progression'
 import type { ColorSkinId } from '@/lib/shapez/types'
@@ -25,7 +26,18 @@ export interface SessionState {
   /** 0 disables the progress limit entirely. */
   milestone: number
   sideUpgrades: string[]
+  /**
+   * The modules put aside to build, and how many of each.
+   *
+   * Kept here with everything else rather than in a store of its own, so that a
+   * half-planned factory is a link — bookmarked, sent to yourself, opened on the
+   * phone beside the game. A basket that only lived in the tab would be gone by
+   * the time it was any use.
+   */
+  basket: BasketEntry[]
 }
+
+
 
 export const DEFAULT_STATE: SessionState = {
   code: 'RbRbRbRb:CrCrCrCr',
@@ -36,6 +48,7 @@ export const DEFAULT_STATE: SessionState = {
   stackerVariant: 'straight',
   milestone: 0,
   sideUpgrades: [],
+  basket: [],
 }
 
 const KEYS = {
@@ -47,6 +60,7 @@ const KEYS = {
   stackerVariant: 'st',
   milestone: 'm',
   sideUpgrades: 'x',
+  basket: 'b',
 } as const
 
 function readParams(search: string): SessionState {
@@ -66,6 +80,7 @@ function readParams(search: string): SessionState {
     stackerVariant: (params.get(KEYS.stackerVariant) as StackerVariant) ?? DEFAULT_STATE.stackerVariant,
     milestone: Math.max(0, number(KEYS.milestone, DEFAULT_STATE.milestone)),
     sideUpgrades: params.get(KEYS.sideUpgrades)?.split(',').filter(Boolean) ?? [],
+    basket: parseBasket(params.get(KEYS.basket)),
   }
 }
 
@@ -83,6 +98,7 @@ function toSearch(state: SessionState): string {
   set(KEYS.stackerVariant, state.stackerVariant, DEFAULT_STATE.stackerVariant)
   set(KEYS.milestone, String(state.milestone), String(DEFAULT_STATE.milestone))
   set(KEYS.sideUpgrades, state.sideUpgrades.join(','), '')
+  set(KEYS.basket, formatBasket(state.basket), '')
 
   const query = params.toString()
   return query === '' ? '' : `?${query}`

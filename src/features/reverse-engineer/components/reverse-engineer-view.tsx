@@ -4,6 +4,7 @@ import { CheckIcon, LinkIcon, StarIcon, XIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { ShapeView } from '@/components/shape-view'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BlueprintViewer } from '@/features/blueprint/components/blueprint-viewer'
+import { ModuleBasket } from '@/features/modules/components/module-basket'
 import { ModuleCatalogue } from '@/features/modules/components/module-catalogue'
 import { ModulePlan } from '@/features/reverse-engineer/components/module-plan'
 import { BlueprintExport } from '@/features/reverse-engineer/components/blueprint-export'
@@ -35,6 +37,7 @@ import {
   unlocksFor,
 } from '@/lib/shapez/progression'
 import type { ScenarioKey } from '@/lib/shapez/progression'
+import { addToBasket, basketCost } from '@/lib/shapez/moduleBasket'
 import { parseShapeCode, parseShapeCodeForDisplay } from '@/lib/shapez/shapeCode'
 import { solveShape } from '@/lib/shapez/solver'
 import { isTradeShape } from '@/lib/shapez/trade'
@@ -48,7 +51,9 @@ const scenarioLabel = (key: ScenarioKey) =>
 
 export function ReverseEngineerView() {
   const { state, update, hydrated } = useSessionState()
-  const { code, scenario, skin, target, tier, stackerVariant, milestone, sideUpgrades } = state
+  const { code, scenario, skin, target, tier, stackerVariant, milestone, sideUpgrades, basket } =
+    state
+  const { platforms } = basketCost(basket, tier)
 
   const parsed = useMemo(() => parseShapeCode(code), [code])
   // gems and black-painted shapes have no plan, but they can still be drawn
@@ -244,6 +249,14 @@ export function ReverseEngineerView() {
           <TabsTrigger value="plan">가공 순서</TabsTrigger>
           <TabsTrigger value="presets">게임 내 도형 찾기</TabsTrigger>
           <TabsTrigger value="modules">작업 모듈</TabsTrigger>
+          <TabsTrigger value="basket" className="gap-1.5">
+            내 모듈함
+            {platforms > 0 ? (
+              <Badge variant="secondary" className="h-4 px-1 text-[10px] tabular-nums">
+                {platforms}
+              </Badge>
+            ) : null}
+          </TabsTrigger>
           <TabsTrigger value="blueprint">청사진 뷰어</TabsTrigger>
         </TabsList>
 
@@ -286,6 +299,13 @@ export function ReverseEngineerView() {
                   skin={skin}
                   tier={tier}
                   loads={throughput.loads}
+                  onCollect={(op, count) => update('basket', addToBasket(basket, op, count))}
+                  onCollectAll={(wanted) =>
+                    update(
+                      'basket',
+                      wanted.reduce((held, one) => addToBasket(held, one.op, one.count), basket),
+                    )
+                  }
                 />
               ) : null}
               <BlueprintExport root={solution.root} shapeCode={code} />
@@ -311,7 +331,19 @@ export function ReverseEngineerView() {
         </TabsContent>
 
         <TabsContent value="modules" className="mt-4">
-          <ModuleCatalogue tier={tier} skin={skin} />
+          <ModuleCatalogue
+            tier={tier}
+            skin={skin}
+            onCollect={(op) => update('basket', addToBasket(basket, op))}
+          />
+        </TabsContent>
+
+        <TabsContent value="basket" className="mt-4">
+          <ModuleBasket
+            basket={basket}
+            tier={tier}
+            onChange={(next) => update('basket', next)}
+          />
         </TabsContent>
 
         <TabsContent value="blueprint" className="mt-4">

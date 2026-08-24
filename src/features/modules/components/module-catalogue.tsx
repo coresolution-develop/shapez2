@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRightIcon, CheckIcon, CopyIcon } from 'lucide-react'
+import { ArrowRightIcon, CheckIcon, CopyIcon, PackagePlusIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { ShapeView } from '@/components/shape-view'
@@ -17,6 +17,7 @@ import type { ColorSkinId } from '@/lib/shapez/types'
 interface ModuleCatalogueProps {
   tier: SpeedTier
   skin: ColorSkinId
+  onCollect: (op: OperationId) => void
 }
 
 interface Made {
@@ -28,7 +29,7 @@ interface Made {
   shape: 'comb' | 'ladder' | null
 }
 
-export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
+export function ModuleCatalogue({ tier, skin, onCollect }: ModuleCatalogueProps) {
   const [made, setMade] = useState<Map<OperationId, Made> | null>(null)
   const [copied, setCopied] = useState<OperationId | null>(null)
   const [building, setBuilding] = useState<OperationId | null>(null)
@@ -194,24 +195,35 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
                       </p>
                     ))}
 
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        void navigator.clipboard
-                          .writeText(state.code!)
-                          .then(() => setCopied(entry.op))
-                          .catch(() => setCopied(null))
-                      }}
-                    >
-                      {copied === entry.op ? (
-                        <CheckIcon className="size-3.5" />
-                      ) : (
-                        <CopyIcon className="size-3.5" />
-                      )}
-                      {copied === entry.op ? '복사됨' : '모듈 복사'}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          void navigator.clipboard
+                            .writeText(state.code!)
+                            .then(() => setCopied(entry.op))
+                            .catch(() => setCopied(null))
+                        }}
+                      >
+                        {copied === entry.op ? (
+                          <CheckIcon className="size-3.5" />
+                        ) : (
+                          <CopyIcon className="size-3.5" />
+                        )}
+                        {copied === entry.op ? '복사됨' : '모듈 복사'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => onCollect(entry.op)}
+                        title={`${OPERATIONS[entry.op].labelKo} 모듈을 모듈함에 담습니다`}
+                      >
+                        <PackagePlusIcon className="size-3.5" />
+                        담기
+                      </Button>
+                    </div>
                   </>
                 ) : SEARCHED_MODULES.has(entry.op) && !state?.reason ? (
                   <>
