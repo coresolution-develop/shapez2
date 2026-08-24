@@ -244,6 +244,17 @@ export const CONFIRMED_PORTS: Record<string, ConfirmedPorts> = {
     fixture: 'carrier rig',
     note: 'Straight through on +X until that backs up, then out the side.',
   },
+  TrashDefaultInternalVariant: {
+    inputs: [
+      [-1, 0, 0],
+      [1, 0, 0],
+    ],
+    outputs: [],
+    samples: 2,
+    source: 'fixture',
+    fixture: 'carrier rig',
+    note: 'Takes shapes and keeps them. The only entry here with a port on both sides: the rig fed one from -X and two from +X, so it plainly does not follow the -X in, +X out convention everything else does. Both observed faces are recorded and no more — it may well accept from all four, but only these two were seen.',
+  },
   Lift1DownLeftInternalVariant: {
     inputs: [[-1, 0, 0]],
     outputs: [[0, -1, -1]],

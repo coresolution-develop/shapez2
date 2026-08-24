@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { buildingNameKo, PART_NAMES_KO } from '@/lib/shapez/namesKo'
-import { generateModule } from '@/lib/shapez/module'
-import type { ModuleResult } from '@/lib/shapez/module'
+import { generateShapeModule } from '@/lib/shapez/shapeModule'
+import type { ShapeModuleResult } from '@/lib/shapez/shapeModule'
 import type { BuildNode } from '@/lib/shapez/plan'
 
 interface BlueprintExportProps {
@@ -25,14 +25,17 @@ interface BlueprintExportProps {
  * extractors, which only go on resource patches, and the paint pipes.
  */
 export function BlueprintExport({ root, shapeCode }: BlueprintExportProps) {
-  const [result, setResult] = useState<ModuleResult | null>(null)
+  const [result, setResult] = useState<ShapeModuleResult | null>(null)
+  const [code, setCode] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     let cancelled = false
-    generateModule(root, shapeCode)
-      .then((value) => {
-        if (!cancelled) setResult(value)
+    generateShapeModule(root, shapeCode)
+      .then(({ layout, code: made }) => {
+        if (cancelled) return
+        setResult(layout)
+        setCode(made)
       })
       .catch(() => {
         if (!cancelled) setResult({ ok: false, reason: '청사진을 만들지 못했습니다' })
@@ -56,9 +59,8 @@ export function BlueprintExport({ root, shapeCode }: BlueprintExportProps) {
         <h3 className="text-sm font-medium">모듈 청사진</h3>
         <p className="text-sm text-muted-foreground">{result.reason}</p>
         <p className="text-xs text-muted-foreground">
-          아직 입출력 위치를 재지 못한 기계가 있습니다 — 절반 파괴기·핀 누름기·교환기·굽은 결합기·
-          반시계 회전기·180° 회전기. 청사진 뷰어의 「건물 포트 분석」으로 재서 보내주시면 바로
-          넣겠습니다.
+          이 계획은 아직 한 판에 담지 못했습니다. 「작업 모듈」 탭의 모듈들을 이어 붙이면 만들 수
+          있고, 그 순서는 위쪽 「모듈 배치도」에 있습니다.
         </p>
       </section>
     )
@@ -77,8 +79,8 @@ export function BlueprintExport({ root, shapeCode }: BlueprintExportProps) {
           <h3 className="text-sm font-medium">
             모듈 청사진
             <span className="ml-2 text-xs font-normal text-muted-foreground">
-              건물 {result.placements.length}개 · 가로 {result.size.width}칸 · 기계 층{' '}
-              {result.size.floors}개
+              건물 {result.placements.length}개 · 기계 {result.machines}대 · 가로{' '}
+              {result.size.width}칸 · 세로 {result.size.height}칸
             </span>
           </h3>
           <p className="text-xs text-muted-foreground">
@@ -91,7 +93,7 @@ export function BlueprintExport({ root, shapeCode }: BlueprintExportProps) {
           size="sm"
           onClick={() => {
             void navigator.clipboard
-              .writeText(result.code)
+              .writeText(code ?? '')
               .then(() => setCopied(true))
               .catch(() => setCopied(false))
           }}
@@ -107,14 +109,14 @@ export function BlueprintExport({ root, shapeCode }: BlueprintExportProps) {
           {result.inputs.map((input, index) => (
             <li key={index}>
               <Badge variant="outline">
-                {input.at.z + 1}층 — {PART_NAMES_KO[input.part] ?? input.part}
+                {PART_NAMES_KO[input.part] ?? input.part}
               </Badge>
             </li>
           ))}
         </ul>
         <p className="text-xs text-muted-foreground">
-          층마다 맨 왼쪽 벨트가 입구입니다. 완성된 도형은 {result.output.z + 1}층 맨 오른쪽으로
-          나옵니다.
+          왼쪽 가장자리 벨트가 입구입니다 — 위에서부터 순서대로 위 목록의 자원을 넣으세요. 완성된
+          도형은 맨 오른쪽으로 나옵니다.
         </p>
         <p className="text-xs text-muted-foreground">
           기계는 단계마다 1대씩입니다. 위 「필요 건물」만큼 <strong className="font-medium text-foreground">이 모듈을 여러 개</strong> 붙여넣어 처리량을 맞추세요.

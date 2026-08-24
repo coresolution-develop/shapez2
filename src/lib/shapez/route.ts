@@ -629,15 +629,20 @@ export function wiringProblems(placements: BuildingPlacement[]): string[] {
       continue
     }
 
-    for (const port of ports.inputs) {
-      const [dx, dy, dz] = toWorld(port, placement.rotation ?? 0)
-      const behind = at.get(
-        Occupancy.key((placement.x ?? 0) + dx, (placement.y ?? 0) + dy, (placement.layer ?? 0) + dz),
-      )
-      // open to the outside is fine: that is where the player feeds it
-      if (!behind || behind === placement) continue
-      if (!lands(behind, placement)) {
-        problems.push(`${where(placement)} 뒤의 ${behind.type}가 아무것도 내보내지 않습니다`)
+    // a sink takes from any side and sends nothing on, so a belt running past
+    // one is not a broken line the way a belt behind a machine would be
+    const isSink = ports.outputs.length === 0 && ports.inputs.length > 1
+    if (!isSink) {
+      for (const port of ports.inputs) {
+        const [dx, dy, dz] = toWorld(port, placement.rotation ?? 0)
+        const behind = at.get(
+          Occupancy.key((placement.x ?? 0) + dx, (placement.y ?? 0) + dy, (placement.layer ?? 0) + dz),
+        )
+        // open to the outside is fine: that is where the player feeds it
+        if (!behind || behind === placement) continue
+        if (!lands(behind, placement)) {
+          problems.push(`${where(placement)} 뒤의 ${behind.type}가 아무것도 내보내지 않습니다`)
+        }
       }
     }
 

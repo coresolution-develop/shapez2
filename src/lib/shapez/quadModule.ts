@@ -55,7 +55,6 @@ import {
 import { Occupancy, routeAll, type Bounds, type Endpoint, type Facing, type Net } from './route'
 
 const DOWNSTREAM: Facing = 3
-const OUTWARD: Facing = 2
 /** Back out the way the shapes came in — the intake edge has spare places. */
 const BACKWARD: Facing = 1
 

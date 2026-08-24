@@ -55,8 +55,17 @@ describe('confirmed port data', () => {
     }
   })
 
-  it('follows the -X in, +X out convention', () => {
+  it('follows the -X in, +X out convention, bar the one that cannot', () => {
+    // a trash has nowhere to send anything, so "downstream" means nothing to
+    // it and it takes from more than one side. It is the only entry like that,
+    // and naming it here keeps the convention meaningful for the rest
+    const SINKS = ['TrashDefaultInternalVariant']
+
     for (const [type, ports] of Object.entries(CONFIRMED_PORTS)) {
+      if (SINKS.includes(type)) {
+        expect(ports.outputs, `${type} should send nothing on`).toEqual([])
+        continue
+      }
       for (const [x] of ports.inputs) {
         expect(x, `${type} input on +X`).toBeLessThanOrEqual(0)
       }
