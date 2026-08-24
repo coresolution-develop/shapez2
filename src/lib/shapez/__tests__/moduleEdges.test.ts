@@ -8,7 +8,14 @@ import {
   layoutLaneModule,
   platformFor,
 } from '../module'
-import { MODULE_WIRING, moduleCapacity, modulesNeeded, type ModuleEdge } from '../moduleEdges'
+import {
+  MODULE_WIRING,
+  SEARCHED_MODULES,
+  makeModule,
+  moduleCapacity,
+  modulesNeeded,
+  type ModuleEdge,
+} from '../moduleEdges'
 import { OPERATION_IDS, type OperationId } from '../operations'
 import { layoutStackerModule } from '../stackerModule'
 import { layoutSwapperModule } from '../swapperModule'
@@ -125,4 +132,19 @@ describe('what each module edge carries', () => {
     expect(modulesNeeded(1440, 100)).toBe(1)
     expect(modulesNeeded(1441, 100)).toBe(2)
   })
+})
+
+describe('the sizes promised for the searched modules', () => {
+  /**
+   * The catalogue prints these on the card before the button is pressed, so a
+   * player decides whether to wait on the strength of them. If a generator
+   * changes shape the promise goes stale silently, which is exactly the sort of
+   * thing worth failing a build over.
+   */
+  it.each([...SEARCHED_MODULES])('holds for %s', async (op, promised) => {
+    const made = await makeModule(op, 100)
+    expect(made.reason).toBeNull()
+    expect(made.machines).toBe(promised.machines)
+    expect(promised.perLane * MODULE_LANES).toBe(promised.machines)
+  }, 20_000)
 })

@@ -9,9 +9,13 @@
  * matter of taste, so they are written here once and checked against the real
  * layouts by `moduleEdges.test.ts` rather than trusted.
  */
+import { generateCrystalModule } from './crystalModule'
+import { generateCutterModule } from './cutterModule'
+import { MODULE_LANES, generateLaneModule } from './module'
 import { OPERATIONS, type OperationId } from './operations'
-import { MODULE_LANES } from './module'
-import { beltThroughput, type SpeedTier } from './throughput'
+import { generateStackerModule } from './stackerModule'
+import { generateSwapperModule } from './swapperModule'
+import { OPERATION_SPECS, beltThroughput, ratedThroughput, type SpeedTier } from './throughput'
 
 /** A module's four sides, named as the player sees them on the platform. */
 export type ModuleEdge = 'intake' | 'outlet' | 'left' | 'right'
@@ -106,4 +110,64 @@ export function sideNote(op: OperationId): string | null {
   if (extraIn) parts.push(`${EDGE_NAMES_KO[extraIn.edge]} 가장자리로 ${extraIn.carries}을 넣고`)
   if (extraOut) parts.push(`${EDGE_NAMES_KO[extraOut.edge]} 가장자리로 ${extraOut.carries}이 나옵니다`)
   return `${OPERATIONS[op].labelKo} 모듈은 ${parts.join(', ')}`
+}
+
+/**
+ * Making the module for an operation, whichever generator that takes.
+ *
+ * Four of them have their belts searched for rather than written down, which
+ * takes anything from a quarter of a second to a couple, and the other six come
+ * back at once. Anything showing modules to a person needs to know which is
+ * which, so it asks before making the slow ones instead of stopping the page —
+ * and can say how big one will be before it is asked for, which is what the two
+ * numbers here are for. `moduleEdges.test.ts` checks them against the real
+ * layouts, since a promised size that turns out wrong is worse than no promise.
+ */
+export const SEARCHED_MODULES = new Map<OperationId, { perLane: number; machines: number }>([
+  ['stack', { perLane: 6, machines: 72 }],
+  ['cut', { perLane: 4, machines: 48 }],
+  ['swap', { perLane: 4, machines: 48 }],
+  ['crystal', { perLane: 6, machines: 72 }],
+])
+
+export interface MadeModule {
+  code: string | null
+  reason: string | null
+  warnings: string[]
+  machines: number
+}
+
+export async function makeModule(
+  op: OperationId,
+  tier: SpeedTier,
+  icon?: string,
+): Promise<MadeModule> {
+  const wrap = (
+    layout: { ok: true; machines: number; warnings: string[] } | { ok: false; reason: string },
+    code: string | null,
+  ): MadeModule =>
+    layout.ok
+      ? { code, reason: null, warnings: layout.warnings, machines: layout.machines }
+      : { code: null, reason: layout.reason, warnings: [], machines: 0 }
+
+  if (op === 'stack') {
+    const { layout, code } = await generateStackerModule(icon)
+    return wrap(layout, code)
+  }
+  if (op === 'cut') {
+    const { layout, code } = await generateCutterModule(icon)
+    return wrap(layout, code)
+  }
+  if (op === 'swap') {
+    const { layout, code } = await generateSwapperModule(icon)
+    return wrap(layout, code)
+  }
+  if (op === 'crystal') {
+    const { layout, code } = await generateCrystalModule(icon)
+    return wrap(layout, code)
+  }
+
+  const perLane = Math.ceil(beltThroughput(tier) / ratedThroughput(OPERATION_SPECS[op], tier))
+  const { layout, code } = await generateLaneModule(op, perLane, icon)
+  return wrap(layout, code)
 }

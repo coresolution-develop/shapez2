@@ -7,10 +7,7 @@ import { ShapeView } from '@/components/shape-view'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { generateLaneModule, moduleSizing, MODULE_LANES } from '@/lib/shapez/module'
-import { generateCrystalModule } from '@/lib/shapez/crystalModule'
-import { generateCutterModule } from '@/lib/shapez/cutterModule'
-import { generateStackerModule } from '@/lib/shapez/stackerModule'
-import { generateSwapperModule } from '@/lib/shapez/swapperModule'
+import { SEARCHED_MODULES, makeModule } from '@/lib/shapez/moduleEdges'
 import { MODULE_CATALOGUE, catalogueDemo } from '@/lib/shapez/moduleCatalogue'
 import { OPERATIONS, type OperationId } from '@/lib/shapez/operations'
 import { OPERATION_SPECS, beltThroughput, ratedThroughput } from '@/lib/shapez/throughput'
@@ -21,23 +18,6 @@ interface ModuleCatalogueProps {
   tier: SpeedTier
   skin: ColorSkinId
 }
-
-/**
- * Modules whose belts are found by the router rather than written down.
- *
- * Each takes a moment to work out, so they are built when asked for rather than
- * on the way into the tab — a second of held-up main thread is a second the
- * page cannot repaint in.
- */
-const SEARCHED = new Map<
-  OperationId,
-  { perLane: number; machines: number; make: () => ReturnType<typeof generateStackerModule> }
->([
-  ['stack', { perLane: 6, machines: 72, make: generateStackerModule }],
-  ['cut', { perLane: 4, machines: 48, make: generateCutterModule }],
-  ['swap', { perLane: 4, machines: 48, make: generateSwapperModule }],
-  ['crystal', { perLane: 6, machines: 72, make: generateCrystalModule }],
-])
 
 interface Made {
   code: string | null
@@ -59,19 +39,11 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
     setBuilding(op)
     // let the button repaint before the search takes the thread
     window.setTimeout(() => {
-      const { perLane, machines, make } = SEARCHED.get(op)!
-      const making = make()
-      void making
-        .then(({ layout, code }) =>
+      const { perLane, machines } = SEARCHED_MODULES.get(op)!
+      void makeModule(op, tier)
+        .then((result) =>
           setSearched((was) =>
-            new Map(was).set(op, {
-              perLane,
-              machines,
-              code,
-              reason: layout.ok ? null : layout.reason,
-              warnings: layout.ok ? layout.warnings : [],
-              shape: null,
-            }),
+            new Map(was).set(op, { ...result, perLane, machines, shape: null }),
           ),
         )
         .catch(() =>
@@ -100,9 +72,9 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
 
     Promise.all(
       MODULE_CATALOGUE.map(async (entry): Promise<[OperationId, Made]> => {
-        if (SEARCHED.has(entry.op)) {
+        if (SEARCHED_MODULES.has(entry.op)) {
           // these have their belts searched for, so they wait to be asked
-          const { perLane, machines } = SEARCHED.get(entry.op)!
+          const { perLane, machines } = SEARCHED_MODULES.get(entry.op)!
           return [entry.op, { perLane, machines, code: null, reason: null, warnings: [], shape: null }]
         }
         const sizing = moduleSizing(
@@ -241,7 +213,7 @@ export function ModuleCatalogue({ tier, skin }: ModuleCatalogueProps) {
                       {copied === entry.op ? '복사됨' : '모듈 복사'}
                     </Button>
                   </>
-                ) : SEARCHED.has(entry.op) && !state?.reason ? (
+                ) : SEARCHED_MODULES.has(entry.op) && !state?.reason ? (
                   <>
                     <p className="text-xs text-muted-foreground">
                       {OPERATIONS[entry.op].labelKo} {state?.machines}대짜리 모듈입니다. 배선을

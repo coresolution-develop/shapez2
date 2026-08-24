@@ -1,9 +1,20 @@
-import { ArrowDownIcon } from 'lucide-react'
+'use client'
+
+import { ArrowDownIcon, CheckIcon, CopyIcon, LoaderIcon } from 'lucide-react'
+import { useState } from 'react'
 
 import { ShapeView } from '@/components/shape-view'
 import { Badge } from '@/components/ui/badge'
-import { EDGE_NAMES_KO, MODULE_WIRING, moduleCapacity, modulesNeeded } from '@/lib/shapez/moduleEdges'
-import { OPERATIONS } from '@/lib/shapez/operations'
+import { Button } from '@/components/ui/button'
+import {
+  EDGE_NAMES_KO,
+  MODULE_WIRING,
+  SEARCHED_MODULES,
+  makeModule,
+  moduleCapacity,
+  modulesNeeded,
+} from '@/lib/shapez/moduleEdges'
+import { OPERATIONS, type OperationId } from '@/lib/shapez/operations'
 import { orderedSteps } from '@/lib/shapez/plan'
 import type { BuildNode } from '@/lib/shapez/plan'
 import { PART_NAMES_KO } from '@/lib/shapez/namesKo'
@@ -26,6 +37,10 @@ interface ModulePlanProps {
  * — the module for each operation, the edge each of its belts meets the world
  * on, and how much one gets through — so this puts it in one place, in the
  * order a factory gets built in.
+ *
+ * Each row also hands over its blueprint, which is the whole point of reading a
+ * build order: the alternative was to note the module's name, cross to another
+ * tab, find it among ten, and copy it there, once per step.
  */
 export function ModulePlan({ root, skin, tier, loads }: ModulePlanProps) {
   const steps = orderedSteps(root).filter((node) => node.op !== null)
@@ -81,6 +96,7 @@ export function ModulePlan({ root, skin, tier, loads }: ModulePlanProps) {
                 <span className="ml-auto text-xs text-muted-foreground tabular-nums">
                   {Math.round(load?.opRate ?? 0)}/분
                 </span>
+                <ModuleCopyButton op={op} tier={tier} />
               </div>
 
               <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
@@ -111,5 +127,66 @@ export function ModulePlan({ root, skin, tier, loads }: ModulePlanProps) {
         마지막 모듈의 아래쪽 가장자리에서 완성된 도형이 나옵니다.
       </div>
     </section>
+  )
+}
+
+/**
+ * One row's blueprint, made when it is asked for.
+ *
+ * Nothing is built on the way in. Six of the ten come back in a blink, and the
+ * other four have their belts searched for and take up to a couple of seconds —
+ * building all of them up front would cost several seconds of a frozen page for
+ * modules the player may well not copy. The wait is only ever paid for the row
+ * that was clicked, and the button says it is waiting.
+ */
+function ModuleCopyButton({ op, tier }: { op: OperationId; tier: SpeedTier }) {
+  const [state, setState] = useState<'idle' | 'making' | 'copied' | 'failed'>('idle')
+
+  const copy = () => {
+    setState('making')
+    // let the button repaint before a search takes the thread
+    window.setTimeout(() => {
+      void makeModule(op, tier)
+        .then(async ({ code }) => {
+          if (!code) return setState('failed')
+          await navigator.clipboard.writeText(code)
+          setState('copied')
+          window.setTimeout(() => setState('idle'), 1600)
+        })
+        .catch(() => setState('failed'))
+    }, 50)
+  }
+
+  const label =
+    state === 'making'
+      ? '만드는 중'
+      : state === 'copied'
+        ? '복사됨'
+        : state === 'failed'
+          ? '실패'
+          : '청사진'
+
+  return (
+    <Button
+      size="sm"
+      variant={state === 'copied' ? 'secondary' : 'outline'}
+      className="h-7 gap-1.5 px-2 text-xs"
+      disabled={state === 'making'}
+      onClick={copy}
+      title={
+        SEARCHED_MODULES.has(op)
+          ? '벨트를 찾아 놓는 모듈이라 1~2초 걸립니다'
+          : '모듈 청사진을 클립보드에 복사합니다'
+      }
+    >
+      {state === 'making' ? (
+        <LoaderIcon className="size-3 animate-spin" />
+      ) : state === 'copied' ? (
+        <CheckIcon className="size-3" />
+      ) : (
+        <CopyIcon className="size-3" />
+      )}
+      {label}
+    </Button>
   )
 }
