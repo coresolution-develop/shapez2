@@ -13,6 +13,20 @@
  * two places, and every belt between them is found rather than composed. What
  * that buys, measured over the game's own shapes, is in `shapeModule.test.ts`.
  *
+ * Three things had to be got right before any of that was worth having, and
+ * two of them produced blueprints that looked perfect:
+ *
+ *   - The router lays no piece on the tile it is aiming for, because everywhere
+ *     else it is used that tile already holds the comb it delivers into. Aiming
+ *     at a machine's port — an empty tile — left every machine in the plan fed
+ *     by a gap. It now aims at the machine's own tile, so the last belt lands on
+ *     the port. A test counts the bare ports rather than trusting this.
+ *   - A tap is only an endpoint until the router reaches it, so a splitter or a
+ *     trash placed afterwards could take the tile a belt was going to start on.
+ *     A cutter fanning out both halves does this to itself. Endpoints are held.
+ *   - Which way a shape crosses a port is read off the port, not assumed to be
+ *     +X. The stacker's second input is a floor up and needs it.
+ *
  * One thing here is still a guess and says so: which of a cutter's two outputs
  * carries which half has never been measured, so a shape whose plan uses both
  * halves may come out with them the wrong way round. The module warns, and
@@ -144,10 +158,34 @@ function portAt(
   return { x: placement.x + dx, y: placement.y + dy, z: placement.z + dz }
 }
 
+/**
+ * Which way a shape crosses a port, and which of the building's own tiles it
+ * crosses into.
+ *
+ * A port sits on an empty tile touching the building, so it names a face: an
+ * input at (-1,0,0) is the −X face, and a shape reaches it travelling +X. That
+ * one step is the whole of it, and taking it from the measurement rather than
+ * assuming +X is what lets a port on any other face work — the stacker's second
+ * input, a floor up, is the one that already needs it.
+ */
+function crossing(port: readonly [number, number, number], rotation: number) {
+  const [dx, dy, dz] = toWorld(port, rotation)
+  const step = (n: number) => (n > 0 ? -1 : n < 0 ? 1 : 0)
+  return {
+    /** Travelling this way carries a shape from the port into the building. */
+    inward: (dx !== 0 ? (dx > 0 ? 2 : 0) : dy > 0 ? 3 : 1) as Facing,
+    /** And this way carries it out. */
+    outward: (dx !== 0 ? (dx > 0 ? 0 : 2) : dy > 0 ? 1 : 3) as Facing,
+    /** The building's own tile behind the port, which is where a feed heads. */
+    behind: { x: dx + step(dx), y: dy + step(dy), z: dz },
+  }
+}
+
 export function layoutShapeModule(
   root: BuildNode,
   columnPitch = COLUMN_PITCH,
   rowPitch = ROW_PITCH,
+  tune: { memory?: number; crowd?: number; rounds?: number } = {},
 ): ShapeModuleResult {
   const { machines, sourceOf } = collectMachines(root)
   if (machines.length === 0) {
@@ -200,7 +238,27 @@ export function layoutShapeModule(
 
   const occupancy = new Occupancy(bounds)
   const placements: BuildingPlacement[] = []
+
+  /**
+   * Tiles a belt is going to start on, held against everything placed after.
+   *
+   * A tap is only an endpoint until the router reaches it, so nothing stops a
+   * later splitter or trash from being put there — and then the belt has
+   * nowhere to begin and the whole plan fails for want of one tile. A cutter
+   * with both halves fanned out does exactly this to itself: the second half's
+   * splitter wants the tile the first half's splitter sends its copy to.
+   */
+  const spokenFor = new Set<string>()
+  const vacant = (x: number, y: number, z: number) =>
+    occupancy.free(x, y, z) && !spokenFor.has(`${x},${y},${z}`)
+  const reserve = (end: { x: number; y: number; z: number }) =>
+    spokenFor.add(`${end.x},${end.y},${end.z}`)
+
   const put = (placement: BuildingPlacement, what: string): string | null => {
+    for (const [dx, dy, dz] of tilesOf(placement.type, placement.rotation ?? 0)) {
+      const key = `${(placement.x ?? 0) + dx},${(placement.y ?? 0) + dy},${(placement.layer ?? 0) + dz}`
+      if (spokenFor.has(key)) return `${what}이(가) 벨트 자리와 겹칩니다: ${key}`
+    }
     const clash = occupancy.claim(placement)
     if (clash) return `${what}이(가) 겹칩니다: ${clash}`
     placements.push(placement)
@@ -254,13 +312,14 @@ export function layoutShapeModule(
     }
 
     for (const [port, node] of machine.outputs) {
-      const at = portAt(
-        { x: machine.x, y: machine.y, z: 0, type: machine.type, rotation: FLOW },
-        ports.outputs[Math.min(port, ports.outputs.length - 1)],
-      )
+      const leaving = ports.outputs[Math.min(port, ports.outputs.length - 1)]
+      const stand = { x: machine.x, y: machine.y, z: 0, type: machine.type, rotation: FLOW }
+      const at = portAt(stand, leaving)
+      const away = crossing(leaving, FLOW).outward
       const needed = wanted.get(node.id) ?? 0
       if (needed <= 1) {
-        taps.set(node.id, [{ ...at, facing: FLOW }])
+        reserve(at)
+        taps.set(node.id, [{ ...at, facing: away }])
         continue
       }
       if (needed > MAX_FANOUT) {
@@ -271,20 +330,60 @@ export function layoutShapeModule(
         }
       }
 
-      // a shape wanted in two places gets a splitter on the tile the machine
-      // delivers into, so the machine feeds it with no belt between
+      // A shape wanted in two places gets splitters, ideally standing on the
+      // tile the machine delivers into so it is fed with no belt between. That
+      // is not always allowed: the splitter's second way out is the tile beside
+      // it, and on a cutter whose other half is being thrown away that tile is
+      // the trash. So the chain starts at the first run of columns where every
+      // splitter has somewhere to send both halves, and the machine reaches it
+      // by belt like anything else.
+      const SPLITTER = 'Splitter1To2LInternalVariant'
+      const splitter = portsFor(SPLITTER)!
+      const side = crossing(splitter.outputs[0], FLOW)
+      const ahead = crossing(splitter.outputs[1], FLOW)
+      /** Room for the whole chain: every splitter, and both ways out of each. */
+      const room = (x: number) => {
+        for (let k = 0; k < needed - 1; k++) {
+          const stands = { x: x + k, y: at.y, z: at.z, type: SPLITTER, rotation: FLOW }
+          const out = portAt(stands, splitter.outputs[0])
+          if (!vacant(stands.x, stands.y, stands.z)) return false
+          if (!vacant(out.x, out.y, out.z)) return false
+        }
+        return vacant(x + needed - 1, at.y, at.z)
+      }
+
+      let start = at.x
+      while (start < at.x + columnPitch && !room(start)) start++
+      if (!room(start)) {
+        return {
+          ok: false,
+          reason: `${OPERATIONS[machine.op].labelKo} 뒤에 분배기를 놓을 자리가 없습니다`,
+          blockedBy: machine.op,
+        }
+      }
+
       const ends: Endpoint[] = []
-      let head = at
+      let head = { x: start, y: at.y, z: at.z }
       for (let made = 0; made < needed - 1; made++) {
         const clash = put(
-          { type: 'Splitter1To2LInternalVariant', x: head.x, y: head.y, layer: head.z, rotation: FLOW },
+          { type: SPLITTER, x: head.x, y: head.y, layer: head.z, rotation: FLOW },
           '분배기',
         )
         if (clash) return { ok: false, reason: clash }
-        ends.push({ x: head.x, y: head.y - 1, z: head.z, facing: 3 })
+        const out = portAt({ ...head, type: SPLITTER, rotation: FLOW }, splitter.outputs[0])
+        ends.push({ ...out, facing: side.outward })
         head = { x: head.x + 1, y: head.y, z: head.z }
       }
-      ends.push({ ...head, facing: FLOW })
+      ends.push({ ...head, facing: ahead.outward })
+      for (const end of ends) reserve(end)
+      if (start > at.x) {
+        // the machine now has to reach its own splitter
+        nets.push({
+          from: { ...at, facing: away },
+          to: { x: start, y: at.y, z: at.z, facing: FLOW },
+          label: `${OPERATIONS[machine.op].labelKo} 나눔`,
+        })
+      }
       taps.set(node.id, ends)
     }
   }
@@ -293,11 +392,18 @@ export function layoutShapeModule(
     const ports = portsFor(machine.type)!
     for (const [slot, input] of machine.inputs.entries()) {
       const port = ports.inputs[Math.min(slot, ports.inputs.length - 1)]
-      const to = portAt(
-        { x: machine.x, y: machine.y, z: 0, type: machine.type, rotation: FLOW },
-        port,
-      )
-      const arrive: Endpoint = { x: to.x, y: to.y, z: to.z, facing: FLOW }
+      const cross = crossing(port, FLOW)
+      // aimed at the machine's own tile, not at the port in front of it. The
+      // router lays no piece on the tile it is aiming for — everywhere else
+      // that tile already holds the comb it delivers into — so aiming at the
+      // port left the port bare and the last belt one tile short of the
+      // machine, which is a blueprint that looks joined up and is not
+      const arrive: Endpoint = {
+        x: machine.x + cross.behind.x,
+        y: machine.y + cross.behind.y,
+        z: cross.behind.z,
+        facing: cross.inward,
+      }
 
       if (input.op === null) {
         // the player feeds this one, so it needs a head of its own at the left
@@ -321,10 +427,23 @@ export function layoutShapeModule(
   if (!last) return { ok: false, reason: '마지막 단계를 찾지 못했습니다' }
   const finishedAt = taps.get(root.id)?.shift()
   if (!finishedAt) return { ok: false, reason: '완성된 도형의 출구를 찾지 못했습니다' }
+  // the way out gets a belt of its own for the same reason a machine's input
+  // does: the router aims at a tile and does not build on it
   const exit: Endpoint = { x: bounds.maxX, y: finishedAt.y, z: finishedAt.z, facing: FLOW }
+  const blockedExit = put(
+    { type: 'BeltDefaultForwardInternalVariant', x: exit.x, y: exit.y, layer: exit.z, rotation: FLOW },
+    '출구',
+  )
+  if (blockedExit) return { ok: false, reason: blockedExit }
   nets.push({ from: finishedAt, to: exit, label: '완성된 도형' })
 
-  const wiring = routeAll(occupancy, nets, { rounds: 200 })
+  // Two hundred rather than the four hundred the other modules negotiate over,
+  // because it was measured and more does not help: of the plans that still
+  // fail, not one is rescued by four hundred rounds, by twelve hundred, or by
+  // any weighting of the two costs. That is what says they are not crowded but
+  // genuinely stuck — two streams wanting one tile with nowhere else to go —
+  // and rounds nobody is rescued by are only rounds spent failing slowly.
+  const wiring = routeAll(occupancy, nets, { rounds: 200, ...tune })
   if ('stuck' in wiring) {
     return { ok: false, reason: `${wiring.stuck.slice(0, 2).join(', ')}를 잇지 못했습니다` }
   }
