@@ -1108,7 +1108,11 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
     warnings.push(`${label}가 넓어서 레인 옆으로 눕혀 세로로 늘어놓았습니다.`)
   }
   if (ports.fluidUnknown) {
-    warnings.push('물감은 직접 연결하세요 — 기계 사이를 한 칸씩 띄워 뒀습니다.')
+    warnings.push(
+      op === 'crystal'
+        ? '물감은 직접 연결하세요 — 생성기마다 왼쪽 위 칸이 파이프 자리입니다(측정값).'
+        : '물감은 직접 연결하세요 — 색칠기의 파이프 면은 아직 못 쟀습니다. 같은 모양인 결정체 생성기는 왼쪽 위 칸을 씁니다.',
+    )
   }
 
   return {

@@ -52,6 +52,11 @@ describe('confirmed port data', () => {
         asKeys(expected.outputs),
       )
       expect(actual!.instances, `${type} samples`).toBe(expected.samples)
+      // pipe faces are recorded now too, and drift the same way belt ports do
+      expect(
+        actual!.fluid.map((port) => port.offset).length ? asKeys(actual!.fluid.map((p) => p.offset)) : [],
+        `${type} fluid`,
+      ).toEqual(asKeys(expected.fluid ?? []))
     }
   })
 
@@ -82,7 +87,11 @@ describe('confirmed port data', () => {
       const floor = ports.fixture ? 1 : 2
       expect(ports.samples, `${type} samples`).toBeGreaterThanOrEqual(floor)
       expect(['fixture', 'player-report'], `${type} source`).toContain(ports.source)
-      expect(ports.inputs.length + ports.outputs.length, `${type} has no ports`).toBeGreaterThan(0)
+      // a fluid port counts: the paint intake carries no belts at all
+      expect(
+        ports.inputs.length + ports.outputs.length + (ports.fluid?.length ?? 0),
+        `${type} has no ports`,
+      ).toBeGreaterThan(0)
     }
   })
 
@@ -116,16 +125,33 @@ describe('confirmed port data', () => {
     }
   })
 
-  it('flags machines that still need paint piped in by hand', () => {
+  it('knows where the crystal generator takes its paint', () => {
+    // withdrawn once for having been read off pipes wrongly treated as
+    // directional, and now settled by thirty-six of them agreeing in a module
+    // a player built: the pipe meets the -X face of the tile the belts miss
     const crystal = portsFor('CrystalGeneratorDefaultInternalVariant')!
-    // the belt sides are solid, the pipe side is not — routing may proceed but
-    // the plan has to say the pipe is the player's job
     expect(asKeys(crystal.inputs)).toEqual(['-1,0,0'])
     expect(asKeys(crystal.outputs)).toEqual(['1,0,0'])
-    expect(crystal.fluidUnknown).toBe(true)
-    expect(needsManualPiping('CrystalGeneratorDefaultInternalVariant')).toBe(true)
+    expect(asKeys(crystal.fluid ?? [])).toEqual(['-1,1,0'])
+    expect(crystal.fluidUnknown).toBeUndefined()
+    expect(needsManualPiping('CrystalGeneratorDefaultInternalVariant')).toBe(false)
+
+    // the mirrored twin mirrors it, which is the check that it is a real face
+    // and not a pipe that happened to run past
+    const mirrored = portsFor('CrystalGeneratorDefaultInternalVariantMirrored')!
+    expect(asKeys(mirrored.fluid ?? [])).toEqual(['-1,-1,0'])
+  })
+
+  it('still does not know where a painter takes its paint', () => {
+    // the one painter in a bundled blueprint has a pipe on both sides of its
+    // far tile, so a single sample cannot say which is the port. The crystal
+    // generator is the same shape and uses -X, which is a good guess and is
+    // not the same thing as knowing
+    const painter = portsFor('PainterDefaultInternalVariant')!
+    expect(painter.fluidUnknown).toBe(true)
+    expect(needsManualPiping('PainterDefaultInternalVariant')).toBe(true)
     expect(needsManualPiping('CutterDefaultInternalVariant')).toBe(false)
-    // a missing pipe location must not block belt routing
-    expect(isRoutable('CrystalGeneratorDefaultInternalVariant')).toBe(true)
+    // and not knowing the pipe must never block belt routing
+    expect(isRoutable('PainterDefaultInternalVariant')).toBe(true)
   })
 })
