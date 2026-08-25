@@ -1,13 +1,14 @@
 'use client'
 
-import { ArrowRightIcon, CheckIcon, CopyIcon, PackagePlusIcon } from 'lucide-react'
+import { ArrowRightIcon, PackagePlusIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
+import { ModuleCopyButton } from '@/components/module-copy-button'
 import { ShapeView } from '@/components/shape-view'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { generateLaneModule, moduleSizing, MODULE_LANES } from '@/lib/shapez/module'
-import { SEARCHED_MODULES, makeModule } from '@/lib/shapez/moduleEdges'
+import { SEARCHED_MODULES, type MadeModule } from '@/lib/shapez/moduleEdges'
 import { MODULE_CATALOGUE, catalogueDemo } from '@/lib/shapez/moduleCatalogue'
 import { OPERATIONS, type OperationId } from '@/lib/shapez/operations'
 import { OPERATION_SPECS, beltThroughput, ratedThroughput } from '@/lib/shapez/throughput'
@@ -31,37 +32,7 @@ interface Made {
 
 export function ModuleCatalogue({ tier, skin, onCollect }: ModuleCatalogueProps) {
   const [made, setMade] = useState<Map<OperationId, Made> | null>(null)
-  const [copied, setCopied] = useState<OperationId | null>(null)
-  const [building, setBuilding] = useState<OperationId | null>(null)
   const [searched, setSearched] = useState<Map<OperationId, Made>>(new Map())
-
-  /** The ones whose belts are searched for rather than written down. */
-  const build = (op: OperationId) => {
-    setBuilding(op)
-    // let the button repaint before the search takes the thread
-    window.setTimeout(() => {
-      const { perLane, machines } = SEARCHED_MODULES.get(op)!
-      void makeModule(op, tier)
-        .then((result) =>
-          setSearched((was) =>
-            new Map(was).set(op, { ...result, perLane, machines, shape: null }),
-          ),
-        )
-        .catch(() =>
-          setSearched((was) =>
-            new Map(was).set(op, {
-              perLane,
-              machines,
-              code: null,
-              reason: '청사진을 만들지 못했습니다',
-              warnings: [],
-              shape: null,
-            }),
-          ),
-        )
-        .finally(() => setBuilding(null))
-    }, 50)
-  }
 
   const demos = useMemo(
     () => new Map(MODULE_CATALOGUE.map((entry) => [entry.op, catalogueDemo(entry)] as const)),
@@ -112,12 +83,6 @@ export function ModuleCatalogue({ tier, skin, onCollect }: ModuleCatalogueProps)
     }
   }, [tier])
 
-  useEffect(() => {
-    if (copied === null) return
-    const timer = window.setTimeout(() => setCopied(null), 1500)
-    return () => window.clearTimeout(timer)
-  }, [copied])
-
   // ready modules first: the list is for picking something to paste
   const ordered = made
     ? [...MODULE_CATALOGUE].sort(
@@ -141,14 +106,10 @@ export function ModuleCatalogue({ tier, skin, onCollect }: ModuleCatalogueProps)
         {ordered.map((entry) => {
           const state = searched.get(entry.op) ?? made?.get(entry.op)
           const demo = demos.get(entry.op)
-          const ready = Boolean(state?.code)
-
           return (
             <li
               key={entry.op}
-              className={`flex flex-col gap-3 rounded-lg border p-4 ${
-                ready ? 'bg-card' : 'bg-muted/30'
-              }`}
+              className="flex flex-col gap-3 rounded-lg border bg-card p-4"
             >
               <div className="space-y-1">
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -173,7 +134,7 @@ export function ModuleCatalogue({ tier, skin, onCollect }: ModuleCatalogueProps)
               ) : null}
 
               <div className="mt-auto space-y-2">
-                {ready && state ? (
+                {state && !state.reason ? (
                   <>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="secondary" className="tabular-nums">
@@ -189,6 +150,12 @@ export function ModuleCatalogue({ tier, skin, onCollect }: ModuleCatalogueProps)
                       ) : null}
                     </div>
 
+                    {SEARCHED_MODULES.has(entry.op) ? (
+                      <p className="text-xs text-muted-foreground">
+                        · 벨트를 찾아 놓는 모듈이라 복사에 1~2초 걸립니다.
+                      </p>
+                    ) : null}
+
                     {state.warnings.map((warning) => (
                       <p key={warning} className="text-xs text-muted-foreground">
                         · {warning}
@@ -196,24 +163,22 @@ export function ModuleCatalogue({ tier, skin, onCollect }: ModuleCatalogueProps)
                     ))}
 
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => {
-                          void navigator.clipboard
-                            .writeText(state.code!)
-                            .then(() => setCopied(entry.op))
-                            .catch(() => setCopied(null))
-                        }}
-                      >
-                        {copied === entry.op ? (
-                          <CheckIcon className="size-3.5" />
-                        ) : (
-                          <CopyIcon className="size-3.5" />
-                        )}
-                        {copied === entry.op ? '복사됨' : '모듈 복사'}
-                      </Button>
+                      <ModuleCopyButton
+                        op={entry.op}
+                        tier={tier}
+                        label="모듈 복사"
+                        className="h-8 flex-1 gap-1.5 text-xs"
+                        onMade={(result: MadeModule) =>
+                          setSearched((was) =>
+                            new Map(was).set(entry.op, {
+                              ...result,
+                              perLane: state.perLane,
+                              machines: result.machines || state.machines,
+                              shape: state.shape,
+                            }),
+                          )
+                        }
+                      />
                       <Button
                         size="sm"
                         variant="secondary"
@@ -224,24 +189,6 @@ export function ModuleCatalogue({ tier, skin, onCollect }: ModuleCatalogueProps)
                         담기
                       </Button>
                     </div>
-                  </>
-                ) : SEARCHED_MODULES.has(entry.op) && !state?.reason ? (
-                  <>
-                    <p className="text-xs text-muted-foreground">
-                      {OPERATIONS[entry.op].labelKo} {state?.machines}대짜리 모듈입니다. 배선을
-                      찾아내야 해서 잠깐 걸립니다.
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full"
-                      disabled={building !== null}
-                      onClick={() => build(entry.op)}
-                    >
-                      {building === entry.op
-                        ? '만드는 중…'
-                        : `${OPERATIONS[entry.op].labelKo} 모듈 만들기`}
-                    </Button>
                   </>
                 ) : (
                   <p className="text-xs text-muted-foreground">

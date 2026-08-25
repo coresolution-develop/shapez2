@@ -928,7 +928,7 @@ function buildLadder(op: OperationId, perLane: number, needsPipe: boolean): Buil
     if (!box) {
       return {
         ok: false,
-        reason: `${label}는 기계 층 2개를 차지해서 구조가 다릅니다 — 「작업 모듈」 탭에서 만들 수 있습니다`,
+        reason: `${label}는 기계 층 2개를 차지해서 구조가 다릅니다 — 「작업 모듈」 탭에 있습니다`,
         blockedBy: op,
       }
     }
@@ -1077,7 +1077,7 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
     // is a different job from a single-file lane and is not written yet
     return {
       ok: false,
-      reason: `${label} 모듈은 벨트가 ${MODULE_LANES * 2}줄 들어가서 한 줄짜리 레인과 구조가 다릅니다 — 「작업 모듈」 탭에서 만들 수 있습니다`,
+      reason: `${label} 모듈은 벨트가 ${MODULE_LANES * 2}줄 들어가서 한 줄짜리 레인과 구조가 다릅니다 — 「작업 모듈」 탭에 있습니다`,
       blockedBy: op,
     }
   }
@@ -1086,7 +1086,7 @@ export function layoutLaneModule(op: OperationId, perLane: number): LaneModuleRe
       ok: false,
       reason:
         op === 'cut' || op === 'swap'
-          ? `${label} 모듈은 벨트 줄 수가 달라서 한 줄짜리 레인과 구조가 다릅니다 — 「작업 모듈」 탭에서 만들 수 있습니다`
+          ? `${label} 모듈은 벨트 줄 수가 달라서 한 줄짜리 레인과 구조가 다릅니다 — 「작업 모듈」 탭에 있습니다`
           : `${label}는 벨트가 ${ports.inputs.length}줄 들어가고 ${ports.outputs.length}줄 나와서 한 줄짜리 레인에 넣을 수 없습니다`,
       blockedBy: op,
     }

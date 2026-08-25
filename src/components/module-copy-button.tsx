@@ -4,7 +4,7 @@ import { CheckIcon, CopyIcon, LoaderIcon } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { SEARCHED_MODULES, makeModule } from '@/lib/shapez/moduleEdges'
+import { SEARCHED_MODULES, makeModule, type MadeModule } from '@/lib/shapez/moduleEdges'
 import type { OperationId } from '@/lib/shapez/operations'
 import type { SpeedTier } from '@/lib/shapez/throughput'
 
@@ -21,10 +21,15 @@ export function ModuleCopyButton({
   op,
   tier,
   className,
+  label = '청사진',
+  onMade,
 }: {
   op: OperationId
   tier: SpeedTier
   className?: string
+  label?: string
+  /** Whatever the module had to say for itself, once it has been made. */
+  onMade?: (made: MadeModule) => void
 }) {
   const [state, setState] = useState<'idle' | 'making' | 'copied' | 'failed'>('idle')
 
@@ -33,7 +38,9 @@ export function ModuleCopyButton({
     // let the button repaint before a search takes the thread
     window.setTimeout(() => {
       void makeModule(op, tier)
-        .then(async ({ code }) => {
+        .then(async (made) => {
+          onMade?.(made)
+          const { code } = made
           if (!code) return setState('failed')
           await navigator.clipboard.writeText(code)
           setState('copied')
@@ -69,7 +76,7 @@ export function ModuleCopyButton({
           ? '복사됨'
           : state === 'failed'
             ? '실패'
-            : '청사진'}
+            : label}
     </Button>
   )
 }
