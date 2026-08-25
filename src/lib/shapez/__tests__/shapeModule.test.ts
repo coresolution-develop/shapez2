@@ -45,7 +45,27 @@ describe('the shape module', () => {
 
     expect(before / plans.length).toBeGreaterThan(0.6)
     expect(after).toBeGreaterThan(before)
-    expect(after / plans.length, `${after}/${plans.length}`).toBeGreaterThan(0.9)
+    expect(after / plans.length, `${after}/${plans.length}`).toBeGreaterThan(0.97)
+  })
+
+  it('lays out every plan that has a machine in it', () => {
+    /**
+     * The stronger claim, and the one worth stating: the only shapes this
+     * cannot do are the ones with nothing to do. A quad circle comes straight
+     * off an extractor, so there is no plan to lay out and saying so is the
+     * right answer rather than a failure.
+     *
+     * Written as an exact count and not a percentage. Everything that used to
+     * fail here failed for a nameable reason — two inputs aimed at one port,
+     * two outputs claiming one tile, a splitter chain with no way in — and any
+     * one of them coming back should read as a broken test, not as a number
+     * that slipped a little.
+     */
+    const stuck = built.filter((entry) => !entry.module.ok)
+    for (const entry of stuck) {
+      expect(entry.module.ok ? '' : entry.module.reason, entry.code).toContain('채굴기')
+      expect(entry.root.op, entry.code).toBeNull()
+    }
   })
 
   it('puts a belt on every tile a machine expects to be fed from', () => {

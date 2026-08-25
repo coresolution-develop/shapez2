@@ -13,19 +13,31 @@
  * two places, and every belt between them is found rather than composed. What
  * that buys, measured over the game's own shapes, is in `shapeModule.test.ts`.
  *
- * Three things had to be got right before any of that was worth having, and
- * two of them produced blueprints that looked perfect:
+ * It lays out every plan that has a machine in it. The shapes it turns down are
+ * the ones with nothing to turn down — a quad circle comes straight off an
+ * extractor — and saying so is the answer rather than a failure.
+ *
+ * Getting there was five separate things, and the first two were producing
+ * blueprints that looked perfect:
  *
  *   - The router lays no piece on the tile it is aiming for, because everywhere
  *     else it is used that tile already holds the comb it delivers into. Aiming
  *     at a machine's port — an empty tile — left every machine in the plan fed
  *     by a gap. It now aims at the machine's own tile, so the last belt lands on
  *     the port. A test counts the bare ports rather than trusting this.
+ *   - Which tile a port belongs to is looked up in the building's footprint. A
+ *     swapper's two inputs are at (-1,-1) and (-1,0), and taking a step out of
+ *     each axis put both on one tile, so two different shapes were routed into
+ *     the same input port.
  *   - A tap is only an endpoint until the router reaches it, so a splitter or a
  *     trash placed afterwards could take the tile a belt was going to start on.
- *     A cutter fanning out both halves does this to itself. Endpoints are held.
- *   - Which way a shape crosses a port is read off the port, not assumed to be
- *     +X. The stacker's second input is a floor up and needs it.
+ *   - Each of a machine's outputs owns the tile in front of it. A cutter that
+ *     sends one half straight on and splits the other used to drop the copy
+ *     exactly where the first half was leaving by.
+ *   - A splitter chain that cannot stand on its own port looks for a place in
+ *     two directions. Sliding it along the row was half an answer: a cutter's
+ *     halves leave one row apart, so a chain pushed along one row lays its
+ *     copies across the other half's path and neither belt can get by.
  *
  * One thing here is still a guess and says so: which of a cutter's two outputs
  * carries which half has never been measured, so a shape whose plan uses both
@@ -158,27 +170,45 @@ function portAt(
   return { x: placement.x + dx, y: placement.y + dy, z: placement.z + dz }
 }
 
+/** Which way each step goes, in the order facings are numbered. */
+const STEPS: readonly (readonly [number, number])[] = [
+  [1, 0],
+  [0, 1],
+  [-1, 0],
+  [0, -1],
+]
+
 /**
  * Which way a shape crosses a port, and which of the building's own tiles it
  * crosses into.
  *
- * A port sits on an empty tile touching the building, so it names a face: an
- * input at (-1,0,0) is the −X face, and a shape reaches it travelling +X. That
- * one step is the whole of it, and taking it from the measurement rather than
- * assuming +X is what lets a port on any other face work — the stacker's second
- * input, a floor up, is the one that already needs it.
+ * A port sits on an empty tile touching the building, so it names a face — but
+ * *which* face is a question the offset alone cannot always answer. A swapper's
+ * two inputs are at (-1,-1) and (-1,0), and reading a step out of each axis
+ * puts both of them on the same tile, which is how two different shapes came to
+ * be routed into one input port. So the tile is looked up in the building's own
+ * footprint instead: exactly one of its tiles touches the port, and finding it
+ * gives the face and the direction together, for any shape of building.
  */
-function crossing(port: readonly [number, number, number], rotation: number) {
+function crossing(type: string, port: readonly [number, number, number], rotation: number) {
   const [dx, dy, dz] = toWorld(port, rotation)
-  const step = (n: number) => (n > 0 ? -1 : n < 0 ? 1 : 0)
-  return {
-    /** Travelling this way carries a shape from the port into the building. */
-    inward: (dx !== 0 ? (dx > 0 ? 2 : 0) : dy > 0 ? 3 : 1) as Facing,
-    /** And this way carries it out. */
-    outward: (dx !== 0 ? (dx > 0 ? 0 : 2) : dy > 0 ? 1 : 3) as Facing,
-    /** The building's own tile behind the port, which is where a feed heads. */
-    behind: { x: dx + step(dx), y: dy + step(dy), z: dz },
+  const tiles = tilesOf(type, rotation)
+
+  for (const [facing, [sx, sy]] of STEPS.entries()) {
+    const touching = tiles.find(
+      (tile) => tile[0] === dx + sx && tile[1] === dy + sy && tile[2] === dz,
+    )
+    if (!touching) continue
+    return {
+      /** Travelling this way carries a shape from the port into the building. */
+      inward: facing as Facing,
+      /** And this way carries it out. */
+      outward: ((facing + 2) % 4) as Facing,
+      /** The building's own tile behind the port, which is where a feed heads. */
+      behind: { x: touching[0], y: touching[1], z: touching[2] },
+    }
   }
+  return null
 }
 
 export function layoutShapeModule(
@@ -253,6 +283,8 @@ export function layoutShapeModule(
     occupancy.free(x, y, z) && !spokenFor.has(`${x},${y},${z}`)
   const reserve = (end: { x: number; y: number; z: number }) =>
     spokenFor.add(`${end.x},${end.y},${end.z}`)
+  const release = (end: { x: number; y: number; z: number }) =>
+    spokenFor.delete(`${end.x},${end.y},${end.z}`)
 
   const put = (placement: BuildingPlacement, what: string): string | null => {
     for (const [dx, dy, dz] of tilesOf(placement.type, placement.rotation ?? 0)) {
@@ -311,11 +343,25 @@ export function layoutShapeModule(
       notes.add('안 쓰는 절반은 쓰레기통으로 버립니다 — 안 그러면 절단기가 멈춥니다.')
     }
 
+    // Each of a machine's outputs owns the tile in front of it, and one output
+    // must not be allowed to build over another's. A cutter that sends one half
+    // straight on and splits the other did exactly that: the splitter stands on
+    // the half it is splitting and throws its copy sideways, which lands on the
+    // tile the first half was leaving by, and two shapes then start life on one
+    // belt. Claiming them all first settles it, and each output is let back on
+    // to its own when its turn comes.
+    const stand = { x: machine.x, y: machine.y, z: 0, type: machine.type, rotation: FLOW }
+    for (const [index] of machine.outputs) {
+      reserve(portAt(stand, ports.outputs[Math.min(index, ports.outputs.length - 1)]))
+    }
+
     for (const [port, node] of machine.outputs) {
       const leaving = ports.outputs[Math.min(port, ports.outputs.length - 1)]
-      const stand = { x: machine.x, y: machine.y, z: 0, type: machine.type, rotation: FLOW }
       const at = portAt(stand, leaving)
-      const away = crossing(leaving, FLOW).outward
+      // its turn, so it gets its own port back — it may want to stand a
+      // splitter there, and nothing else was ever going to use it
+      release(at)
+      const away = crossing(machine.type, leaving, FLOW)?.outward ?? FLOW
       const needed = wanted.get(node.id) ?? 0
       if (needed <= 1) {
         reserve(at)
@@ -331,30 +377,52 @@ export function layoutShapeModule(
       }
 
       // A shape wanted in two places gets splitters, ideally standing on the
-      // tile the machine delivers into so it is fed with no belt between. That
-      // is not always allowed: the splitter's second way out is the tile beside
-      // it, and on a cutter whose other half is being thrown away that tile is
-      // the trash. So the chain starts at the first run of columns where every
-      // splitter has somewhere to send both halves, and the machine reaches it
-      // by belt like anything else.
+      // tile the machine delivers into so it is fed with no belt between. Often
+      // that tile will not do — the splitter throws its copy to the tile beside
+      // it, and on a cutter that tile is the other half's way out, or the trash
+      // the other half is being thrown into.
+      //
+      // Sliding the chain along the row was the first answer and it was half of
+      // one: a cutter's two halves leave one row apart, so a chain pushed along
+      // one row lays its copies straight across the other half's path, and the
+      // two belts then have no way past each other. The chain looks for a place
+      // in two directions instead, and gives up the row when that is what it
+      // takes. Nearest first, so the common case still costs no belt at all.
       const SPLITTER = 'Splitter1To2LInternalVariant'
       const splitter = portsFor(SPLITTER)!
-      const side = crossing(splitter.outputs[0], FLOW)
-      const ahead = crossing(splitter.outputs[1], FLOW)
+      const side = crossing(SPLITTER, splitter.outputs[0], FLOW)!
+      const ahead = crossing(SPLITTER, splitter.outputs[1], FLOW)!
+
       /** Room for the whole chain: every splitter, and both ways out of each. */
-      const room = (x: number) => {
+      const room = (x: number, y: number) => {
         for (let k = 0; k < needed - 1; k++) {
-          const stands = { x: x + k, y: at.y, z: at.z, type: SPLITTER, rotation: FLOW }
+          const stands = { x: x + k, y, z: at.z, type: SPLITTER, rotation: FLOW }
           const out = portAt(stands, splitter.outputs[0])
           if (!vacant(stands.x, stands.y, stands.z)) return false
           if (!vacant(out.x, out.y, out.z)) return false
         }
-        return vacant(x + needed - 1, at.y, at.z)
+        if (!vacant(x + needed - 1, y, at.z)) return false
+        // a chain away from the port needs the tile a belt would arrive from,
+        // since that is the only way into a splitter's back
+        return (x === at.x && y === at.y) || vacant(x - 1, y, at.z)
       }
 
-      let start = at.x
-      while (start < at.x + columnPitch && !room(start)) start++
-      if (!room(start)) {
+      const reach = Math.max(1, Math.floor(rowPitch / 2))
+      const spots: { x: number; y: number; far: number }[] = []
+      for (let dx = 0; dx < columnPitch; dx++) {
+        for (let dy = 0; dy <= reach; dy++) {
+          // leaving the row means being fed by belt, and a splitter is only fed
+          // from behind — so there has to be somewhere for that belt to come
+          // from, which the tile directly above the machine's own port is not
+          if (dy > 0 && dx < 1) continue
+          for (const y of dy === 0 ? [at.y] : [at.y - dy, at.y + dy]) {
+            spots.push({ x: at.x + dx, y, far: dx + dy })
+          }
+        }
+      }
+      spots.sort((a, b) => a.far - b.far)
+      const found = spots.find((spot) => room(spot.x, spot.y))
+      if (!found) {
         return {
           ok: false,
           reason: `${OPERATIONS[machine.op].labelKo} 뒤에 분배기를 놓을 자리가 없습니다`,
@@ -363,7 +431,7 @@ export function layoutShapeModule(
       }
 
       const ends: Endpoint[] = []
-      let head = { x: start, y: at.y, z: at.z }
+      let head = { x: found.x, y: found.y, z: at.z }
       for (let made = 0; made < needed - 1; made++) {
         const clash = put(
           { type: SPLITTER, x: head.x, y: head.y, layer: head.z, rotation: FLOW },
@@ -376,11 +444,13 @@ export function layoutShapeModule(
       }
       ends.push({ ...head, facing: ahead.outward })
       for (const end of ends) reserve(end)
-      if (start > at.x) {
+      // and the port it came out of, whether or not a splitter is standing there
+      reserve(at)
+      if (found.x !== at.x || found.y !== at.y) {
         // the machine now has to reach its own splitter
         nets.push({
           from: { ...at, facing: away },
-          to: { x: start, y: at.y, z: at.z, facing: FLOW },
+          to: { x: found.x, y: found.y, z: at.z, facing: FLOW },
           label: `${OPERATIONS[machine.op].labelKo} 나눔`,
         })
       }
@@ -392,7 +462,14 @@ export function layoutShapeModule(
     const ports = portsFor(machine.type)!
     for (const [slot, input] of machine.inputs.entries()) {
       const port = ports.inputs[Math.min(slot, ports.inputs.length - 1)]
-      const cross = crossing(port, FLOW)
+      const cross = crossing(machine.type, port, FLOW)
+      if (!cross) {
+        return {
+          ok: false,
+          reason: `${OPERATIONS[machine.op].labelKo}의 입력 포트가 기계에 닿아 있지 않습니다`,
+          blockedBy: machine.op,
+        }
+      }
       // aimed at the machine's own tile, not at the port in front of it. The
       // router lays no piece on the tile it is aiming for — everywhere else
       // that tile already holds the comb it delivers into — so aiming at the
@@ -497,3 +574,4 @@ export async function generateShapeModule(
   )
   return { layout, code }
 }
+
