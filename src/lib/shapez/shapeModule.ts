@@ -324,7 +324,20 @@ export function layoutShapeModule(
 
   for (const machine of machines) {
     const ports = portsFor(machine.type)!
-    if (ports.fluidUnknown) notes.add('색칠기·결정체 생성기는 파이프로 물감을 직접 연결해야 합니다.')
+    // Every machine that drinks paint needs a pipe run by hand, and saying so
+    // used to depend on the pipe face being *unmeasured*. Measuring the crystal
+    // generator's therefore turned its warning off and left those blueprints
+    // silently unpipeable — the machine still wants paint whether or not we know
+    // which face it takes it on. The test asserts both kinds now.
+    if (ports.fluidUnknown) {
+      notes.add(
+        `${OPERATIONS[machine.op].labelKo}에 물감 파이프를 직접 연결하세요 — 파이프를 대는 면은 아직 못 쟀습니다.`,
+      )
+    } else if (ports.fluid && ports.fluid.length > 0) {
+      notes.add(
+        `${OPERATIONS[machine.op].labelKo}에 물감 파이프를 직접 연결하세요 — 벨트가 닿지 않는 쪽 칸이 파이프 자리입니다(측정값).`,
+      )
+    }
 
     // a machine whose second output goes nowhere jams, and a belt laid across
     // it looks connected and is not — which is exactly how the first version of
@@ -529,14 +542,27 @@ export function layoutShapeModule(
   }
   placements.push(...wiring.paths.flat())
 
-  const usesCutter = machines.some((machine) => machine.outputs.size > 1)
   const list = [
     '추출기는 포함하지 않았습니다. 자원 패치 위에 따로 놓고 왼쪽 벨트에 연결하세요.',
     ...notes,
   ]
-  if (usesCutter) {
+
+  // Which of a two-output machine's ports carries which result is not something
+  // a blueprint can be read for, so every such machine says so by name. Two
+  // things were wrong here. It always said "cutter", so a plan with only
+  // swappers in it was warned about a building it did not contain. And it asked
+  // whether the *plan* used both outputs, when the danger is worst where it
+  // uses one: the other half goes to a trash, and if the two are the wrong way
+  // round then what is being thrown away is the half that was wanted. The
+  // question is how many ways out the building has, not how many are taken.
+  const twoWays = new Set(
+    machines
+      .filter((machine) => (portsFor(machine.type)?.outputs.length ?? 0) > 1)
+      .map((machine) => machine.op),
+  )
+  for (const op of twoWays) {
     list.push(
-      '절단기의 두 절반이 어느 쪽으로 나가는지는 아직 재지 못했습니다 — 결과가 다르면 두 출구를 바꿔 보세요.',
+      `${OPERATIONS[op].labelKo}의 두 결과가 어느 출구로 나가는지는 아직 재지 못했습니다 — 결과가 다르면 두 출구를 바꿔 보세요.`,
     )
   }
 

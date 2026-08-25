@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import { decodeBlueprint } from '../blueprint'
-import { layoutModule } from '../module'
+import { OPERATION_BUILDING, layoutModule } from '../module'
+import { OPERATIONS, OPERATION_IDS, type OperationId } from '../operations'
 import { portsFor } from '../portData'
 import { toWorld } from '../ports'
 import presets from '../presets.json'
@@ -125,6 +126,75 @@ describe('the shape module', () => {
       (entry) => entry.module.ok && entry.module.placements.some((p) => p.type.startsWith('Trash')),
     )
     expect(withCutter, '남는 절반을 버리는 계획이 하나는 있어야 합니다').toBeDefined()
+  })
+
+  it('tells the player to pipe every machine that drinks paint', () => {
+    /**
+     * Measuring a pipe face used to switch this warning off.
+     *
+     * The note hung off `fluidUnknown`, so working out where a crystal
+     * generator takes its paint stopped those blueprints from mentioning paint
+     * at all — and a machine wants a pipe whether or not we know which face it
+     * takes it on.
+     *
+     * Checked per machine, not per blueprint. Nearly every plan with a crystal
+     * generator has a painter in it too, so "some note mentions paint" passes
+     * with the bug still in — the first version of this test did exactly that.
+     * Each drinker has to be named.
+     */
+    let checked = 0
+    for (const entry of made) {
+      const laid = entry.module
+      if (!laid.ok) continue
+      const drinkers = new Set(
+        laid.placements
+          .map((p) => ({ op: OPERATION_IDS.find((o) => OPERATION_BUILDING[o] === p.type), ports: portsFor(p.type) }))
+          .filter((one) => one.op && one.ports && (one.ports.fluidUnknown || (one.ports.fluid?.length ?? 0) > 0))
+          .map((one) => one.op as OperationId),
+      )
+      for (const op of drinkers) {
+        checked++
+        const named = laid.notes.some(
+          (note) => note.startsWith(OPERATIONS[op].labelKo) && note.includes('물감 파이프'),
+        )
+        expect(named, `${entry.code}: ${OPERATIONS[op].labelKo} 경고 없음 — ${laid.notes.join(' / ')}`).toBe(true)
+      }
+    }
+    expect(checked, '물감 먹는 기계가 든 계획이 있어야 합니다').toBeGreaterThan(0)
+  })
+
+  it('names the machine whose two outputs it cannot tell apart', () => {
+    /**
+     * Same trap: a plan with a swapper in it almost always has a cutter too, so
+     * a warning that always said "cutter" passed a test that only asked whether
+     * the warning was about a machine present. Every two-output machine has to
+     * be named, and nothing else may be.
+     */
+    let checked = 0
+    for (const entry of made) {
+      const laid = entry.module
+      if (!laid.ok) continue
+      const present = new Set(
+        laid.placements
+          .map((p) => OPERATION_IDS.find((o) => OPERATION_BUILDING[o] === p.type))
+          .filter((op): op is OperationId => op !== undefined),
+      )
+      const twoWays = [...present].filter((op) => (portsFor(OPERATION_BUILDING[op])?.outputs.length ?? 0) > 1)
+      for (const op of twoWays) {
+        checked++
+        const named = laid.notes.some(
+          (note) => note.startsWith(OPERATIONS[op].labelKo) && note.includes('두 결과가 어느 출구로'),
+        )
+        expect(named, `${entry.code}: ${OPERATIONS[op].labelKo} 경고 없음 — ${laid.notes.join(' / ')}`).toBe(true)
+      }
+      // and no warning about a machine that is not in this blueprint
+      for (const note of laid.notes) {
+        if (!note.includes('두 결과가 어느 출구로')) continue
+        const named = OPERATION_IDS.find((op) => note.startsWith(OPERATIONS[op].labelKo))
+        expect(named !== undefined && present.has(named), `${entry.code}: ${note}`).toBe(true)
+      }
+    }
+    expect(checked, '출구가 둘인 기계가 든 계획이 있어야 합니다').toBeGreaterThan(0)
   })
 
   it('says plainly when a shape needs no machines at all', () => {
