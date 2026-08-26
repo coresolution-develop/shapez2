@@ -308,7 +308,12 @@ export function ReverseEngineerView() {
                   }
                 />
               ) : null}
-              <BlueprintExport root={solution.root} shapeCode={code} />
+              <BlueprintExport
+                root={solution.root}
+                shapeCode={code}
+                tier={tier}
+                stackerVariant={stackerVariant}
+              />
               <PlanSteps root={solution.root} skin={skin} loads={throughput?.loads} />
             </div>
           ) : (

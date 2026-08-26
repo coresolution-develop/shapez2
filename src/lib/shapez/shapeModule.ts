@@ -528,8 +528,11 @@ export function layoutShapeModule(
     inputs,
     output: exit,
     size: {
-      width: Math.max(...cells.map((c) => c.x)) + 1,
-      height: Math.max(...cells.map((c) => c.y)) + 1,
+      // measured corner to corner, not from the origin: the layout starts a
+      // margin in, and counting from zero told the player it was three tiles
+      // taller than the blueprint viewer said it was
+      width: span(cells.map((c) => c.x)),
+      height: span(cells.map((c) => c.y)),
       floors: Math.max(...placements.map((p) => (p.layer ?? 0) + 1)),
     },
     machines: machines.length,
@@ -551,3 +554,8 @@ export async function generateShapeModule(
   return { layout, code }
 }
 
+
+/** How many tiles a run covers, corner to corner. */
+function span(values: number[]): number {
+  return values.length === 0 ? 0 : Math.max(...values) - Math.min(...values) + 1
+}
