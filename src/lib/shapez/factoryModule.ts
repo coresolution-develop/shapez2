@@ -34,10 +34,20 @@
  * down on the way in, which puts that comb on its own floor with a column to
  * itself. It costs one tile per machine and buys every plan there is.
  *
- * What it does *not* do is pack tightly. A lane comes out around 46 by 31 for a
- * median plan, most of which is air — the machines themselves are a tenth of
- * that. Fitting twelve lanes on a platform is a packing problem this has not
- * started on.
+ * ## Room
+ *
+ * A lane comes out around 57 by 21 for a median plan and fills a fifth of the
+ * box it stands in. Most of the rest is unavoidable: a step needs five columns
+ * for one of machines, and only one floor in three holds machines at all.
+ *
+ * The width is folded rather than left to grow. A column per step ran a deep
+ * plan to 277 tiles, and the widest platform in the game is sixty — so the
+ * factory now wraps onto a new band when a row is full, which bounds the width
+ * and, since a step lands nearer the ones it feeds, shortens the belts too.
+ *
+ * Twelve lanes side by side is still far larger than any platform. Getting
+ * there wants machines on all three floors, which the second-stream lifts are
+ * currently the only thing using.
  */
 import { encodeBuildingBlueprint, type BuildingPlacement } from './blueprint'
 import { factoryPlan, type FactoryPlan, type FactoryStep } from './factoryPlan'
@@ -129,6 +139,7 @@ export function layoutFactoryModule(
     lanes?: number
     columnPitch?: number
     rowGap?: number
+    across?: number
     rounds?: number
   },
 ): FactoryModuleResult {
@@ -177,8 +188,20 @@ export function layoutFactoryModule(
     return { ok: false, reason: '분배기·병합기를 세울 방향을 찾지 못했습니다' }
   }
 
-  const columnPitch = options.columnPitch ?? 6
+  // Five columns is exactly what a step needs — comb, carrier, machines,
+  // carrier, comb — and four does not fit at all. Two rows between blocks
+  // rather than one: a collecting comb hands over on the row below its lowest
+  // machine, and with a single row the block beneath is already using it.
+  const columnPitch = options.columnPitch ?? 5
   const rowGap = options.rowGap ?? 2
+  /**
+   * How wide the factory may grow before folding onto a new band.
+   *
+   * Three platform chunks less the margins, because that is the widest thing
+   * the game has to stand it on. Left to run in a straight line a deep plan
+   * came out 277 tiles long, which no platform can hold however thin it is.
+   */
+  const across = options.across ?? 56
 
   /** How many places want each result, which decides how it is collected. */
   const takers = new Map<string, number>()
@@ -200,39 +223,68 @@ export function layoutFactoryModule(
   for (const step of plan.steps) {
     byDepth.set(step.depth, [...(byDepth.get(step.depth) ?? []), step])
   }
-  const deepest = Math.max(...plan.steps.map((step) => step.depth))
 
+  /**
+   * The steps laid down in reading order, folded when they run out of room.
+   *
+   * Giving every depth a column of its own is the obvious arrangement and it
+   * grows without limit: a plan forty steps deep came out a hundred and sixty
+   * tiles long, on a platform sixty wide. Depth still decides the *order* — a
+   * step is placed after everything it draws from — but where that lands is
+   * wherever there is room, wrapping to a fresh band when the row is full, so
+   * the shape of the factory is set by how much space it is given rather than
+   * by how long the plan happens to be.
+   *
+   * The router does not mind. It was already finding its own way between the
+   * bands, and a step now sits nearer the ones it feeds rather than a column
+   * apart from them, which if anything shortens the belts.
+   */
   const blocks = new Map<string, Block>()
+  const ordered = [...byDepth.keys()].sort((a, b) => a - b).flatMap((depth) => byDepth.get(depth)!)
+
+  let column = MARGIN
+  let band = MARGIN + 1
+  let bandDeep = 0
+  let widest = MARGIN
   let tallest = MARGIN
-  for (const [, steps] of byDepth) {
-    let row = MARGIN + 1
-    for (const step of steps) {
-      const span = tilesOf(step.type, FLOW).map(([, dy]) => dy)
-      const height = Math.max(...span) - Math.min(...span) + 1
-      const lift = -Math.min(...span)
-      const wanted = Math.min(sharesOf(step), step.machines)
-      const column = MARGIN + step.depth * columnPitch
-      const shares: { x: number; y: number }[][] = []
-      let left = step.machines
-      for (let share = 0; share < wanted; share++) {
-        const size = Math.floor(left / (wanted - share))
-        left -= size
-        shares.push(
-          Array.from({ length: size }, (_, index) => ({ x: column, y: row + index * height + lift })),
-        )
-        // a blank row between groups, so each comb's way out is its own tile
-        row += size * height + 1
-      }
-      const stand = shares.flat()
-      blocks.set(step.node.id, { step, stand, shares, intake: new Map(), supply: new Map() })
-      row += rowGap
+
+  for (const step of ordered) {
+    const span = tilesOf(step.type, FLOW).map(([, dy]) => dy)
+    const height = Math.max(...span) - Math.min(...span) + 1
+    const lift = -Math.min(...span)
+    const wanted = Math.min(sharesOf(step), step.machines)
+    const rows = step.machines * height + wanted + rowGap
+
+    if (column + columnPitch > across && column > MARGIN) {
+      column = MARGIN
+      band += bandDeep
+      bandDeep = 0
     }
-    tallest = Math.max(tallest, row)
+
+    let row = band
+    const shares: { x: number; y: number }[][] = []
+    let left = step.machines
+    for (let share = 0; share < wanted; share++) {
+      const size = Math.floor(left / (wanted - share))
+      left -= size
+      shares.push(
+        Array.from({ length: size }, (_, index) => ({ x: column, y: row + index * height + lift })),
+      )
+      // a blank row between groups, so each comb's way out is its own tile
+      row += size * height + 1
+    }
+    const stand = shares.flat()
+    blocks.set(step.node.id, { step, stand, shares, intake: new Map(), supply: new Map() })
+
+    bandDeep = Math.max(bandDeep, rows)
+    widest = Math.max(widest, column + columnPitch)
+    tallest = Math.max(tallest, band + bandDeep)
+    column += columnPitch
   }
 
   const bounds: Bounds = {
     minX: 0,
-    maxX: MARGIN + deepest * columnPitch + columnPitch,
+    maxX: widest + MARGIN,
     minY: 0,
     maxY: tallest + MARGIN,
     floors: FLOORS,

@@ -97,6 +97,19 @@ describe('the factory module', () => {
     }
   })
 
+  it('stays inside the widest platform the game has', () => {
+    /**
+     * Folded on purpose. Given a column per step a deep plan ran to 277 tiles
+     * long, and no platform is that wide however thin it is — three chunks is
+     * sixty. The width is now set by how much room it is given rather than by
+     * how long the plan happens to be, so this checks the fold actually holds.
+     */
+    for (const one of made) {
+      if (!one.module.ok) continue
+      expect(one.module.size.width, one.code).toBeLessThanOrEqual(60)
+    }
+  })
+
   it('carries a machine second stream on a floor of its own', () => {
     // the lifts are the whole reason a cutter keeping both halves works, so
     // this checks they are actually there rather than that the layout happened
