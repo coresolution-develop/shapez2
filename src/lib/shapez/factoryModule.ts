@@ -59,10 +59,20 @@
  * its neighbours. Lanes share the comb and carrier columns, which is the whole
  * point: twelve lanes is not twelve of these side by side.
  *
- * It is set to one, because that is the only count that lays out. Two manages
- * about four fifths of the plans and three collapses to a quarter, and giving
- * them more room barely moves either — the same signal that has meant a
- * structural collision every time it has come up here. Not chased yet.
+ * It is set to one, because one is the only count that comes out clean. Two and
+ * four still produce five blueprints each that are wired wrong, with the same
+ * signature as a bug fixed earlier here — a comb whose open tile no net owns,
+ * which the router then builds through. Three is clean but only reaches nine
+ * tenths of the plans. Do not put a lane count in front of a player before that
+ * is settled.
+ *
+ * Two things were found and fixed while chasing it, and both were room in the
+ * wrong place rather than routing. Every raw feed starts in the leftmost column
+ * and three lanes means three times as many trying to leave it at once — the
+ * margin now grows with the lane count, and that alone took three lanes from a
+ * quarter of the plans to four fifths. And the gap between one step's
+ * collecting comb and the next step's feed comb was two columns whatever the
+ * traffic, so the column pitch grows with the lane count too.
  *
  * The arithmetic says the goal is reachable but not at this density. Twelve
  * lanes of a median plan is about five thousand tiles of buildings, and a
@@ -94,7 +104,7 @@ const FLOW: Facing = 0
 const UP: Facing = 1
 const DOWN: Facing = 3
 const FLOORS = 3
-const MARGIN = 3
+const MARGIN_DEFAULT = 3
 
 const SPLITTER = 'Splitter1To2LInternalVariant'
 const MERGER = 'Merger2To1LInternalVariant'
@@ -164,6 +174,7 @@ export function layoutFactoryModule(
     columnPitch?: number
     rowGap?: number
     across?: number
+    margin?: number
     stackLimit?: number
     rounds?: number
   },
@@ -215,14 +226,16 @@ export function layoutFactoryModule(
   }
 
   // A step needs five columns of its own — comb, carrier, machines, carrier,
-  // comb — and four does not fit at all. Seven rather than five because three
-  // steps now share a column, one to a floor, and the belts between them have
-  // to get past each other: at five, a quarter of the plans cannot be wired.
-  // Two rows between blocks rather than one: a collecting comb hands over on
-  // the row below its lowest machine, and with a single row the block beneath
-  // is already using it.
-  const columnPitch = options.columnPitch ?? 7
-  const rowGap = options.rowGap ?? 2
+  // comb — and everything past that is room for the belts between steps to get
+  // by each other. One lane wants two spare columns and four does not fit at
+  // all; every further lane is another belt through the same gap, so the pitch
+  // grows with the lane count. Measured: at eleven, three lanes lay out
+  // completely, and at seven they do not.
+  const columnPitch = options.columnPitch ?? 5 + 2 * lanes
+  // Two rows between blocks: a collecting comb hands over on the row below its
+  // lowest machine, and with one row the block beneath is already using it.
+  // More lanes means more of those handovers stacked up the same column.
+  const rowGap = options.rowGap ?? Math.max(2, lanes)
   /**
    * How wide the factory may grow before folding onto a new band.
    *
@@ -231,6 +244,16 @@ export function layoutFactoryModule(
    * came out 277 tiles long, which no platform can hold however thin it is.
    */
   const across = options.across ?? 56
+  /**
+   * Free ground at the left, where the player's belts come in.
+   *
+   * Every raw feed starts in the leftmost column and has to reach a comb, and
+   * with three lanes there are three times as many of them trying to get out of
+   * that column at once. Three tiles was enough for one lane and left three
+   * quarters of the three-lane plans unwireable; widening it alone took them
+   * from a quarter to four fifths.
+   */
+  const MARGIN = options.margin ?? MARGIN_DEFAULT + 2 * (lanes - 1)
   /** How many floors of one column may be stacked with machines. */
   const stackLimit = options.stackLimit ?? FLOORS
 
@@ -322,7 +345,9 @@ export function layoutFactoryModule(
       stacked = 0
       column += columnPitch
     }
-    if (column + columnPitch > across && column > MARGIN) {
+    // fold on the total width, margins included, or a wide margin pushes the
+    // factory past the platform it was being folded to fit
+    if (column + columnPitch + MARGIN > across && column > MARGIN) {
       column = MARGIN
       stacked = 0
       band += bandDeep
@@ -757,3 +782,4 @@ export async function generateFactoryModule(
 function span(values: number[]): number {
   return values.length === 0 ? 0 : Math.max(...values) - Math.min(...values) + 1
 }
+
