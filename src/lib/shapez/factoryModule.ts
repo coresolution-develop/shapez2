@@ -51,8 +51,25 @@
  * five a quarter of the plans cannot be wired at all. That is the trade, and it
  * still halves the area.
  *
- * Twelve lanes side by side is a different problem again and has not been
- * started: twelve of these is far more than a platform holds.
+ * ## Lanes
+ *
+ * The structure takes a lane count — the machines split into a group per lane,
+ * each group with its own feed comb and its own collecting comb, so a lane
+ * carries one belt from the raw material to the finished shape and never meets
+ * its neighbours. Lanes share the comb and carrier columns, which is the whole
+ * point: twelve lanes is not twelve of these side by side.
+ *
+ * It is set to one, because that is the only count that lays out. Two manages
+ * about four fifths of the plans and three collapses to a quarter, and giving
+ * them more room barely moves either — the same signal that has meant a
+ * structural collision every time it has come up here. Not chased yet.
+ *
+ * The arithmetic says the goal is reachable but not at this density. Twelve
+ * lanes of a median plan is about five thousand tiles of buildings, and a
+ * three-chunk platform holds ten thousand eight hundred — so it needs roughly
+ * half the space filled, where this fills a quarter. The single-operation
+ * modules manage three fifths, so the room is there in principle; it wants a
+ * tighter arrangement rather than a bigger board.
  */
 import { encodeBuildingBlueprint, type BuildingPlacement } from './blueprint'
 import { factoryPlan, type FactoryPlan, type FactoryStep } from './factoryPlan'
@@ -133,7 +150,7 @@ interface Block {
    * feed overwrite the first so both nets aimed at one mouth and fought over
    * the tile in front of it.
    */
-  intake: Map<number, Endpoint>
+  intake: Map<number, Endpoint[]>
   /** Where each result can be drawn from — one endpoint per consumer. */
   supply: Map<string, Endpoint[]>
 }
@@ -151,8 +168,9 @@ export function layoutFactoryModule(
     rounds?: number
   },
 ): FactoryModuleResult {
+  const lanes = options.lanes ?? 1
   const plan = factoryPlan(root, {
-    lanes: options.lanes ?? 1,
+    lanes,
     tier: options.tier,
     stackerVariant: options.stackerVariant,
     tilesOf: (type) => tilesOf(type, 0).length,
@@ -228,8 +246,18 @@ export function layoutFactoryModule(
   const finishedId = plan.steps[plan.steps.length - 1].node.id
   takers.set(finishedId, (takers.get(finishedId) ?? 0) + 1)
 
+  /**
+   * How many groups a step's machines fall into.
+   *
+   * One per lane, because a lane carries one belt and a comb collects onto one
+   * belt — that is the whole reason the factory is built a lane at a time. And
+   * one more factor for a result wanted in several places, since each consumer
+   * needs a comb of its own. The groups are laid out lane-major, so lane L's
+   * consumers are groups L*takers .. L*takers+takers-1, which keeps a lane's
+   * traffic together instead of threading it past its neighbours.
+   */
   const sharesOf = (step: FactoryStep) =>
-    Math.max(1, ...[...step.outputs.values()].map((out) => takers.get(out.node.id) ?? 1))
+    lanes * Math.max(1, ...[...step.outputs.values()].map((out) => takers.get(out.node.id) ?? 1))
 
   // ── where everything stands ──────────────────────────────────────────────
   const byDepth = new Map<number, FactoryStep[]>()
@@ -391,35 +419,43 @@ export function layoutFactoryModule(
         return { ok: false, reason: `${OPERATIONS[step.op].labelKo}의 입력 포트가 기계에 닿지 않습니다` }
       }
       const upstairs = liftIn[slot]
-      const mouths = stand.map((at) =>
-        portAt({ ...at, z: block.floor, type: step.type, rotation: FLOW }, port),
-      )
-      for (const mouth of mouths) {
-        const clash = put(
-          upstairs
-            ? { type: LIFT_DOWN, x: mouth.x, y: mouth.y, layer: mouth.z + 1, rotation: cross.inward }
-            : { type: BELT, x: mouth.x, y: mouth.y, layer: mouth.z, rotation: cross.inward },
-          `${OPERATIONS[step.op].labelKo} 입구`,
+      // one comb per lane: a lane arrives on one belt, and it feeds whichever
+      // of this step's groups belong to that lane
+      const perLane = block.shares.length / lanes
+      const ends: Endpoint[] = []
+      for (let lane = 0; lane < lanes; lane++) {
+        const mine = block.shares.slice(lane * perLane, (lane + 1) * perLane).flat()
+        const mouths = mine.map((at) =>
+          portAt({ ...at, z: block.floor, type: step.type, rotation: FLOW }, port),
         )
-        if (clash) return { ok: false, reason: clash }
+        for (const mouth of mouths) {
+          const clash = put(
+            upstairs
+              ? { type: LIFT_DOWN, x: mouth.x, y: mouth.y, layer: mouth.z + 1, rotation: cross.inward }
+              : { type: BELT, x: mouth.x, y: mouth.y, layer: mouth.z, rotation: cross.inward },
+            `${OPERATIONS[step.op].labelKo} 입구`,
+          )
+          if (clash) return { ok: false, reason: clash }
+        }
+        const built = comb({
+          mouths: mouths.map((mouth) => ({
+            ...mouth,
+            x: mouth.x - 1,
+            z: mouth.z + (upstairs ? 1 : 0),
+          })),
+          stand: mine,
+          cross,
+          way: 'feed',
+          piece: SPLITTER,
+          rotation: splitRotation,
+          put,
+          reserve,
+          label: `${OPERATIONS[step.op].labelKo} 공급 빗`,
+        })
+        if (typeof built === 'string') return { ok: false, reason: built }
+        ends.push(built)
       }
-      const built = comb({
-        mouths: mouths.map((mouth) => ({
-          ...mouth,
-          x: mouth.x - 1,
-          z: mouth.z + (upstairs ? 1 : 0),
-        })),
-        stand,
-        cross,
-        way: 'feed',
-        piece: SPLITTER,
-        rotation: splitRotation,
-        put,
-        reserve,
-        label: `${OPERATIONS[step.op].labelKo} 공급 빗`,
-      })
-      if (typeof built === 'string') return { ok: false, reason: built }
-      block.intake.set(slot, built)
+      block.intake.set(slot, ends)
     }
 
     for (const [ordinal, [index, out]] of [...step.outputs].entries()) {
@@ -445,7 +481,7 @@ export function layoutFactoryModule(
       // to a comb: its comb runs straight over the blank row between them,
       // which costs nothing because the two results are collected on different
       // floors and so never share that row.
-      const wanted = takers.get(out.node.id) ?? 1
+      const wanted = (takers.get(out.node.id) ?? 1) * lanes
       if (wanted > block.shares.length) {
         return {
           ok: false,
@@ -528,30 +564,37 @@ export function layoutFactoryModule(
 
   for (const block of blocks.values()) {
     for (const [slot, feed] of block.step.inputs.entries()) {
-      const to = block.intake.get(slot)
-      if (!to) return { ok: false, reason: '공급받을 자리를 찾지 못했습니다' }
+      const mouths = block.intake.get(slot)
+      if (!mouths) return { ok: false, reason: '공급받을 자리를 찾지 못했습니다' }
 
-      if (!feed.from) {
-        const head: Endpoint = { x: bounds.minX, y: feedRow, z: 0, facing: FLOW }
-        feedRow += 2
-        inputs.push({ part: feed.part ?? '', at: { x: head.x, y: head.y, z: head.z } })
-        nets.push({ from: head, to, label: `${feed.part} 공급` })
-        continue
+      for (const to of mouths) {
+        if (!feed.from) {
+          const head: Endpoint = { x: bounds.minX, y: feedRow, z: 0, facing: FLOW }
+          feedRow += 2
+          inputs.push({ part: feed.part ?? '', at: { x: head.x, y: head.y, z: head.z } })
+          nets.push({ from: head, to, label: `${feed.part} 공급` })
+          continue
+        }
+        const taps = blocks.get(feed.from.node.id)?.supply.get(feed.node.id)
+        const from = taps?.shift()
+        if (!from) return { ok: false, reason: '만든 도형을 어디서 받을지 정하지 못했습니다' }
+        nets.push({ from, to, label: `${OPERATIONS[block.step.op].labelKo} 공급` })
       }
-      const taps = blocks.get(feed.from.node.id)?.supply.get(feed.node.id)
-      const from = taps?.shift()
-      if (!from) return { ok: false, reason: '만든 도형을 어디서 받을지 정하지 못했습니다' }
-      nets.push({ from, to, label: `${OPERATIONS[block.step.op].labelKo} 공급` })
     }
   }
 
   const last = plan.steps[plan.steps.length - 1]
-  const finished = blocks.get(last.node.id)?.supply.get(last.node.id)?.shift()
-  if (!finished) return { ok: false, reason: '완성된 도형의 출구를 찾지 못했습니다' }
-  const exit: Endpoint = { x: bounds.maxX, y: finished.y, z: finished.z, facing: FLOW }
-  const blocked = put({ type: BELT, x: exit.x, y: exit.y, layer: exit.z, rotation: FLOW }, '출구')
-  if (blocked) return { ok: false, reason: blocked }
-  nets.push({ from: finished, to: exit, label: '완성된 도형' })
+  const leaving = blocks.get(last.node.id)?.supply.get(last.node.id) ?? []
+  if (leaving.length === 0) return { ok: false, reason: '완성된 도형의 출구를 찾지 못했습니다' }
+  const outlets: Endpoint[] = []
+  for (const finished of leaving) {
+    const exit: Endpoint = { x: bounds.maxX, y: finished.y, z: finished.z, facing: FLOW }
+    const blocked = put({ type: BELT, x: exit.x, y: exit.y, layer: exit.z, rotation: FLOW }, '출구')
+    if (blocked) return { ok: false, reason: blocked }
+    outlets.push(exit)
+    nets.push({ from: finished, to: exit, label: '완성된 도형' })
+  }
+  const exit = outlets[0]
 
   const wiring = routeAll(occupancy, nets, { rounds: options.rounds ?? 10 })
   if ('stuck' in wiring) {
