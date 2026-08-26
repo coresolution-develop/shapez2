@@ -49,7 +49,7 @@ import { OPERATION_BUILDING } from './module'
 import { OPERATIONS, type OperationId } from './operations'
 import { walk, type BuildNode } from './plan'
 import { portsFor } from './portData'
-import { toWorld } from './ports'
+import { crossing, portAt } from './portGeometry'
 import { Occupancy, routeAll, tilesOf, type Bounds, type Endpoint, type Facing, type Net } from './route'
 
 /** Shapes travel left to right, which puts the plan in reading order. */
@@ -159,56 +159,6 @@ function collectMachines(root: BuildNode): { machines: Machine[]; sourceOf: Map<
   for (const machine of ordered) machine.depth = depthOf(machine)
   ordered.sort((a, b) => a.depth - b.depth)
   return { machines: ordered, sourceOf }
-}
-
-/** Where a building's port lands, in world tiles. */
-function portAt(
-  placement: { x: number; y: number; z: number; type: string; rotation: number },
-  port: readonly [number, number, number],
-): { x: number; y: number; z: number } {
-  const [dx, dy, dz] = toWorld(port, placement.rotation)
-  return { x: placement.x + dx, y: placement.y + dy, z: placement.z + dz }
-}
-
-/** Which way each step goes, in the order facings are numbered. */
-const STEPS: readonly (readonly [number, number])[] = [
-  [1, 0],
-  [0, 1],
-  [-1, 0],
-  [0, -1],
-]
-
-/**
- * Which way a shape crosses a port, and which of the building's own tiles it
- * crosses into.
- *
- * A port sits on an empty tile touching the building, so it names a face — but
- * *which* face is a question the offset alone cannot always answer. A swapper's
- * two inputs are at (-1,-1) and (-1,0), and reading a step out of each axis
- * puts both of them on the same tile, which is how two different shapes came to
- * be routed into one input port. So the tile is looked up in the building's own
- * footprint instead: exactly one of its tiles touches the port, and finding it
- * gives the face and the direction together, for any shape of building.
- */
-function crossing(type: string, port: readonly [number, number, number], rotation: number) {
-  const [dx, dy, dz] = toWorld(port, rotation)
-  const tiles = tilesOf(type, rotation)
-
-  for (const [facing, [sx, sy]] of STEPS.entries()) {
-    const touching = tiles.find(
-      (tile) => tile[0] === dx + sx && tile[1] === dy + sy && tile[2] === dz,
-    )
-    if (!touching) continue
-    return {
-      /** Travelling this way carries a shape from the port into the building. */
-      inward: facing as Facing,
-      /** And this way carries it out. */
-      outward: ((facing + 2) % 4) as Facing,
-      /** The building's own tile behind the port, which is where a feed heads. */
-      behind: { x: touching[0], y: touching[1], z: touching[2] },
-    }
-  }
-  return null
 }
 
 export function layoutShapeModule(

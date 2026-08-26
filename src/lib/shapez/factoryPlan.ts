@@ -180,13 +180,15 @@ export function factoryPlan(
   const raw = new Map<string, { part: string; rate: number; belts: number }>()
 
   for (const step of steps) {
-    // one entry per distinct input, so a machine fed the same shape twice gets
-    // one feed carrying twice as much rather than two feeds to the same port
-    for (const input of dedupe(step.node.inputs)) {
+    // One feed per port, not per distinct shape. A stacker laying a shape on
+    // itself is fed the same thing twice, and folding those into one feed of
+    // twice the rate is right for the arithmetic and wrong for the layout —
+    // the machine still has two mouths and the second one goes hungry.
+    for (const input of step.node.inputs) {
       const from = byNode.get(input.id) ?? null
       // what this step alone draws, which is not the whole of what its source
       // makes when two steps draw from the same one
-      const rate = shareOf(step, input.id, step.opRate)
+      const rate = step.opRate
       const belts = Math.max(1, Math.ceil(rate / beltRate))
       step.inputs.push({
         from,
@@ -217,25 +219,11 @@ export function factoryPlan(
 }
 
 /**
- * How much of a source's output this one consumer takes.
+ * A feed carries one shape per run of the machine it feeds — no more, and no
+ * less however many other mouths that machine has. So a step's draw on a source
+ * is its own running rate, once for each mouth that source fills.
  *
- * A shape wanted in two places is made once and split, so a consumer's share is
- * its own demand and not everything its source produces. Each run of a machine
- * eats one of each thing on its input list, so the share is simply how often
- * this machine runs times how many times the shape appears on that list — a
- * stacker laying a shape on itself wants two of it per run.
- *
- * `factoryPlan.test.ts` adds the shares back up and checks they come to what
- * the source was told to make, which is the property that would break first if
- * this and the throughput model ever drifted apart.
+ * `factoryPlan.test.ts` adds the draws back up and checks they come to what the
+ * source was told to make, which is the property that would break first if this
+ * and the throughput model ever drifted apart.
  */
-function shareOf(step: FactoryStep, inputId: string, opRate: number): number {
-  const times = step.node.inputs.filter((input) => input.id === inputId).length
-  return opRate * times
-}
-
-/** The distinct things a step is fed, keeping the order they are listed in. */
-function dedupe(inputs: BuildNode[]): BuildNode[] {
-  const seen = new Set<string>()
-  return inputs.filter((input) => !seen.has(input.id) && seen.add(input.id))
-}
