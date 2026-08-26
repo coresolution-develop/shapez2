@@ -36,18 +36,23 @@
  *
  * ## Room
  *
- * A lane comes out around 57 by 21 for a median plan and fills a fifth of the
- * box it stands in. Most of the rest is unavoidable: a step needs five columns
- * for one of machines, and only one floor in three holds machines at all.
+ * A lane comes out around 49 by 12 for a median plan, and 93% of them fit on a
+ * three-chunk platform, which is the biggest the game has.
  *
- * The width is folded rather than left to grow. A column per step ran a deep
- * plan to 277 tiles, and the widest platform in the game is sixty — so the
- * factory now wraps onto a new band when a row is full, which bounds the width
- * and, since a step lands nearer the ones it feeds, shortens the belts too.
+ * Three things got it there. The width is folded rather than left to grow — a
+ * column per step ran a deep plan to 277 tiles, and no platform is that wide.
+ * Three steps share a column, one to a floor, where the machines used to stand
+ * on the ground floor alone. And a step only takes a second floor when it
+ * actually needs one: a stacker takes its two shapes on separate floors already
+ * and was being given a lift it had no use for.
  *
- * Twelve lanes side by side is still far larger than any platform. Getting
- * there wants machines on all three floors, which the second-stream lifts are
- * currently the only thing using.
+ * The column pitch had to go up from five to seven to pay for the stacking —
+ * with three steps in a column the belts between them need room to pass, and at
+ * five a quarter of the plans cannot be wired at all. That is the trade, and it
+ * still halves the area.
+ *
+ * Twelve lanes side by side is a different problem again and has not been
+ * started: twelve of these is far more than a platform holds.
  */
 import { encodeBuildingBlueprint, type BuildingPlacement } from './blueprint'
 import { factoryPlan, type FactoryPlan, type FactoryStep } from './factoryPlan'
@@ -107,6 +112,8 @@ export type FactoryModuleResult = FactoryModuleSuccess | FactoryModuleFailure
 
 interface Block {
   step: FactoryStep
+  /** Which floor this step's machines stand on. */
+  floor: number
   stand: { x: number; y: number }[]
   /**
    * The machines split into the groups each collecting comb serves.
@@ -140,6 +147,7 @@ export function layoutFactoryModule(
     columnPitch?: number
     rowGap?: number
     across?: number
+    stackLimit?: number
     rounds?: number
   },
 ): FactoryModuleResult {
@@ -188,11 +196,14 @@ export function layoutFactoryModule(
     return { ok: false, reason: '분배기·병합기를 세울 방향을 찾지 못했습니다' }
   }
 
-  // Five columns is exactly what a step needs — comb, carrier, machines,
-  // carrier, comb — and four does not fit at all. Two rows between blocks
-  // rather than one: a collecting comb hands over on the row below its lowest
-  // machine, and with a single row the block beneath is already using it.
-  const columnPitch = options.columnPitch ?? 5
+  // A step needs five columns of its own — comb, carrier, machines, carrier,
+  // comb — and four does not fit at all. Seven rather than five because three
+  // steps now share a column, one to a floor, and the belts between them have
+  // to get past each other: at five, a quarter of the plans cannot be wired.
+  // Two rows between blocks rather than one: a collecting comb hands over on
+  // the row below its lowest machine, and with a single row the block beneath
+  // is already using it.
+  const columnPitch = options.columnPitch ?? 7
   const rowGap = options.rowGap ?? 2
   /**
    * How wide the factory may grow before folding onto a new band.
@@ -202,6 +213,8 @@ export function layoutFactoryModule(
    * came out 277 tiles long, which no platform can hold however thin it is.
    */
   const across = options.across ?? 56
+  /** How many floors of one column may be stacked with machines. */
+  const stackLimit = options.stackLimit ?? FLOORS
 
   /** How many places want each result, which decides how it is collected. */
   const takers = new Map<string, number>()
@@ -247,19 +260,48 @@ export function layoutFactoryModule(
   let bandDeep = 0
   let widest = MARGIN
   let tallest = MARGIN
+  /** How many floors of the current column are spoken for. */
+  let stacked = 0
 
   for (const step of ordered) {
-    const span = tilesOf(step.type, FLOW).map(([, dy]) => dy)
+    const footprint = tilesOf(step.type, FLOW)
+    const span = footprint.map(([, dy]) => dy)
     const height = Math.max(...span) - Math.min(...span) + 1
     const lift = -Math.min(...span)
     const wanted = Math.min(sharesOf(step), step.machines)
     const rows = step.machines * height + wanted + rowGap
+    const ports = portsFor(step.type)!
 
+    // How many floors the step wants: what the building itself stands in — a
+    // stacker is two floors tall — plus one more if a port has to be lifted
+    // clear of another on the same face. Most steps want one, which is what
+    // lets three share a column. The machines used to sit on the ground floor
+    // alone and two floors in three held nothing but the odd comb.
+    const storeys = footprint.map(([, , dz]) => dz)
+    const tall = Math.max(...storeys) - Math.min(...storeys) + 1
+    const lifted =
+      needLifting(ports.inputs.slice(0, step.inputs.length)).some(Boolean) ||
+      needLifting(ports.outputs.filter((_, index) => step.outputs.has(index))).some(Boolean)
+    const deep = tall + (lifted ? 1 : 0)
+    if (deep > FLOORS) {
+      return {
+        ok: false,
+        reason: `${OPERATIONS[step.op].labelKo}는 층 ${deep}개가 필요한데 ${FLOORS}층뿐입니다`,
+      }
+    }
+
+    if (stacked + deep > stackLimit) {
+      stacked = 0
+      column += columnPitch
+    }
     if (column + columnPitch > across && column > MARGIN) {
       column = MARGIN
+      stacked = 0
       band += bandDeep
       bandDeep = 0
     }
+    const floor = stacked
+    stacked += deep
 
     let row = band
     const shares: { x: number; y: number }[][] = []
@@ -274,12 +316,11 @@ export function layoutFactoryModule(
       row += size * height + 1
     }
     const stand = shares.flat()
-    blocks.set(step.node.id, { step, stand, shares, intake: new Map(), supply: new Map() })
+    blocks.set(step.node.id, { step, floor, stand, shares, intake: new Map(), supply: new Map() })
 
     bandDeep = Math.max(bandDeep, rows)
     widest = Math.max(widest, column + columnPitch)
     tallest = Math.max(tallest, band + bandDeep)
-    column += columnPitch
   }
 
   const bounds: Bounds = {
@@ -310,7 +351,7 @@ export function layoutFactoryModule(
   for (const block of blocks.values()) {
     for (const at of block.stand) {
       const clash = put(
-        { type: block.step.type, x: at.x, y: at.y, layer: 0, rotation: FLOW },
+        { type: block.step.type, x: at.x, y: at.y, layer: block.floor, rotation: FLOW },
         OPERATIONS[block.step.op].labelKo,
       )
       if (clash) return { ok: false, reason: clash }
@@ -340,14 +381,19 @@ export function layoutFactoryModule(
     // takes the shape from a floor above and drops it straight onto the machine
     // tile. A swapper's two mouths are one row apart in the same column, and
     // that is the only way both combs get a column to themselves.
+    const liftIn = needLifting(step.inputs.map((_, slot) => ports.inputs[Math.min(slot, ports.inputs.length - 1)]))
+    const liftOut = needLifting([...step.outputs.keys()].map((index) => ports.outputs[Math.min(index, ports.outputs.length - 1)]))
+
     for (const [slot] of step.inputs.entries()) {
       const port = ports.inputs[Math.min(slot, ports.inputs.length - 1)]
       const cross = crossing(step.type, port, FLOW)
       if (!cross) {
         return { ok: false, reason: `${OPERATIONS[step.op].labelKo}의 입력 포트가 기계에 닿지 않습니다` }
       }
-      const upstairs = slot > 0
-      const mouths = stand.map((at) => portAt({ ...at, z: 0, type: step.type, rotation: FLOW }, port))
+      const upstairs = liftIn[slot]
+      const mouths = stand.map((at) =>
+        portAt({ ...at, z: block.floor, type: step.type, rotation: FLOW }, port),
+      )
       for (const mouth of mouths) {
         const clash = put(
           upstairs
@@ -424,10 +470,12 @@ export function layoutFactoryModule(
       // all. Its two outputs are one row apart in the same column, and two
       // combs cannot both have an unbroken run up it; a lift at the mouth puts
       // the second one upstairs, where it has a column to itself.
-      const upstairs = ordinal > 0
+      const upstairs = liftOut[ordinal]
       const ends: Endpoint[] = []
       for (const mine of buckets) {
-        const mouths = mine.map((at) => portAt({ ...at, z: 0, type: step.type, rotation: FLOW }, port))
+        const mouths = mine.map((at) =>
+          portAt({ ...at, z: block.floor, type: step.type, rotation: FLOW }, port),
+        )
         for (const mouth of mouths) {
           const clash = put(
             upstairs
@@ -462,7 +510,7 @@ export function layoutFactoryModule(
     for (const [index, port] of ports.outputs.entries()) {
       if (step.outputs.has(index)) continue
       for (const at of stand) {
-        const spare = portAt({ ...at, z: 0, type: step.type, rotation: FLOW }, port)
+        const spare = portAt({ ...at, z: block.floor, type: step.type, rotation: FLOW }, port)
         const clash = put(
           { type: TRASH, x: spare.x, y: spare.y, layer: spare.z, rotation: FLOW },
           '쓰레기통',
@@ -534,6 +582,25 @@ export function layoutFactoryModule(
       ...notes,
     ],
   }
+}
+
+/**
+ * Which of a building's ports have to be carried to another floor.
+ *
+ * Two ports on the same face and the same floor are one row apart, and a comb
+ * needs an unbroken run up that column — so the second of them has to be lifted
+ * out of the way. Ports that already differ by a floor do not: a stacker takes
+ * its two shapes on separate floors and needs no lift at all, and giving it one
+ * was costing a floor that the machines could have stood on.
+ */
+function needLifting(ports: readonly (readonly [number, number, number])[]): boolean[] {
+  const seen = new Set<string>()
+  return ports.map((port) => {
+    const face = `${port[0]},${port[2]}`
+    if (seen.has(face)) return true
+    seen.add(face)
+    return false
+  })
 }
 
 /** The rotation that satisfies a test, or null when none does. */

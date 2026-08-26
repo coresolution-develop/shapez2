@@ -97,6 +97,32 @@ describe('the factory module', () => {
     }
   })
 
+  it('stands its machines on all three floors', () => {
+    /**
+     * The machines used to sit on the ground floor alone, which meant two
+     * floors in three held nothing but the odd comb — and a lane twice the size
+     * it needed to be. Three steps share a column now, one to a floor, so this
+     * checks the floors are actually being used rather than that the numbers
+     * happened to come out smaller.
+     */
+    const spread = made.filter((one) => {
+      if (!one.module.ok) return false
+      const floors = new Set(
+        one.module.placements
+          .filter((placement) => !/^(Belt|Lift)/.test(placement.type))
+          .map((placement) => placement.layer ?? 0),
+      )
+      return floors.size >= 3
+    })
+    expect(spread.length / made.length, `${spread.length}/${made.length}`).toBeGreaterThan(0.5)
+  })
+
+  it('fits most lanes on a platform the game actually has', () => {
+    // three chunks square is the biggest there is; the number to push up
+    const fits = made.filter((one) => one.module.ok && one.module.size.width <= 60 && one.module.size.height <= 60)
+    expect(fits.length / made.length, `${fits.length}/${made.length}`).toBeGreaterThan(0.9)
+  })
+
   it('stays inside the widest platform the game has', () => {
     /**
      * Folded on purpose. Given a column per step a deep plan ran to 277 tiles
