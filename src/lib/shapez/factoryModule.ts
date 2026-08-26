@@ -20,18 +20,24 @@
  * one from the side — so both are built by the same code run in opposite
  * directions, and which way to turn each piece is read off the measurement.
  *
- * ## What it cannot do yet
+ * ## The third floor
  *
- * One thing left: a machine whose two *inputs* are in the same column, which
- * is the swapper. Both feed combs would want an unbroken run up that column
- * through the rows the other's mouths are on, and neither can have it.
+ * Two machines have ports one row apart in the same column: a cutter keeping
+ * both halves, and a swapper taking two shapes. A comb needs an unbroken run up
+ * its column, through the rows the other comb's mouths are on, so the two
+ * cannot both have it — and turning the machines sideways only transposes the
+ * problem, since the ports become adjacent columns of one row.
  *
- * That is the same shape of problem a cutter keeping both halves had on the
- * output side, and the way out of that one should work here too — the second
- * result is carried a floor up by a lift at its mouth and collected upstairs,
- * where it has a column to itself. Doing it in reverse means a lift *down* at
- * each mouth, fed by a comb standing a floor above. It is five plans, so it has
- * not been done; the plans are turned down by name rather than laid out wrong.
+ * The floor above settles both. Nothing meets a mouth directly: a carrier
+ * stands there and the comb a column clear of it. For the first stream the
+ * carrier is a plain belt; for the second it is a lift, up on the way out and
+ * down on the way in, which puts that comb on its own floor with a column to
+ * itself. It costs one tile per machine and buys every plan there is.
+ *
+ * What it does *not* do is pack tightly. A lane comes out around 46 by 31 for a
+ * median plan, most of which is air — the machines themselves are a tenth of
+ * that. Fitting twelve lanes on a platform is a packing problem this has not
+ * started on.
  */
 import { encodeBuildingBlueprint, type BuildingPlacement } from './blueprint'
 import { factoryPlan, type FactoryPlan, type FactoryStep } from './factoryPlan'
@@ -56,7 +62,7 @@ const FLOW: Facing = 0
 const UP: Facing = 1
 const DOWN: Facing = 3
 const FLOORS = 3
-const MARGIN = 2
+const MARGIN = 3
 
 const SPLITTER = 'Splitter1To2LInternalVariant'
 const MERGER = 'Merger2To1LInternalVariant'
@@ -66,6 +72,8 @@ const TURN_MIRRORED = 'BeltDefaultLeftInternalVariantMirrored'
 const TRASH = 'TrashDefaultInternalVariant'
 /** Takes a shape in on its own floor and puts it down one floor up, one on. */
 const LIFT_UP = 'Lift1UpForwardInternalVariant'
+/** And the other way: in on its own floor, out one floor down, one tile on. */
+const LIFT_DOWN = 'Lift1DownForwardInternalVariant'
 
 const clockwise = (facing: Facing): Facing => (((facing + 3) % 4) as Facing)
 
@@ -148,14 +156,10 @@ export function layoutFactoryModule(
         reason: `${OPERATIONS[step.op].labelKo}는 결과가 ${step.outputs.size}가지라 층이 모자랍니다`,
       }
     }
-    if (step.inputs.length > 1) {
-      const used = step.inputs.map((_, slot) => ports.inputs[Math.min(slot, ports.inputs.length - 1)])
-      const seen = new Set(used.map((port) => `${port[0]},${port[2]}`))
-      if (seen.size < used.length) {
-        return {
-          ok: false,
-          reason: `${OPERATIONS[step.op].labelKo}는 두 입구가 같은 열에 있어서 아직 배치할 수 없습니다`,
-        }
+    if (step.inputs.length > FLOORS - 1) {
+      return {
+        ok: false,
+        reason: `${OPERATIONS[step.op].labelKo}는 입구가 ${step.inputs.length}개라 층이 모자랍니다`,
       }
     }
   }
@@ -278,14 +282,35 @@ export function layoutFactoryModule(
       )
     }
 
+    // Feeding is the same trick as collecting, run backwards. Nothing is fed
+    // at the mouth itself: a carrier stands there and the comb a column clear
+    // of it — a plain belt for the first mouth, and for the second a lift that
+    // takes the shape from a floor above and drops it straight onto the machine
+    // tile. A swapper's two mouths are one row apart in the same column, and
+    // that is the only way both combs get a column to themselves.
     for (const [slot] of step.inputs.entries()) {
       const port = ports.inputs[Math.min(slot, ports.inputs.length - 1)]
       const cross = crossing(step.type, port, FLOW)
       if (!cross) {
         return { ok: false, reason: `${OPERATIONS[step.op].labelKo}의 입력 포트가 기계에 닿지 않습니다` }
       }
+      const upstairs = slot > 0
+      const mouths = stand.map((at) => portAt({ ...at, z: 0, type: step.type, rotation: FLOW }, port))
+      for (const mouth of mouths) {
+        const clash = put(
+          upstairs
+            ? { type: LIFT_DOWN, x: mouth.x, y: mouth.y, layer: mouth.z + 1, rotation: cross.inward }
+            : { type: BELT, x: mouth.x, y: mouth.y, layer: mouth.z, rotation: cross.inward },
+          `${OPERATIONS[step.op].labelKo} 입구`,
+        )
+        if (clash) return { ok: false, reason: clash }
+      }
       const built = comb({
-        mouths: stand.map((at) => portAt({ ...at, z: 0, type: step.type, rotation: FLOW }, port)),
+        mouths: mouths.map((mouth) => ({
+          ...mouth,
+          x: mouth.x - 1,
+          z: mouth.z + (upstairs ? 1 : 0),
+        })),
         stand,
         cross,
         way: 'feed',
@@ -493,12 +518,9 @@ function comb(spec: {
   const order = [...mouths].sort((a, b) => a.y - b.y)
 
   if (order.length === 1) {
-    if (way === 'feed') {
-      // aim at the machine's own tile: the router lays no piece where it aims,
-      // and a port left bare is a machine fed by a gap
-      const at = spec.stand[0]
-      return { x: at.x + cross.behind.x, y: at.y + cross.behind.y, z: cross.behind.z, facing: cross.inward }
-    }
+    // one machine wants no comb: the feed aims straight at the carrier standing
+    // in front of it, which is already built and so cannot be built over
+    if (way === 'feed') return { ...order[0], facing: cross.inward }
     reserve(order[0])
     return { ...order[0], facing: cross.outward }
   }

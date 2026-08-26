@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
 import { layoutFactoryModule } from '../factoryModule'
-import { factoryPlan } from '../factoryPlan'
 import { portsFor } from '../portData'
 import { toWorld } from '../ports'
 import presets from '../presets.json'
@@ -34,36 +33,21 @@ const made = built.filter((one) => one.module.ok)
  * project keeps having and the only one worth guarding against up front.
  */
 describe('the factory module', () => {
-  it('lays out every plan whose machines take their two inputs apart', () => {
+  it('lays out every plan that has a machine in it', () => {
     /**
-     * The boundary is nameable, which is the point.
+     * All of them, which is the claim worth making and worth breaking on.
      *
-     * A cutter keeping both halves used to be out of reach: its two results
-     * leave one row apart in the same column, and two combs cannot both have an
-     * unbroken run up it. The third floor settles that — a lift at the mouth
-     * carries the second result upstairs, where it has a column to itself.
+     * Two machines here have ports one row apart in the same column — a cutter
+     * keeping both halves, a swapper taking two shapes — and a comb needs an
+     * unbroken run up that column, so the two combs cannot both have it. The
+     * third floor is what settles both: a lift at the mouth carries the second
+     * stream up or down a floor, where it has a column to itself.
      *
-     * The same trick has not been done on the feeding side, so the one thing
-     * left is a machine whose two *inputs* are in one column: a swapper. This
-     * asserts exactly that rather than a percentage, because a plan failing for
-     * any other reason should read as a broken test.
+     * Written as an exact count and not a percentage, because everything that
+     * ever failed here failed for a nameable reason. Any of them coming back
+     * should read as a broken test rather than a number that slipped.
      */
-    for (const one of built) {
-      if (one.module.ok) continue
-      const sameColumn = factoryPlan(one.root, {
-        lanes: 1,
-        tier: 100,
-        stackerVariant: 'straight',
-        tilesOf: (type) => tilesOf(type, 0).length,
-      }).steps.some((step) => {
-        const ports = portsFor(step.type)
-        if (!ports || step.inputs.length < 2) return false
-        const used = step.inputs.map((_, slot) => ports.inputs[Math.min(slot, ports.inputs.length - 1)])
-        return new Set(used.map((port) => `${port[0]},${port[2]}`)).size < used.length
-      })
-      expect(sameColumn, `${one.code}: ${one.module.reason}`).toBe(true)
-    }
-    expect(made.length / plans.length, `${made.length}/${plans.length}`).toBeGreaterThan(0.98)
+    expect(made.length, `${made.length}/${plans.length}`).toBe(plans.length)
   })
 
   it('wires every blueprint it does produce', () => {
@@ -113,12 +97,20 @@ describe('the factory module', () => {
     }
   })
 
-  it('says which machine it is turning the plan down for', () => {
-    // "could not route" tells a player nothing they can act on; naming the
-    // machine at least says what to build by hand instead
-    for (const one of built) {
-      if (one.module.ok) continue
-      expect(one.module.reason, one.code).toContain('두 입구')
-    }
+  it('carries a machine second stream on a floor of its own', () => {
+    // the lifts are the whole reason a cutter keeping both halves works, so
+    // this checks they are actually there rather than that the layout happened
+    // to squeeze past
+    const withTwo = made.find(
+      (one) =>
+        one.module.ok &&
+        one.module.plan.steps.some((step) => step.outputs.size > 1),
+    )
+    expect(withTwo, '두 결과를 다 쓰는 계획이 하나는 있어야 합니다').toBeDefined()
+    if (!withTwo || !withTwo.module.ok) return
+    const lifts = withTwo.module.placements.filter((one) => one.type.startsWith('Lift1Up'))
+    expect(lifts.length, withTwo.code).toBeGreaterThan(0)
+    const upstairs = withTwo.module.placements.filter((one) => (one.layer ?? 0) > 0)
+    expect(upstairs.length, `${withTwo.code}: 위층을 안 씁니다`).toBeGreaterThan(0)
   })
 })
