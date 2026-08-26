@@ -22,17 +22,16 @@
  *
  * ## What it cannot do yet
  *
- * A machine whose plan uses *both* of its outputs — a cutter keeping both
- * halves — needs two combs, and both of its output ports are in the same column
- * one row apart. Each comb needs an unbroken run up that column, through the
- * rows the other comb's mouths are on, so the two cannot both have it. Turning
- * the machines sideways only transposes the problem: the ports become adjacent
- * columns of one row and the combs collide along the row instead. Standing the
- * combs a column clear of the machines does not help either — the second one's
- * belts would have to cross the first one's column to reach a third. It wants a
- * different idea, and the likeliest is the third floor: lift one result out of
- * the mouth column and collect it upstairs. Until then those plans are turned
- * down by name rather than laid out wrong. That is a third of them.
+ * One thing left: a machine whose two *inputs* are in the same column, which
+ * is the swapper. Both feed combs would want an unbroken run up that column
+ * through the rows the other's mouths are on, and neither can have it.
+ *
+ * That is the same shape of problem a cutter keeping both halves had on the
+ * output side, and the way out of that one should work here too — the second
+ * result is carried a floor up by a lift at its mouth and collected upstairs,
+ * where it has a column to itself. Doing it in reverse means a lift *down* at
+ * each mouth, fed by a comb standing a floor above. It is five plans, so it has
+ * not been done; the plans are turned down by name rather than laid out wrong.
  */
 import { encodeBuildingBlueprint, type BuildingPlacement } from './blueprint'
 import { factoryPlan, type FactoryPlan, type FactoryStep } from './factoryPlan'
@@ -65,6 +64,8 @@ const BELT = 'BeltDefaultForwardInternalVariant'
 const TURN = 'BeltDefaultLeftInternalVariant'
 const TURN_MIRRORED = 'BeltDefaultLeftInternalVariantMirrored'
 const TRASH = 'TrashDefaultInternalVariant'
+/** Takes a shape in on its own floor and puts it down one floor up, one on. */
+const LIFT_UP = 'Lift1UpForwardInternalVariant'
 
 const clockwise = (facing: Facing): Facing => (((facing + 3) % 4) as Facing)
 
@@ -141,10 +142,10 @@ export function layoutFactoryModule(
         reason: `${OPERATIONS[step.op].labelKo}의 입출력 위치를 아직 측정하지 못했습니다`,
       }
     }
-    if (step.outputs.size > 1) {
+    if (step.outputs.size > FLOORS - 1) {
       return {
         ok: false,
-        reason: `${OPERATIONS[step.op].labelKo}는 두 결과를 다 쓰는데, 그 두 빗이 같은 열을 놓고 다퉈서 아직 배치할 수 없습니다`,
+        reason: `${OPERATIONS[step.op].labelKo}는 결과가 ${step.outputs.size}가지라 층이 모자랍니다`,
       }
     }
     if (step.inputs.length > 1) {
@@ -298,7 +299,7 @@ export function layoutFactoryModule(
       block.intake.set(slot, built)
     }
 
-    for (const [index, out] of step.outputs) {
+    for (const [ordinal, [index, out]] of [...step.outputs].entries()) {
       const port = ports.outputs[Math.min(index, ports.outputs.length - 1)]
       const cross = crossing(step.type, port, FLOW)
       if (!cross) {
@@ -309,6 +310,18 @@ export function layoutFactoryModule(
       // then split: each group of machines gets its own comb. One comb with two
       // nets drawing on it had both of them start on the same tile, which no
       // amount of negotiating gets past.
+      // Every group of machines has to end up in exactly one comb, and every
+      // comb has to have a consumer waiting for it. A comb nobody asked for
+      // ends on a tile no net owns, and a tile no net owns is one the router
+      // will build a lift through — which is how a merger came to be feeding
+      // the side of a lift that does not take from there.
+      //
+      // The two results of one machine need not be wanted in the same number
+      // of places, though. The machines are laid out in as many groups as the
+      // greediest result needs, and a result wanting fewer takes several groups
+      // to a comb: its comb runs straight over the blank row between them,
+      // which costs nothing because the two results are collected on different
+      // floors and so never share that row.
       const wanted = takers.get(out.node.id) ?? 1
       if (wanted > block.shares.length) {
         return {
@@ -316,23 +329,43 @@ export function layoutFactoryModule(
           reason: `${OPERATIONS[step.op].labelKo} 한 대를 ${wanted}군데로 나눠야 해서 아직 배치할 수 없습니다`,
         }
       }
-      // The comb stands one column clear of the machines rather than right up
-      // against them, reached by a belt from each mouth. That leaves the mouth
-      // column empty — which is where the trash for an unused output has to go,
-      // since it has to touch the machine and a comb filling that column has
-      // already taken the tile.
+      const buckets: { x: number; y: number }[][] = []
+      let left = block.shares.length
+      let cursor = 0
+      for (let bucket = 0; bucket < wanted; bucket++) {
+        const take = Math.floor(left / (wanted - bucket))
+        buckets.push(block.shares.slice(cursor, cursor + take).flat())
+        cursor += take
+        left -= take
+      }
+      // Nothing collects at the mouth itself. Each result is carried one tile
+      // clear first, which leaves the mouth column free for the trash an unused
+      // output needs — and, for the second result of a two-output machine,
+      // carries it a floor up at the same time.
+      //
+      // That last part is what makes a cutter keeping both halves possible at
+      // all. Its two outputs are one row apart in the same column, and two
+      // combs cannot both have an unbroken run up it; a lift at the mouth puts
+      // the second one upstairs, where it has a column to itself.
+      const upstairs = ordinal > 0
       const ends: Endpoint[] = []
-      for (const mine of block.shares) {
+      for (const mine of buckets) {
         const mouths = mine.map((at) => portAt({ ...at, z: 0, type: step.type, rotation: FLOW }, port))
         for (const mouth of mouths) {
           const clash = put(
-            { type: BELT, x: mouth.x, y: mouth.y, layer: mouth.z, rotation: cross.outward },
+            upstairs
+              ? { type: LIFT_UP, x: mouth.x, y: mouth.y, layer: mouth.z, rotation: cross.outward }
+              : { type: BELT, x: mouth.x, y: mouth.y, layer: mouth.z, rotation: cross.outward },
             `${OPERATIONS[step.op].labelKo} 출구`,
           )
           if (clash) return { ok: false, reason: clash }
         }
         const built = comb({
-          mouths: mouths.map((mouth) => ({ ...mouth, x: mouth.x + 1 })),
+          mouths: mouths.map((mouth) => ({
+            ...mouth,
+            x: mouth.x + 1,
+            z: mouth.z + (upstairs ? 1 : 0),
+          })),
           stand: mine,
           cross,
           way: 'collect',

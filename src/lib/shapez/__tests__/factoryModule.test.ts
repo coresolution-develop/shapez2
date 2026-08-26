@@ -34,30 +34,36 @@ const made = built.filter((one) => one.module.ok)
  * project keeps having and the only one worth guarding against up front.
  */
 describe('the factory module', () => {
-  it('lays out every plan with no two-output step in it', () => {
+  it('lays out every plan whose machines take their two inputs apart', () => {
     /**
      * The boundary is nameable, which is the point.
      *
-     * The only thing it cannot do is a machine whose plan keeps both of its
-     * results — a cutter using both halves — because the two combs that would
-     * collect them want the same column. Everything else lays out, so this
-     * asserts exactly that rather than a percentage: a plan without one of
-     * those steps failing should read as a broken test, not as a number that
-     * slipped.
+     * A cutter keeping both halves used to be out of reach: its two results
+     * leave one row apart in the same column, and two combs cannot both have an
+     * unbroken run up it. The third floor settles that — a lift at the mouth
+     * carries the second result upstairs, where it has a column to itself.
+     *
+     * The same trick has not been done on the feeding side, so the one thing
+     * left is a machine whose two *inputs* are in one column: a swapper. This
+     * asserts exactly that rather than a percentage, because a plan failing for
+     * any other reason should read as a broken test.
      */
     for (const one of built) {
-      const twoWays = one.module.ok
-        ? false
-        : factoryPlan(one.root, {
-            lanes: 1,
-            tier: 100,
-            stackerVariant: 'straight',
-            tilesOf: (type) => tilesOf(type, 0).length,
-          }).steps.some((step) => step.outputs.size > 1)
       if (one.module.ok) continue
-      expect(twoWays, `${one.code}: ${one.module.ok ? '' : one.module.reason}`).toBe(true)
+      const sameColumn = factoryPlan(one.root, {
+        lanes: 1,
+        tier: 100,
+        stackerVariant: 'straight',
+        tilesOf: (type) => tilesOf(type, 0).length,
+      }).steps.some((step) => {
+        const ports = portsFor(step.type)
+        if (!ports || step.inputs.length < 2) return false
+        const used = step.inputs.map((_, slot) => ports.inputs[Math.min(slot, ports.inputs.length - 1)])
+        return new Set(used.map((port) => `${port[0]},${port[2]}`)).size < used.length
+      })
+      expect(sameColumn, `${one.code}: ${one.module.reason}`).toBe(true)
     }
-    expect(made.length / plans.length, `${made.length}/${plans.length}`).toBeGreaterThan(0.66)
+    expect(made.length / plans.length, `${made.length}/${plans.length}`).toBeGreaterThan(0.98)
   })
 
   it('wires every blueprint it does produce', () => {
@@ -112,7 +118,7 @@ describe('the factory module', () => {
     // machine at least says what to build by hand instead
     for (const one of built) {
       if (one.module.ok) continue
-      expect(one.module.reason, one.code).toContain('두 결과')
+      expect(one.module.reason, one.code).toContain('두 입구')
     }
   })
 })
