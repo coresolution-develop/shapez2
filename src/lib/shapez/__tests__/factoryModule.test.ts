@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { layoutFactoryModule } from '../factoryModule'
+import { factoryPlan } from '../factoryPlan'
 import { portsFor } from '../portData'
 import { toWorld } from '../ports'
 import presets from '../presets.json'
@@ -33,10 +34,30 @@ const made = built.filter((one) => one.module.ok)
  * project keeps having and the only one worth guarding against up front.
  */
 describe('the factory module', () => {
-  it('lays out a useful share of the plans', () => {
-    // deliberately a floor and not a target: this is the number to push up, and
-    // it should read as a regression if it ever falls
-    expect(made.length / plans.length, `${made.length}/${plans.length}`).toBeGreaterThan(0.28)
+  it('lays out every plan with no two-output step in it', () => {
+    /**
+     * The boundary is nameable, which is the point.
+     *
+     * The only thing it cannot do is a machine whose plan keeps both of its
+     * results — a cutter using both halves — because the two combs that would
+     * collect them want the same column. Everything else lays out, so this
+     * asserts exactly that rather than a percentage: a plan without one of
+     * those steps failing should read as a broken test, not as a number that
+     * slipped.
+     */
+    for (const one of built) {
+      const twoWays = one.module.ok
+        ? false
+        : factoryPlan(one.root, {
+            lanes: 1,
+            tier: 100,
+            stackerVariant: 'straight',
+            tilesOf: (type) => tilesOf(type, 0).length,
+          }).steps.some((step) => step.outputs.size > 1)
+      if (one.module.ok) continue
+      expect(twoWays, `${one.code}: ${one.module.ok ? '' : one.module.reason}`).toBe(true)
+    }
+    expect(made.length / plans.length, `${made.length}/${plans.length}`).toBeGreaterThan(0.66)
   })
 
   it('wires every blueprint it does produce', () => {
@@ -86,12 +107,12 @@ describe('the factory module', () => {
     }
   })
 
-  it('turns down what it cannot do by name', () => {
-    // the two it cannot do are known and named; anything else failing silently
-    // as "could not route" is the number to bring down
-    const reasons = built.filter((one) => !one.module.ok).map((one) => (one.module.ok ? '' : one.module.reason))
-    for (const reason of reasons) expect(reason.length, reason).toBeGreaterThan(0)
-    const named = reasons.filter((reason) => reason.includes('두 결과') || reason.includes('두 입구'))
-    expect(named.length, '출구·입구가 둘인 단계는 이름을 대고 거절해야 합니다').toBeGreaterThan(100)
+  it('says which machine it is turning the plan down for', () => {
+    // "could not route" tells a player nothing they can act on; naming the
+    // machine at least says what to build by hand instead
+    for (const one of built) {
+      if (one.module.ok) continue
+      expect(one.module.reason, one.code).toContain('두 결과')
+    }
   })
 })

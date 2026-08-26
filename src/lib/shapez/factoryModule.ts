@@ -27,9 +27,12 @@
  * one row apart. Each comb needs an unbroken run up that column, through the
  * rows the other comb's mouths are on, so the two cannot both have it. Turning
  * the machines sideways only transposes the problem: the ports become adjacent
- * columns of one row and the combs collide along the row instead. It wants a
- * different idea, not a different axis, so those plans are turned down by name
- * rather than laid out wrong. That is a third of them.
+ * columns of one row and the combs collide along the row instead. Standing the
+ * combs a column clear of the machines does not help either — the second one's
+ * belts would have to cross the first one's column to reach a third. It wants a
+ * different idea, and the likeliest is the third floor: lift one result out of
+ * the mouth column and collect it upstairs. Until then those plans are turned
+ * down by name rather than laid out wrong. That is a third of them.
  */
 import { encodeBuildingBlueprint, type BuildingPlacement } from './blueprint'
 import { factoryPlan, type FactoryPlan, type FactoryStep } from './factoryPlan'
@@ -86,6 +89,16 @@ export type FactoryModuleResult = FactoryModuleSuccess | FactoryModuleFailure
 interface Block {
   step: FactoryStep
   stand: { x: number; y: number }[]
+  /**
+   * The machines split into the groups each collecting comb serves.
+   *
+   * A result wanted in two places is collected twice, and the two combs stand
+   * in the same column — so the groups have to be laid out with a row between
+   * them. Without it the lower comb's way out is the upper comb's last piece,
+   * and the belt that should start there has nowhere to go. This is why the
+   * split is decided before anything is placed rather than after.
+   */
+  shares: { x: number; y: number }[][]
   /**
    * Where each feed has to be delivered, one per mouth.
    *
@@ -162,6 +175,21 @@ export function layoutFactoryModule(
   const columnPitch = options.columnPitch ?? 6
   const rowGap = options.rowGap ?? 2
 
+  /** How many places want each result, which decides how it is collected. */
+  const takers = new Map<string, number>()
+  for (const step of plan.steps) {
+    for (const feed of step.inputs) {
+      if (!feed.from) continue
+      takers.set(feed.node.id, (takers.get(feed.node.id) ?? 0) + 1)
+    }
+  }
+  // the finished shape leaves the module, which is a taker like any other
+  const finishedId = plan.steps[plan.steps.length - 1].node.id
+  takers.set(finishedId, (takers.get(finishedId) ?? 0) + 1)
+
+  const sharesOf = (step: FactoryStep) =>
+    Math.max(1, ...[...step.outputs.values()].map((out) => takers.get(out.node.id) ?? 1))
+
   // ── where everything stands ──────────────────────────────────────────────
   const byDepth = new Map<number, FactoryStep[]>()
   for (const step of plan.steps) {
@@ -177,12 +205,22 @@ export function layoutFactoryModule(
       const span = tilesOf(step.type, FLOW).map(([, dy]) => dy)
       const height = Math.max(...span) - Math.min(...span) + 1
       const lift = -Math.min(...span)
-      const stand = Array.from({ length: step.machines }, (_, index) => ({
-        x: MARGIN + step.depth * columnPitch,
-        y: row + index * height + lift,
-      }))
-      blocks.set(step.node.id, { step, stand, intake: new Map(), supply: new Map() })
-      row += step.machines * height + rowGap
+      const wanted = Math.min(sharesOf(step), step.machines)
+      const column = MARGIN + step.depth * columnPitch
+      const shares: { x: number; y: number }[][] = []
+      let left = step.machines
+      for (let share = 0; share < wanted; share++) {
+        const size = Math.floor(left / (wanted - share))
+        left -= size
+        shares.push(
+          Array.from({ length: size }, (_, index) => ({ x: column, y: row + index * height + lift })),
+        )
+        // a blank row between groups, so each comb's way out is its own tile
+        row += size * height + 1
+      }
+      const stand = shares.flat()
+      blocks.set(step.node.id, { step, stand, shares, intake: new Map(), supply: new Map() })
+      row += rowGap
     }
     tallest = Math.max(tallest, row)
   }
@@ -225,16 +263,6 @@ export function layoutFactoryModule(
   // ── the combs that feed and collect each step ────────────────────────────
   const notes = new Set<string>()
 
-  /** How many places want each result, which decides how it is collected. */
-  const takers = new Map<string, number>()
-  for (const step of plan.steps) {
-    for (const feed of step.inputs) {
-      if (!feed.from) continue
-      takers.set(feed.node.id, (takers.get(feed.node.id) ?? 0) + 1)
-    }
-  }
-  // the finished shape leaves the module, which is a taker like any other
-  takers.set(plan.steps[plan.steps.length - 1].node.id, (takers.get(plan.steps[plan.steps.length - 1].node.id) ?? 0) + 1)
 
   for (const block of blocks.values()) {
     const { step, stand } = block
@@ -278,24 +306,33 @@ export function layoutFactoryModule(
       }
 
       // A result wanted in two places is collected twice rather than once and
-      // then split: the machines are shared out and each share gets its own
-      // comb. One comb with two nets drawing on it had both of them start on
-      // the same tile, which no amount of negotiating gets past.
-      const wanted = Math.max(1, takers.get(out.node.id) ?? 1)
-      if (wanted > stand.length) {
+      // then split: each group of machines gets its own comb. One comb with two
+      // nets drawing on it had both of them start on the same tile, which no
+      // amount of negotiating gets past.
+      const wanted = takers.get(out.node.id) ?? 1
+      if (wanted > block.shares.length) {
         return {
           ok: false,
           reason: `${OPERATIONS[step.op].labelKo} 한 대를 ${wanted}군데로 나눠야 해서 아직 배치할 수 없습니다`,
         }
       }
+      // The comb stands one column clear of the machines rather than right up
+      // against them, reached by a belt from each mouth. That leaves the mouth
+      // column empty — which is where the trash for an unused output has to go,
+      // since it has to touch the machine and a comb filling that column has
+      // already taken the tile.
       const ends: Endpoint[] = []
-      let taken = 0
-      for (let share = 0; share < wanted; share++) {
-        const size = Math.floor((stand.length - taken) / (wanted - share))
-        const mine = stand.slice(taken, taken + size)
-        taken += size
+      for (const mine of block.shares) {
+        const mouths = mine.map((at) => portAt({ ...at, z: 0, type: step.type, rotation: FLOW }, port))
+        for (const mouth of mouths) {
+          const clash = put(
+            { type: BELT, x: mouth.x, y: mouth.y, layer: mouth.z, rotation: cross.outward },
+            `${OPERATIONS[step.op].labelKo} 출구`,
+          )
+          if (clash) return { ok: false, reason: clash }
+        }
         const built = comb({
-          mouths: mine.map((at) => portAt({ ...at, z: 0, type: step.type, rotation: FLOW }, port)),
+          mouths: mouths.map((mouth) => ({ ...mouth, x: mouth.x + 1 })),
           stand: mine,
           cross,
           way: 'collect',
@@ -493,4 +530,5 @@ export async function generateFactoryModule(
   )
   return { layout, code }
 }
+
 
